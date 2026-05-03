@@ -1,0 +1,5 @@
+node_modules/
+tripvisuals_catalogo.db
+sessions.db
+*.log
+uploads/

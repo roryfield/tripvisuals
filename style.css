@@ -1,0 +1,129 @@
+/* ========================================================
+   BASE (FUNDO E TIPOGRAFIA DA LANDING PAGE)
+   ======================================================== */
+:root {
+    --bg-dark: #050505;
+    --card-dark: #111111;
+    --border-color: #2a2a2e;
+    --neon-purple: #9d00ff;
+    --neon-cyan: #00e5ff;
+    --text-main: #ffffff;
+    --text-muted: #888888;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-top: 80px;
+}
+
+/* ========================================================
+   AJUSTE DA LOGO E LANDING PAGE
+   ======================================================== */
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+.logo-glow {
+    max-width: 150px;
+    height: auto;
+    border-radius: 50%; /* Se a logo for quadrada, deixa arredondada */
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px var(--neon-purple);
+}
+
+.landing-title { margin-bottom: 5px; font-size: 2rem; }
+.landing-subtitle { color: var(--neon-cyan); margin-bottom: 40px; }
+
+.links-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.footer-credits { margin-top: 50px; color: #555; font-size: 0.8rem; }
+
+/* ========================================================
+   ESTÉTICA DOS BOTÕES (Seu Padrão Ghost Button com Máscara)
+   ======================================================== */
+.btn-comprar, .btn-aplicar, .neon-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 14px;
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+    border-radius: 50px;
+    background: transparent;
+    transition: all 0.3s ease;
+    z-index: 1;
+    box-sizing: border-box;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-comprar::before, .btn-aplicar::before, .neon-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    z-index: -1;
+    border-radius: 50px;
+    padding: 2px;
+    background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+.btn-comprar:hover, .btn-aplicar:hover, .neon-btn:hover {
+    transform: scale(1.05);
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+    box-shadow: -8px 0 25px rgba(157, 0, 255, 0.5), 
+                 8px 0 25px rgba(0, 229, 255, 0.5), 
+                 inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================================
+   HEADER FUNCIONAL (TOPO DO SITE)
+   ======================================================== */
+.main-header {
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    height: 70px;
+    background: rgba(5, 5, 5, 0.9);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--neon-purple);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 5%;
+    z-index: 9999;
+}
+
+.logo { 
+    font-family: 'Oswald', sans-serif; 
+    color: var(--neon-cyan); 
+    font-size: 1.5rem; 
+    text-transform: uppercase; 
+    margin: 0;
+}
+.logo span { color: var(--neon-purple); font-size: 0.8rem; margin-left: 5px; }
+
+/* ... (Todo o resto do seu código de vitrine se mantém original caso coloque depois) ... */
