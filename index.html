@@ -1,50 +1,309 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Visuals Wear | Links</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trip Visuals Wear | Links</title>
+  <meta name="description" content="Trip Visuals Wear — moda imersiva. Catálogo, Instagram e WhatsApp da loja.">
+  <meta name="theme-color" content="#0a0510">
 
-    <!-- SEO / discovery -->
-    <meta name="description" content="Trip Visuals Wear — moda imersiva. Catálogo, Instagram e WhatsApp da loja.">
-    <meta name="theme-color" content="#050505">
+  <!-- OG tags preserved -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Trip Visuals Wear">
+  <meta property="og:description" content="Fluxo Imersivo · Catálogo, Instagram e WhatsApp.">
+  <meta property="og:image" content="/logo.jpeg">
 
-    <!-- Open Graph (Instagram / WhatsApp link previews) -->
-    <meta property="og:title"       content="Trip Visuals Wear">
-    <meta property="og:description" content="Fluxo Imersivo · Catálogo, Instagram e WhatsApp.">
-    <meta property="og:image"       content="/logo.jpeg">
-    <meta property="og:type"        content="website">
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpeg" href="/logo.jpeg">
 
-    <!-- Favicon (a loja pode subir um favicon.ico no Cloudinary depois;
-         por enquanto o logo serve.) -->
-    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+  <!-- Fonts: bubbly retro display + clean mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css">
+  <style>
+    /* ===========================================================
+       TRIP VISUALS WEAR · Landing Page
+       Aesthetic: retro psychedelic, CRT static, deep purple + yellow
+       =========================================================== */
+
+    :root {
+      --bg-deep:     #0a0510;
+      --bg-purple:   #6B2D9B;
+      --bg-magenta:  #ff2d8a;
+      --accent-yellow: #f4e830;
+      --accent-cream:  #f0e9d2;
+      --text-soft:   #e8d8ff;
+      --shadow-purple: rgba(107, 45, 155, 0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg-deep);
+      color: var(--accent-cream);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      overflow-x: hidden;
+    }
+
+    /* Animated cosmic background gradient mesh */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(107, 45, 155, 0.45), transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(255, 45, 138, 0.35), transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(244, 232, 48, 0.15), transparent 55%);
+      z-index: -2;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(-3%, 2%) scale(1.05); }
+      100% { transform: translate(2%, -2%) scale(1.02); }
+    }
+
+    /* CRT scanlines overlay — subtle */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.16) 0px,
+        rgba(0,0,0,0.16) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      z-index: 100;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    /* Layout shell */
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      gap: 40px;
+      position: relative;
+    }
+
+    /* Logo with a TV-glow halo */
+    .logo-wrap {
+      position: relative;
+      width: min(260px, 65vw);
+      aspect-ratio: 1;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    .logo-wrap::before {
+      content: '';
+      position: absolute; inset: -8%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(244, 232, 48, 0.35), transparent 65%);
+      filter: blur(20px);
+      z-index: -1;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50%      { opacity: 1;   transform: scale(1.08); }
+    }
+
+    .logo-wrap img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 4px rgba(244, 232, 48, 0.2),
+        0 20px 60px var(--shadow-purple),
+        0 0 80px rgba(255, 45, 138, 0.3);
+    }
+
+    /* Title block */
+    .title {
+      text-align: center;
+      animation: enter 0.9s 0.2s both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .title h1 {
+      font-family: 'Bagel Fat One', cursive;
+      font-size: clamp(38px, 8vw, 64px);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 0.95;
+      color: var(--accent-yellow);
+      text-shadow:
+        2px 2px 0 var(--bg-magenta),
+        4px 4px 0 var(--bg-purple),
+        6px 6px 24px rgba(0,0,0,0.6);
+      filter: drop-shadow(0 0 12px rgba(244,232,48,0.25));
+    }
+
+    .title .tagline {
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(11px, 2.2vw, 13px);
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      opacity: 0.85;
+      position: relative;
+      display: inline-block;
+    }
+
+    .title .tagline::before,
+    .title .tagline::after {
+      content: '◆';
+      margin: 0 12px;
+      color: var(--accent-yellow);
+      opacity: 0.7;
+    }
+
+    /* Link buttons */
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 360px;
+      animation: enter 0.9s 0.4s both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .link-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 18px 24px;
+      background: transparent;
+      color: var(--accent-cream);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 2px solid var(--accent-yellow);
+      border-radius: 4px;
+      overflow: hidden;
+      transition: transform 0.2s ease, color 0.25s ease;
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    /* Sliding yellow fill on hover */
+    .link-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-yellow);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(.7,0,.3,1);
+      z-index: -1;
+    }
+
+    .link-btn:hover { color: var(--bg-deep); transform: translate(-2px, -2px); }
+    .link-btn:hover::before { transform: translateX(0); }
+    .link-btn:active { transform: translate(0, 0); }
+
+    /* Shadow that "drops" on hover for that retro press effect */
+    .link-btn { box-shadow: 3px 3px 0 var(--bg-magenta); }
+    .link-btn:hover { box-shadow: 5px 5px 0 var(--bg-magenta); }
+
+    /* Different accent per button for variety */
+    .link-btn.primary    { border-color: var(--accent-yellow); }
+    .link-btn.primary::before { background: var(--accent-yellow); }
+    .link-btn.primary    { box-shadow: 3px 3px 0 var(--bg-magenta); }
+
+    .link-btn.instagram  { border-color: var(--bg-magenta); }
+    .link-btn.instagram::before { background: var(--bg-magenta); }
+    .link-btn.instagram  { box-shadow: 3px 3px 0 var(--accent-yellow); }
+    .link-btn.instagram:hover { color: var(--bg-deep); }
+
+    .link-btn.whatsapp   { border-color: #25d366; }
+    .link-btn.whatsapp::before { background: #25d366; }
+    .link-btn.whatsapp   { box-shadow: 3px 3px 0 var(--accent-yellow); }
+    .link-btn.whatsapp:hover { color: var(--bg-deep); }
+
+    /* Footer credit */
+    .footer {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      opacity: 0.5;
+      animation: enter 0.9s 0.8s both ease-out;
+    }
+
+    /* Entrance animation */
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo entrance */
+    .logo-wrap {
+      animation:
+        enter 0.9s 0s both cubic-bezier(.2,.8,.2,1),
+        float 5s 1s ease-in-out infinite;
+    }
+
+    /* Accessibility: respect reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-    <main id="mainContent" class="landing-container">
-        <header class="profile-header">
-            <img src="logo.jpeg" alt="Logo da Trip Visuals Wear" class="logo-glow"
-                 onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20150%20150%22%3E%3Crect%20fill%3D%22%23050505%22%20width%3D%22150%22%20height%3D%22150%22/%3E%3Ctext%20x%3D%2275%22%20y%3D%2275%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%20font-family%3D%22sans-serif%22%20font-size%3D%2218%22%20letter-spacing%3D%222%22%3ETRIP%3C/text%3E%3C/svg%3E'">
-            <h1 class="landing-title">TRIP VISUALS WEAR</h1>
-            <p class="landing-subtitle">Fluxo Imersivo</p>
-        </header>
 
-        <section class="links-section" aria-label="Links principais">
-            <a href="catalogo.html" class="neon-btn">Catálogo</a>
-            <a href="https://www.instagram.com/tripvisuals.wear/" class="neon-btn"
-               target="_blank" rel="noopener" aria-label="Instagram da Trip Visuals (abre em nova aba)">
-                Siga no Instagram!
-            </a>
-            <!-- ⚠️ VERIFICAR número: 5511 = DDD São Paulo.
-                 Se a loja é de outro estado, alterar AQUI e em catalogo.html. -->
-            <a href="https://wa.me/5511940537169" class="neon-btn"
-               target="_blank" rel="noopener" aria-label="WhatsApp da Trip Visuals (abre em nova aba)">
-                Fale Conosco!
-            </a>
-        </section>
+  <main class="stage">
 
-        <footer class="footer-credits">By Rory 💀</footer>
-    </main>
+    <div class="logo-wrap">
+      <img src="logo.jpeg" alt="Logo da Trip Visuals Wear">
+    </div>
+
+    <header class="title">
+      <h1>TRIP VISUALS<br>WEAR</h1>
+      <div class="tagline">Fluxo Imersivo</div>
+    </header>
+
+    <nav class="links" aria-label="Links principais">
+      <a class="link-btn primary" href="catalogo.html">
+        ▸ Catálogo
+      </a>
+      <a class="link-btn instagram" href="https://www.instagram.com/tripvisuals.wear/" target="_blank" rel="noopener">
+        ▸ Siga no Instagram
+      </a>
+      <a class="link-btn whatsapp" href="https://wa.me/5511940537169" target="_blank" rel="noopener">
+        ▸ Fale Conosco
+      </a>
+    </nav>
+
+    <footer class="footer">By Rory 💀</footer>
+
+  </main>
+
 </body>
 </html>
