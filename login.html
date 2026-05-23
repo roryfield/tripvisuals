@@ -3,43 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso Restrito — VOIDZONE</title>
+    <title>Trip Visuals | Acesso Restrito</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root { --cyan: #00e5ff; --purple: #9d00ff; --dark: #050505; }
+        :root {
+            --cyan:   #00e5ff;
+            --purple: #9d00ff;
+            --danger: #ff4d4d;
+            --bg:     #050505;
+            --panel:  #0c0c0c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background: var(--dark);
+            background: var(--bg);
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            font-family: 'DM Sans', sans-serif;
             color: #fff;
             overflow: hidden;
+            padding: 20px;
         }
 
         .login-card {
-            background: #0c0c0c;
+            background: var(--panel);
             padding: 50px 40px;
             border: 1px solid var(--purple);
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(157, 0, 255, 0.2);
             text-align: center;
             transition: opacity 0.5s ease;
-            width: 320px;
+            width: 100%;
+            max-width: 360px;
         }
 
-        .login-title {
+        .login-brand {
+            font-family: 'Bebas Neue', sans-serif;
             color: var(--cyan);
-            letter-spacing: 3px;
-            margin-top: 0;
-            margin-bottom: 4px;
-            font-size: 1.5rem;
+            letter-spacing: 6px;
+            margin: 0 0 4px;
+            font-size: 1.8rem;
         }
         .login-sub {
             font-size: 0.7rem;
-            color: #555;
+            color: #777;
             text-transform: uppercase;
             margin-bottom: 30px;
             letter-spacing: 1px;
@@ -49,20 +60,23 @@
         input {
             background: #111;
             border: 1px solid #333;
-            color: white;
+            color: #fff;
             padding: 15px;
             width: 100%;
             border-radius: 4px;
-            box-sizing: border-box;
             font-size: 1rem;
-            transition: border-color 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input:focus { border-color: var(--cyan); outline: none; }
+        input:focus {
+            border-color: var(--cyan);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+        }
 
-        /* ✅ NOVO: Mensagem de erro inline — sem alert() */
         .erro-msg {
             font-size: 0.78rem;
-            color: #ff4d4d;
+            color: var(--danger);
             min-height: 18px;
             margin-bottom: 14px;
             letter-spacing: 0.3px;
@@ -72,7 +86,7 @@
         .btn-auth {
             background: #fff;
             color: #000;
-            font-weight: bold;
+            font-weight: 700;
             padding: 15px;
             width: 100%;
             border: none;
@@ -81,10 +95,12 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
             transition: background 0.3s, opacity 0.3s;
         }
         .btn-auth:hover:not(:disabled) { background: var(--cyan); }
-        .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-auth:disabled              { opacity: 0.5; cursor: not-allowed; }
+        .btn-auth:focus-visible         { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
         /* Loading screen */
         .loading-screen {
@@ -105,7 +121,7 @@
             border-top-color: var(--cyan);
             border-bottom-color: var(--purple);
             border-radius: 50%;
-            animation: void-spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            animation: void-spin 1.5s cubic-bezier(0.68,-0.55,0.265,1.55) infinite;
             margin-bottom: 20px;
         }
         @keyframes void-spin {
@@ -113,48 +129,64 @@
             50%  { transform: rotate(180deg); opacity: 1; box-shadow: 0 0 15px var(--cyan); }
             100% { transform: rotate(360deg); opacity: 0.5; }
         }
+
+        @keyframes shake {
+            0%,100%{transform:translateX(0)}
+            20%{transform:translateX(-8px)}
+            40%{transform:translateX(8px)}
+            60%{transform:translateX(-5px)}
+            80%{transform:translateX(5px)}
+        }
+        .login-card.shake { animation: shake 0.4s ease; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .void-loader { animation: none; }
+            .login-card.shake { animation: none; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="login-card" id="loginBox">
-        <h2 class="login-title">VOIDZONE</h2>
-        <p class="login-sub">Acesso Restrito · Trip Visuals</p>
+    <main class="login-card" id="loginBox">
+        <h1 class="login-brand">TRIP VISUALS</h1>
+        <p class="login-sub">Acesso Restrito · Painel Admin</p>
 
         <div class="input-wrap">
-            <!-- ✅ NOVO: Enter dispara o login -->
+            <label for="senha" class="visually-hidden" style="position:absolute;left:-9999px">Chave de acesso</label>
             <input type="password" id="senha" placeholder="Chave de acesso"
+                   autocomplete="current-password" autofocus
                    onkeydown="if(event.key==='Enter') fazerLogin()">
         </div>
 
-        <!-- ✅ NOVO: Erro inline, sem alert() -->
-        <p class="erro-msg" id="erroMsg"></p>
+        <p class="erro-msg" id="erroMsg" role="alert" aria-live="assertive"></p>
 
         <button class="btn-auth" id="btnAuth" onclick="fazerLogin()">AUTENTICAR</button>
-    </div>
+    </main>
 
-    <div class="loading-screen" id="loadScreen">
+    <div class="loading-screen" id="loadScreen" aria-hidden="true">
         <div class="void-loader"></div>
-        <p style="color: #666; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">
+        <p style="color: #777; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">
             Estabelecendo conexão...
         </p>
     </div>
 
     <script>
         async function fazerLogin() {
-            const senha   = document.getElementById('senha').value.trim();
-            const erroMsg = document.getElementById('erroMsg');
-            const btn     = document.getElementById('btnAuth');
+            const senhaInput = document.getElementById('senha');
+            const senha      = senhaInput.value.trim();
+            const erroMsg    = document.getElementById('erroMsg');
+            const btn        = document.getElementById('btnAuth');
+            const card       = document.getElementById('loginBox');
 
             if (!senha) {
                 erroMsg.innerText = 'Digite a chave de acesso.';
-                document.getElementById('senha').focus();
+                senhaInput.focus();
                 return;
             }
 
             erroMsg.innerText = '';
-            btn.disabled      = true;
-            btn.innerText     = 'VERIFICANDO...';
+            btn.disabled  = true;
+            btn.innerText = 'VERIFICANDO...';
 
             try {
                 const res = await fetch('/api/login', {
@@ -164,43 +196,41 @@
                 });
 
                 if (res.ok) {
-                    // Sucesso — anima entrada no admin
-                    document.getElementById('loginBox').style.opacity = '0';
+                    card.style.opacity = '0';
                     setTimeout(() => {
                         document.getElementById('loadScreen').classList.add('active');
                         setTimeout(() => window.location.href = '/admin-hub.html', 2500);
                     }, 400);
-                } else {
-                    // ✅ NOVO: erro inline, sem alert
-                    erroMsg.innerText = 'Acesso negado. Tente novamente.';
-                    document.getElementById('senha').value = '';
-                    document.getElementById('senha').focus();
-                    btn.disabled  = false;
-                    btn.innerText = 'AUTENTICAR';
-
-                    // Shake visual na card
-                    const card = document.getElementById('loginBox');
-                    card.style.animation = 'none';
-                    card.offsetHeight; // reflow
-                    card.style.animation = 'shake 0.4s ease';
+                    return;
                 }
+
+                // ✅ Handle rate limiter (429) and other error responses
+                let msg = 'Acesso negado. Tente novamente.';
+                if (res.status === 429) {
+                    try {
+                        const data = await res.json();
+                        msg = data.message || 'Muitas tentativas. Aguarde alguns minutos.';
+                    } catch (_) {
+                        msg = 'Muitas tentativas. Aguarde alguns minutos.';
+                    }
+                }
+
+                erroMsg.innerText = msg;
+                senhaInput.value  = '';
+                senhaInput.focus();
+                btn.disabled  = false;
+                btn.innerText = 'AUTENTICAR';
+
+                card.classList.remove('shake');
+                void card.offsetHeight;          // reflow to retrigger animation
+                card.classList.add('shake');
+
             } catch (e) {
                 erroMsg.innerText = 'Erro de conexão com o servidor.';
                 btn.disabled  = false;
                 btn.innerText = 'AUTENTICAR';
             }
         }
-
-        /* Animação de shake no erro */
-        const style = document.createElement('style');
-        style.innerText = `@keyframes shake {
-            0%,100%{transform:translateX(0)}
-            20%{transform:translateX(-8px)}
-            40%{transform:translateX(8px)}
-            60%{transform:translateX(-5px)}
-            80%{transform:translateX(5px)}
-        }`;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
