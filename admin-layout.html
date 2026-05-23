@@ -3,20 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOIDZONE | Painel de Layout</title>
+    <title>Trip Visuals | Painel de Layout</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
 
-    <!-- Proteção de rota -->
+    <!-- ✅ Auth + Theme bootstrap -->
     <script>
-    (async()=>{
+    document.documentElement.dataset.init = 'pending';
+    (async () => {
         try {
-            const r = await fetch('/api/me');
-            if (r.status === 401 || r.status === 403) window.location.replace('/login.html');
-        } catch(e) {}
+            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
+            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
+            if (cfg.ok) {
+                const data = await cfg.json();
+                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
+            }
+        } catch (e) { console.warn('Init bootstrap:', e.message); }
+        finally {
+            if (document.documentElement.classList.contains('apply-light') && document.body) {
+                document.body.classList.add('tema-claro');
+            }
+            document.documentElement.removeAttribute('data-init');
+        }
     })();
     </script>
+    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
 
     <style>
         body {
@@ -46,6 +58,7 @@
             font-size: 2.2rem;
             letter-spacing: 3px;
             margin-bottom: 8px;
+            color: var(--text);
         }
         .layout-card .subtitle {
             color: var(--text-muted);
@@ -60,14 +73,20 @@
             margin-bottom: 36px;
         }
         .opt {
-            border: 1px solid #2a2a2a;
+            border: 1px solid var(--border-strong);     /* ✅ FIX: was hardcoded #2a2a2a */
+            background: transparent;
             padding: 24px 16px;
             border-radius: 10px;
             cursor: pointer;
             transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
             position: relative;
+            text-align: center;
+            font-family: inherit;
+            color: var(--text);
+            width: 100%;
         }
         .opt:hover { border-color: rgba(157,0,255,0.4); background: rgba(157,0,255,0.04); }
+        .opt:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
         .opt.active {
             border-color: var(--cyan);
             box-shadow: 0 0 20px rgba(0,229,255,0.12);
@@ -80,13 +99,12 @@
             font-size: 12px; color: var(--cyan); font-weight: 700;
         }
 
-        /* Previews visuais */
         .opt-preview {
             display: flex; gap: 4px;
             justify-content: center; align-items: flex-end;
             height: 40px; margin-bottom: 14px;
         }
-        .preview-bar { background: #2a2a2a; border-radius: 3px; transition: background 0.3s; }
+        .preview-bar { background: var(--border-strong); border-radius: 3px; transition: background 0.3s; }
         .opt.active .preview-bar { background: rgba(0,229,255,0.4); }
 
         .prev-grid3 .preview-bar { width: 18px; height: 28px; }
@@ -105,47 +123,47 @@
 </head>
 <body>
 
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <div class="layout-card">
         <p class="eyebrow">Configuração da Loja</p>
         <h2>PAINEL DE LAYOUT</h2>
         <p class="subtitle">Escolha como os produtos aparecem para os clientes por padrão</p>
 
-        <div class="layout-options">
-            <div class="opt" onclick="definirLayout('grid-3')" id="opt-grid-3">
-                <div class="opt-preview prev-grid3">
+        <div class="layout-options" role="radiogroup" aria-label="Layout padrão">
+            <button class="opt" type="button" role="radio" aria-checked="false" onclick="definirLayout('grid-3')" id="opt-grid-3">
+                <div class="opt-preview prev-grid3" aria-hidden="true">
                     <div class="preview-bar"></div>
                     <div class="preview-bar"></div>
                     <div class="preview-bar"></div>
                 </div>
                 <strong>GRADE</strong>
                 <p>3 colunas — visualização rápida de muitos itens.</p>
-            </div>
-            <div class="opt" onclick="definirLayout('grid-2')" id="opt-grid-2">
-                <div class="opt-preview prev-grid2">
+            </button>
+            <button class="opt" type="button" role="radio" aria-checked="false" onclick="definirLayout('grid-2')" id="opt-grid-2">
+                <div class="opt-preview prev-grid2" aria-hidden="true">
                     <div class="preview-bar"></div>
                     <div class="preview-bar"></div>
                 </div>
                 <strong>DUO</strong>
                 <p>2 colunas — equilíbrio entre quantidade e destaque.</p>
-            </div>
-            <div class="opt" onclick="definirLayout('grid-1')" id="opt-grid-1">
-                <div class="opt-preview prev-grid1">
+            </button>
+            <button class="opt" type="button" role="radio" aria-checked="false" onclick="definirLayout('grid-1')" id="opt-grid-1">
+                <div class="opt-preview prev-grid1" aria-hidden="true">
                     <div class="preview-bar"></div>
                     <div class="preview-bar"></div>
                     <div class="preview-bar"></div>
                 </div>
                 <strong>LISTA</strong>
                 <p>1 coluna — foco em branding e fotos grandes.</p>
-            </div>
+            </button>
         </div>
     </div>
 
     <!-- ADMIN BOTTOM NAV -->
-    <nav class="admin-nav">
+    <nav class="admin-nav" aria-label="Navegação admin">
         <a href="/admin-hub.html" class="nav-tab" id="tab-hub">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <rect x="3" y="3" width="7" height="7" rx="1.5"/>
                 <rect x="14" y="3" width="7" height="7" rx="1.5"/>
                 <rect x="3" y="14" width="7" height="7" rx="1.5"/>
@@ -154,7 +172,7 @@
             Hub
         </a>
         <a href="/admin.html" class="nav-tab" id="tab-upload">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <polyline points="16 16 12 12 8 16"/>
                 <line x1="12" y1="12" x2="12" y2="21"/>
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
@@ -162,7 +180,7 @@
             Upload
         </a>
         <a href="/admin-produtos.html" class="nav-tab" id="tab-produtos">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <line x1="8" y1="6" x2="21" y2="6"/>
                 <line x1="8" y1="12" x2="21" y2="12"/>
                 <line x1="8" y1="18" x2="21" y2="18"/>
@@ -172,17 +190,16 @@
             </svg>
             Produtos
         </a>
-        <!-- ✅ active nesta página -->
-        <a href="/admin-layout.html" class="nav-tab active" id="tab-layout">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <a href="/admin-layout.html" class="nav-tab active" id="tab-layout" aria-current="page">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <line x1="3" y1="9" x2="21" y2="9"/>
                 <line x1="9" y1="21" x2="9" y2="9"/>
             </svg>
             Layout
         </a>
-        <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
                 <line x1="1" y1="6" x2="1" y2="22"/>
             </svg>
@@ -191,16 +208,22 @@
     </nav>
 
     <script>
-        function mostrarToast(msg) {
+        function mostrarToast(msg, erro = false) {
             const t = document.getElementById('toast');
             t.innerText = msg;
+            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         async function definirLayout(layout) {
-            document.querySelectorAll('.opt').forEach(o => o.classList.remove('active'));
-            document.getElementById(`opt-${layout}`).classList.add('active');
+            document.querySelectorAll('.opt').forEach(o => {
+                const active = o.id === `opt-${layout}`;
+                o.classList.toggle('active', active);
+                o.setAttribute('aria-checked', active ? 'true' : 'false');
+            });
 
             try {
                 const res = await fetch('/api/config', {
@@ -209,21 +232,30 @@
                     body: JSON.stringify({ chave: 'layout_padrao', valor: layout })
                 });
                 const labels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
-                mostrarToast(res.ok
-                    ? `✓ Layout "${labels[layout]}" aplicado para todos!`
-                    : '⚠️ Erro ao salvar. Tente novamente.');
-            } catch(e) {
-                mostrarToast('⚠️ Sem conexão com o servidor.');
+                if (res.ok) {
+                    mostrarToast(`✓ Layout "${labels[layout]}" aplicado para todos!`);
+                } else if (res.status === 401) {
+                    window.location.replace('/login.html');
+                } else {
+                    mostrarToast('⚠️ Erro ao salvar. Tente novamente.', true);
+                }
+            } catch (e) {
+                mostrarToast('⚠️ Sem conexão com o servidor.', true);
             }
         }
 
         window.onload = async () => {
             try {
                 const res  = await fetch('/api/config');
+                if (!res.ok) return;
                 const data = await res.json();
-                const el   = document.getElementById(`opt-${data.layout_padrao || 'grid-3'}`);
-                if (el) el.classList.add('active');
-            } catch(e) {}
+                const layout = data.layout_padrao || 'grid-3';
+                const el = document.getElementById(`opt-${layout}`);
+                if (el) {
+                    el.classList.add('active');
+                    el.setAttribute('aria-checked', 'true');
+                }
+            } catch (e) { /* silent */ }
         };
     </script>
 </body>
