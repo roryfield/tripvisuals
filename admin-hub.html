@@ -3,32 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOIDZONE | Hub Administrativo</title>
+    <title>Trip Visuals | Hub Administrativo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
 
-    <!-- ✅ Proteção de rota: redireciona para login se não autenticado -->
-    <!-- NOTA: o servidor precisa ter GET /api/me retornando 401 se sem sessão -->
+    <!-- ✅ Auth + Theme bootstrap (no flash of unauthed/wrong-theme content) -->
     <script>
-    (async()=>{
+    document.documentElement.dataset.init = 'pending';
+    (async () => {
         try {
-            const r = await fetch('/api/me');
-            if (r.status === 401 || r.status === 403) window.location.replace('/login.html');
-        } catch(e) { /* endpoint ainda não implementado — acesso liberado */ }
+            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
+            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
+            if (cfg.ok) {
+                const data = await cfg.json();
+                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
+            }
+        } catch (e) {
+            console.warn('Init bootstrap:', e.message);
+        } finally {
+            // Apply theme class to body if needed (body now exists)
+            if (document.documentElement.classList.contains('apply-light')) {
+                document.body.classList.add('tema-claro');
+            }
+            document.documentElement.removeAttribute('data-init');
+        }
     })();
     </script>
+    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
 
     <style>
         .hub-wrap {
             padding: 48px 40px 0;
             max-width: 1100px;
+            margin: 0 auto;
         }
+
         .hub-header {
             border-bottom: 1px solid var(--border);
             padding-bottom: 24px;
             margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            flex-wrap: wrap;
         }
+        .hub-header-text { flex: 1; min-width: 240px; }
         .hub-header .eyebrow {
             font-size: 11px;
             text-transform: uppercase;
@@ -41,14 +62,15 @@
             font-size: clamp(2rem, 5vw, 3.2rem);
             letter-spacing: 3px;
             line-height: 1;
+            color: var(--text);
         }
-        .hub-header p {
+        .hub-header p.hub-desc {
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-top: 8px;
         }
 
-        /* Stats */
+        /* Stats row */
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -58,7 +80,7 @@
         .stat-card {
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius);
             padding: 20px 24px;
         }
         .stat-card .stat-label {
@@ -72,15 +94,15 @@
             font-family: 'Bebas Neue', sans-serif;
             font-size: 2.2rem;
             letter-spacing: 1px;
-            color: #fff;
+            color: var(--text);        /* ✅ FIX: was #fff, now theme-aware */
             line-height: 1;
         }
         .stat-card .stat-value.small {
             font-size: 1.1rem;
             padding-top: 8px;
         }
-        /* ✅ NOVO: estado de erro visível nos stats */
-        .stat-error { color: #ff4d4d !important; font-size: 0.8rem !important; font-family: 'DM Sans', sans-serif !important; }
+        .stat-error { color: var(--danger) !important; font-size: 0.8rem !important; font-family: 'DM Sans', sans-serif !important; }
+        .stat-loading { font-size: 0.85rem; color: var(--text-muted); }
 
         /* Action cards */
         .cards-grid {
@@ -91,11 +113,11 @@
         .action-card {
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius);
             padding: 28px;
             text-decoration: none;
-            color: #fff;
-            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            color: var(--text);        /* ✅ FIX: was #fff, now theme-aware */
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s, background-color 0.25s;
             display: block;
             position: relative;
             overflow: hidden;
@@ -105,9 +127,13 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 24px rgba(0,229,255,0.07);
         }
-        .action-card .card-icon  { font-size: 1.6rem; margin-bottom: 14px; display: block; }
-        .action-card h3          { font-size: 1rem; font-weight: 600; color: var(--cyan); margin-bottom: 8px; }
-        .action-card p           { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+        .action-card:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+        .action-card .card-icon { font-size: 1.6rem; margin-bottom: 14px; display: block; }
+        .action-card h3         { font-size: 1rem; font-weight: 600; color: var(--cyan); margin-bottom: 8px; }
+        .action-card p          { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
         .action-card .arrow {
             position: absolute; right: 20px; bottom: 20px;
             color: var(--cyan); font-size: 1.2rem;
@@ -115,38 +141,12 @@
             transition: opacity 0.2s, transform 0.2s;
         }
         .action-card:hover .arrow { opacity: 1; transform: translateX(0); }
-
-        /* ✅ NOVO: Tema toggle no hub */
-        .theme-toggle-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 40px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-        }
-        .theme-toggle-wrap span {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-        }
-        .theme-btn {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 8px 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .theme-btn:hover { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.15); }
-        .theme-btn.active { border-color: var(--cyan); color: var(--cyan); }
+        .action-card.external { border-color: rgba(157,0,255,0.2); }
+        .action-card.external .arrow { color: var(--purple); }
 
         @media (max-width: 600px) {
             .hub-wrap { padding: 24px 16px 0; }
+            .hub-header { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
@@ -155,9 +155,19 @@
 <div class="hub-wrap">
 
     <header class="hub-header">
-        <p class="eyebrow">Sistema de Gestão · Trip Visuals Wear</p>
-        <h1>VOIDZONE<br>ADMIN HUB</h1>
-        <p>Gestão de produtos, catálogo e configurações da loja.</p>
+        <div class="hub-header-text">
+            <p class="eyebrow">Sistema de Gestão · Trip Visuals Wear</p>
+            <h1>TRIP VISUALS<br>ADMIN HUB</h1>
+            <p class="hub-desc">Gestão de produtos, catálogo e configurações da loja.</p>
+        </div>
+
+        <!-- ✅ Theme toggle relocated: top-right pill, icon-only -->
+        <div class="theme-pill" role="group" aria-label="Tema do admin">
+            <button class="theme-icon-btn" id="btnClaro" onclick="setTema('claro')"
+                    aria-label="Tema claro" title="Tema claro">☀️</button>
+            <button class="theme-icon-btn" id="btnEscuro" onclick="setTema('escuro')"
+                    aria-label="Tema escuro" title="Tema escuro">🌑</button>
+        </div>
     </header>
 
     <!-- Stats -->
@@ -165,19 +175,19 @@
         <div class="stat-card">
             <div class="stat-label">Produtos Ativos</div>
             <div class="stat-value" id="statProdutos">
-                <span style="font-size:1rem;color:var(--text-muted)">Carregando...</span>
+                <span class="stat-loading">Carregando...</span>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-label">Layout Padrão</div>
             <div class="stat-value small" id="statLayout">
-                <span style="font-size:0.8rem;color:var(--text-muted)">Carregando...</span>
+                <span class="stat-loading">Carregando...</span>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-label">Tema Atual</div>
             <div class="stat-value small" id="statTema">
-                <span style="font-size:0.8rem;color:var(--text-muted)">Carregando...</span>
+                <span class="stat-loading">Carregando...</span>
             </div>
         </div>
     </div>
@@ -185,52 +195,43 @@
     <!-- Action cards -->
     <div class="cards-grid">
         <a href="/admin.html" class="action-card">
-            <span class="card-icon">📥</span>
+            <span class="card-icon" aria-hidden="true">📥</span>
             <h3>Upload de Produtos</h3>
             <p>Adicione novos produtos com nomenclatura automática e precificação dinâmica por tipo.</p>
-            <span class="arrow">→</span>
+            <span class="arrow" aria-hidden="true">→</span>
         </a>
         <a href="/admin-produtos.html" class="action-card">
-            <span class="card-icon">📋</span>
+            <span class="card-icon" aria-hidden="true">📋</span>
             <h3>Gerenciar Catálogo</h3>
             <p>Edite nome, preço ou remova produtos já cadastrados diretamente do banco de dados.</p>
-            <span class="arrow">→</span>
+            <span class="arrow" aria-hidden="true">→</span>
         </a>
         <a href="/admin-layout.html" class="action-card">
-            <span class="card-icon">🖼️</span>
+            <span class="card-icon" aria-hidden="true">🖼️</span>
             <h3>Layout da Loja</h3>
             <p>Defina o modo de exibição padrão que todos os clientes verão ao abrir o catálogo.</p>
-            <span class="arrow">→</span>
+            <span class="arrow" aria-hidden="true">→</span>
         </a>
-        <a href="/catalogo.html" class="action-card" target="_blank" style="border-color: rgba(157,0,255,0.2)">
-            <span class="card-icon">🌐</span>
+        <a href="/catalogo.html" target="_blank" rel="noopener" class="action-card external">
+            <span class="card-icon" aria-hidden="true">🌐</span>
             <h3>Ver Catálogo</h3>
             <p>Visualize o catálogo como o cliente final vê. Abre em nova aba.</p>
-            <span class="arrow" style="color:var(--purple)">↗</span>
+            <span class="arrow" aria-hidden="true">↗</span>
         </a>
-        <a href="/index.html" target="_blank" class="action-card" style="border-color: rgba(157,0,255,0.2)">
-            <span class="card-icon">🔗</span>
+        <a href="/index.html" target="_blank" rel="noopener" class="action-card external">
+            <span class="card-icon" aria-hidden="true">🔗</span>
             <h3>Ver Landing Page</h3>
             <p>Visualize a página de links principal da Trip Visuals Wear. Abre em nova aba.</p>
-            <span class="arrow" style="color:var(--purple)">↗</span>
+            <span class="arrow" aria-hidden="true">↗</span>
         </a>
-    </div>
-
-    <!-- ✅ NOVO: Theme toggle integrado no hub (substitui admin-config.html) -->
-    <div class="theme-toggle-wrap">
-        <span>Tema do Admin:</span>
-        <button class="theme-btn" id="btnClaro"  onclick="setTema('claro')">☀️ Claro</button>
-        <button class="theme-btn" id="btnEscuro" onclick="setTema('escuro')">🌑 Escuro</button>
     </div>
 
 </div><!-- /hub-wrap -->
 
-<!-- ══════════════════════════════════════════
-     ADMIN BOTTOM NAV
-══════════════════════════════════════════ -->
-<nav class="admin-nav">
-    <a href="/admin-hub.html" class="nav-tab active" id="tab-hub">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<!-- ADMIN BOTTOM NAV -->
+<nav class="admin-nav" aria-label="Navegação admin">
+    <a href="/admin-hub.html" class="nav-tab active" id="tab-hub" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7" rx="1.5"/>
             <rect x="14" y="3" width="7" height="7" rx="1.5"/>
             <rect x="3" y="14" width="7" height="7" rx="1.5"/>
@@ -239,7 +240,7 @@
         Hub
     </a>
     <a href="/admin.html" class="nav-tab" id="tab-upload">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <polyline points="16 16 12 12 8 16"/>
             <line x1="12" y1="12" x2="12" y2="21"/>
             <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
@@ -247,7 +248,7 @@
         Upload
     </a>
     <a href="/admin-produtos.html" class="nav-tab" id="tab-produtos">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <line x1="8" y1="6" x2="21" y2="6"/>
             <line x1="8" y1="12" x2="21" y2="12"/>
             <line x1="8" y1="18" x2="21" y2="18"/>
@@ -258,15 +259,15 @@
         Produtos
     </a>
     <a href="/admin-layout.html" class="nav-tab" id="tab-layout">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <line x1="3" y1="9" x2="21" y2="9"/>
             <line x1="9" y1="21" x2="9" y2="9"/>
         </svg>
         Layout
     </a>
-    <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+    <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
             <line x1="1" y1="6" x2="1" y2="22"/>
         </svg>
@@ -276,13 +277,10 @@
 
 <script>
     window.onload = async () => {
-        // ── CONFIG ──────────────────────────────────────
         try {
-            const res     = await fetch('/api/config');
-            if (!res.ok) throw new Error('config error');
+            const res = await fetch('/api/config');
+            if (!res.ok) throw new Error('config');
             const configs = await res.json();
-
-            if (configs.tema_admin === 'claro') aplicarTema('claro');
 
             const layoutLabels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
             document.getElementById('statLayout').innerText =
@@ -291,34 +289,30 @@
                 configs.tema_admin === 'claro' ? '☀️ Claro' : '🌑 Escuro';
 
             marcarTemaBtn(configs.tema_admin || 'escuro');
-
-        } catch(e) {
-            // ✅ FIX: era catch vazio — agora mostra erro visível nos stats
+        } catch (e) {
             document.getElementById('statLayout').innerHTML = '<span class="stat-error">Erro ao carregar</span>';
             document.getElementById('statTema').innerHTML   = '<span class="stat-error">Erro ao carregar</span>';
+            // Default theme button state
+            marcarTemaBtn(document.body.classList.contains('tema-claro') ? 'claro' : 'escuro');
         }
 
-        // ── PRODUTOS ─────────────────────────────────────
         try {
             const res  = await fetch('/api/produtos');
-            if (!res.ok) throw new Error('produtos error');
+            if (!res.ok) throw new Error('produtos');
             const data = await res.json();
             document.getElementById('statProdutos').innerText = data.length;
-        } catch(e) {
+        } catch (e) {
             document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
         }
     };
 
-    // ── TEMA ──────────────────────────────────────────────
-    function aplicarTema(tema) {
-        document.body.classList.toggle('tema-claro', tema === 'claro');
-    }
     function marcarTemaBtn(tema) {
         document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
         document.getElementById('btnEscuro').classList.toggle('active', tema === 'escuro');
     }
+
     async function setTema(tema) {
-        aplicarTema(tema);
+        document.body.classList.toggle('tema-claro', tema === 'claro');
         marcarTemaBtn(tema);
         document.getElementById('statTema').innerText = tema === 'claro' ? '☀️ Claro' : '🌑 Escuro';
         try {
@@ -327,7 +321,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chave: 'tema_admin', valor: tema })
             });
-        } catch(e) {}
+        } catch (e) { /* visual change applied; persistence retried on next load */ }
     }
 </script>
 </body>
