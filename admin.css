@@ -1,27 +1,77 @@
 /* ═══════════════════════════════════════════════════════
-   VOIDZONE — Admin Shared Styles v2
-   Importado em TODAS as páginas admin.
-   Estilos específicos de cada página ficam inline no <style> do próprio arquivo.
+   Trip Visuals Wear — Admin Shared Styles v3
+   Theme-aware via CSS variables. WCAG AA compliant.
 ═══════════════════════════════════════════════════════ */
 
+/* ── DARK THEME (DEFAULT) ──────────────────────────── */
 :root {
-    --cyan:       #00e5ff;
-    --purple:     #9d00ff;
-    --dark:       #050505;
-    --panel:      #0c0c0c;
-    --border:     rgba(255,255,255,0.07);
-    --text-muted: #555;
-    --nav-h:      72px;
+    /* Brand accents — stable across themes */
+    --cyan:           #00e5ff;
+    --purple:         #9d00ff;
+    --danger:         #ff4d4d;
+    --success:        #25d366;
+
+    /* Theme-aware tokens (dark) */
+    --bg:             #050505;
+    --panel:          #0c0c0c;
+    --panel-2:        #111111;
+    --border:         rgba(255,255,255,0.07);
+    --border-strong:  #2a2a2a;
+    --text:           #ffffff;
+    --text-dim:       #c8c8c8;
+    --text-muted:     #888888;   /* 6.5:1 on panel — AAA */
+    --input-bg:       #000000;
+    --input-text:     #ffffff;
+    --input-border:   #333333;
+    --nav-bg:         rgba(8,8,8,0.96);
+    --table-border:   #1a1a1a;
+
+    --nav-h:          72px;
+    --radius:         12px;
 }
 
+/* ── LIGHT THEME ───────────────────────────────────── */
+body.tema-claro {
+    --bg:             #f5f5f5;
+    --panel:          #ffffff;
+    --panel-2:        #f0f0f0;
+    --border:         rgba(0,0,0,0.08);
+    --border-strong:  #d8d8d8;
+    --text:           #111111;
+    --text-dim:       #333333;
+    --text-muted:     #666666;   /* 5.7:1 on white — AA */
+    --input-bg:       #ffffff;
+    --input-text:     #111111;
+    --input-border:   #cccccc;
+    --nav-bg:         rgba(248,248,248,0.97);
+    --table-border:   #e8e8e8;
+}
+
+/* ── FOUC PREVENTION ───────────────────────────────── */
+/* The init script flips html[data-init="pending"] off when theme+auth
+   resolve; body stays hidden until then. Prevents theme flash and
+   admin-content flash to unauthenticated viewers. */
+html[data-init="pending"] body { visibility: hidden; }
+
+/* If JS is disabled, show the page anyway. */
+noscript + style, .no-js body { visibility: visible !important; }
+
+/* ── BASE ──────────────────────────────────────────── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background: var(--dark);
-    color: #fff;
+    background: var(--bg);
+    color: var(--text);
     font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
     padding-bottom: var(--nav-h);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Theme transitions on the elements that swap */
+.admin-nav, .dropzone, .vz-table td, .stat-card, .action-card,
+.produto-card, .layout-card, .theme-pill, input, select, textarea {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 /* ── PAGE HEADER ───────────────────────────────────── */
@@ -32,6 +82,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 .page-eyebrow {
     font-size: 11px;
@@ -45,58 +97,66 @@ body {
     font-size: 2rem;
     letter-spacing: 3px;
     line-height: 1;
+    color: var(--text);
 }
 
 /* ── DROPZONE ──────────────────────────────────────── */
 .dropzone {
     text-align: center;
-    padding: 50px;
-    border: 2px dashed #2a2a2a;
-    border-radius: 12px;
+    padding: 50px 24px;
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
     background: var(--panel);
     cursor: pointer;
-    transition: border-color 0.3s;
     margin-bottom: 20px;
 }
-.dropzone:hover { border-color: var(--purple); }
-.dropzone h3    { color: var(--cyan); margin: 0; }
-.dropzone p     { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
+.dropzone:hover  { border-color: var(--purple); }
+.dropzone:focus-within { border-color: var(--cyan); outline: 2px solid rgba(0,229,255,0.2); outline-offset: 2px; }
+.dropzone h3     { color: var(--cyan); margin: 0; }
+.dropzone p      { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
 
 /* ── INPUTS ────────────────────────────────────────── */
 input[type="text"],
 input[type="number"],
+input[type="password"],
 select {
-    background: #000;
-    color: #fff;
-    border: 1px solid #333;
+    background: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
     padding: 8px 10px;
     width: 100%;
     border-radius: 4px;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.85rem;
 }
-input:focus, select:focus { outline: none; border-color: var(--cyan); }
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+}
 
 /* ── TABLE ─────────────────────────────────────────── */
 .vz-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 .vz-table th {
     text-align: left;
-    color: #444;
+    color: var(--text-muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 12px 15px;
-    border-bottom: 2px solid #1a1a1a;
+    border-bottom: 2px solid var(--table-border);
 }
 .vz-table td {
     padding: 12px 15px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--table-border);
     vertical-align: middle;
     background: var(--panel);
+    color: var(--text);
 }
 .vz-table img {
     width: 50px; height: 50px;
-    object-fit: cover; border-radius: 6px; border: 1px solid #222;
+    object-fit: cover; border-radius: 6px;
+    border: 1px solid var(--border-strong);
 }
 .status-cell { text-align: center; font-size: 1.1rem; }
 
@@ -118,7 +178,8 @@ input:focus, select:focus { outline: none; border-color: var(--cyan); }
     display: inline-block;
 }
 .btn-launch:hover:not(:disabled) { box-shadow: 0 0 20px rgba(157,0,255,0.4); transform: scale(1.01); }
-.btn-launch:disabled              { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-launch:disabled             { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-launch:focus-visible        { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .btn-launch-full { width: 100%; text-align: center; }
 
 /* ── TOAST ─────────────────────────────────────────── */
@@ -137,19 +198,43 @@ input:focus, select:focus { outline: none; border-color: var(--cyan); }
     transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
     white-space: nowrap;
     pointer-events: none;
+    box-shadow: 0 4px 24px rgba(0,229,255,0.15);
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
-/* ════════════════════════════════════════════════════
-   ADMIN BOTTOM NAV
-   Copie o bloco <nav class="admin-nav"> em CADA página
-   admin. Adicione .active apenas na tab da página atual.
-════════════════════════════════════════════════════ */
+/* ── THEME PILL (icon-only toggle for hub header) ──── */
+.theme-pill {
+    display: inline-flex;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 4px;
+    gap: 2px;
+}
+.theme-icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+    transition: color 0.2s, background 0.2s;
+}
+.theme-icon-btn.active {
+    background: rgba(0,229,255,0.15);
+    color: var(--cyan);
+}
+.theme-icon-btn:hover:not(.active) { color: var(--text); }
+.theme-icon-btn:focus-visible       { outline: 2px solid var(--cyan); outline-offset: 1px; }
+
+/* ── ADMIN BOTTOM NAV ──────────────────────────────── */
 .admin-nav {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     height: var(--nav-h);
-    background: rgba(8,8,8,0.96);
+    background: var(--nav-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-top: 1px solid var(--border);
@@ -196,30 +281,32 @@ input:focus, select:focus { outline: none; border-color: var(--cyan); }
 }
 .nav-tab.active         { color: var(--cyan); }
 .nav-tab.active::after  { transform: scaleX(1); }
-.nav-tab:hover:not(.active) { color: #888; }
-.nav-tab.external            { color: #444; }
-.nav-tab.external::after     { background: var(--purple); }
-.nav-tab.external.active     { color: var(--purple); }
+.nav-tab:hover:not(.active) { color: var(--text); }
+.nav-tab:focus-visible      { outline: 2px solid var(--cyan); outline-offset: -2px; }
+.nav-tab.external           { color: var(--text-muted); }
+.nav-tab.external::after    { background: var(--purple); }
+.nav-tab.external.active    { color: var(--purple); }
 .nav-icon { width: 22px; height: 22px; transition: transform 0.2s; }
 .nav-tab.active .nav-icon { transform: translateY(-1px); }
 
-/* ── LIGHT THEME ───────────────────────────────────── */
-body.tema-claro {
-    --dark:       #f4f4f4;
-    --panel:      #ffffff;
-    --border:     rgba(0,0,0,0.08);
-    --text-muted: #999;
-    color: #111;
-}
-body.tema-claro .admin-nav { background: rgba(248,248,248,0.97); }
-body.tema-claro input[type="text"],
-body.tema-claro input[type="number"],
-body.tema-claro select    { background: #eee; color: #111; border-color: #ccc; }
-body.tema-claro .dropzone { background: #f8f8f8; border-color: #ddd; }
-body.tema-claro .vz-table td { background: #fff; }
-
 /* ── MOBILE ────────────────────────────────────────── */
 @media (max-width: 600px) {
-    .nav-tab  { font-size: 9px; gap: 3px; }
-    .nav-icon { width: 20px; height: 20px; }
+    .nav-tab    { font-size: 9px; gap: 3px; }
+    .nav-icon   { width: 20px; height: 20px; }
+    .page-title { font-size: 1.6rem; letter-spacing: 2px; }
+}
+
+/* ── ACCESSIBILITY: REDUCED MOTION ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ── PRINT ─────────────────────────────────────────── */
+@media print {
+    .admin-nav, .toast { display: none !important; }
+    body { padding-bottom: 0; }
 }
