@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Visuals Wear | Catálogo</title><!-- ✅ FIX: era VOIDZONE, agora Trip Visuals -->
+    <meta name="description" content="Catálogo Trip Visuals Wear — moda imersiva. Camisetas, regatas e moletons.">
+    <title>Trip Visuals Wear | Catálogo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -41,7 +42,6 @@
             z-index: 9000;
         }
 
-        /* ✅ FIX: Logo agora exibe Trip Visuals, não VOIDZONE */
         .cust-logo {
             display: flex;
             align-items: center;
@@ -63,7 +63,6 @@
         }
         .cust-logo-text span { color: var(--cyan); }
 
-        /* Right side action group */
         .cust-actions {
             display: flex;
             align-items: center;
@@ -96,13 +95,13 @@
             border-color: var(--border);
             background: rgba(255,255,255,0.05);
         }
-        .search-input::placeholder { color: #555; }
+        .search-input::placeholder { color: #777; }
         .search-btn {
             position: absolute;
             left: 10px;
             background: none;
             border: none;
-            color: #666;
+            color: #888;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -111,6 +110,7 @@
             z-index: 1;
         }
         .search-btn:hover, .search-btn.active { color: var(--cyan); }
+        .search-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; border-radius: 4px; }
 
         /* Icon buttons */
         .icon-btn {
@@ -118,7 +118,7 @@
             border-radius: 50%;
             background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
-            color: #aaa;
+            color: #bbb;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
@@ -130,6 +130,7 @@
             color: var(--cyan);
             box-shadow: 0 0 12px rgba(0,229,255,0.2);
         }
+        .icon-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
         .icon-btn svg { width: 17px; height: 17px; }
 
         /* Layout toggle pill */
@@ -147,7 +148,7 @@
             border-radius: 50px;
             border: none;
             background: transparent;
-            color: #555;
+            color: #888;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
@@ -156,15 +157,11 @@
             background: rgba(0,229,255,0.15);
             color: var(--cyan);
         }
-        .lt-btn:hover:not(.active) { color: #aaa; }
+        .lt-btn:hover:not(.active) { color: #ccc; }
+        .lt-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
         .lt-btn svg { width: 15px; height: 15px; }
 
-        /* Divider */
-        .hdr-divider {
-            width: 1px; height: 24px;
-            background: var(--border);
-            flex-shrink: 0;
-        }
+        .hdr-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
 
         /* ── SEARCH RESULTS ────────────────────────────── */
         .search-results {
@@ -184,7 +181,7 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #444;
+            color: #666;
             margin-bottom: 16px;
         }
         .sr-grid {
@@ -198,8 +195,17 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+            text-align: left;
+            width: 100%;
         }
-        .sr-item:hover { background: rgba(255,255,255,0.05); }
+        .sr-item:hover, .sr-item:focus-visible {
+            background: rgba(255,255,255,0.05);
+            outline: none;
+        }
         .sr-item img {
             width: 44px; height: 44px;
             object-fit: cover; border-radius: 6px;
@@ -211,9 +217,10 @@
             font-size: 0.8rem;
             font-weight: 500;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--text);
         }
         .sr-item-price { font-size: 0.75rem; color: var(--cyan); margin-top: 2px; }
-        .sr-empty { color: #444; font-size: 0.9rem; padding: 20px 0; }
+        .sr-empty { color: #666; font-size: 0.9rem; padding: 20px 0; }
 
         /* ── CATALOG GRID ──────────────────────────────── */
         .vitrine-wrap { padding: 32px; }
@@ -230,11 +237,20 @@
             cursor: pointer;
             transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
             position: relative;
+            text-align: left;
+            color: inherit;
+            font-family: inherit;
+            width: 100%;
+            padding: 0;
         }
         .card-produto:hover {
             border-color: rgba(0,229,255,0.4);
             transform: translateY(-4px);
             box-shadow: 0 12px 32px rgba(0,229,255,0.08);
+        }
+        .card-produto:focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 4px;
         }
         .card-produto img {
             width: 100%; height: 320px;
@@ -249,6 +265,7 @@
             display: flex; align-items: center; justify-content: center;
             background: rgba(0,0,0,0.5);
             opacity: 0; transition: opacity 0.3s;
+            pointer-events: none;
         }
         .card-produto:hover .buy-overlay { opacity: 1; }
         .buy-pill {
@@ -281,15 +298,16 @@
             letter-spacing: 1px;
         }
 
-        /* ── LOADING / EMPTY STATE ─────────────────────── */
+        /* ── STATE MESSAGES ────────────────────────────── */
         .state-msg {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 40vh;
-            color: #333;
+            color: #555;
             gap: 12px;
+            grid-column: 1 / -1;
         }
         .state-msg .icon { font-size: 2.5rem; }
         .state-msg p     { font-size: 0.9rem; }
@@ -304,63 +322,59 @@
             .search-input.open { width: 140px; }
             .sr-grid         { grid-template-columns: 1fr 1fr; }
             .hdr-divider     { display: none; }
-            .cust-logo-text  { display: none; } /* só mostra logo img em mobile */
+            .cust-logo-text  { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     CUSTOMER HEADER
-══════════════════════════════════════════ -->
+<!-- CUSTOMER HEADER -->
 <header class="cust-header">
-
-    <!-- ✅ FIX: Logo agora é Trip Visuals Wear -->
-    <a href="/index.html" class="cust-logo">
-        <img src="/logo.jpeg" alt="Trip Visuals Wear"
-             onerror="this.style.display='none'">
+    <a href="/index.html" class="cust-logo" aria-label="Trip Visuals Wear — página inicial">
+        <img src="/logo.jpeg" alt="" onerror="this.style.display='none'">
         <span class="cust-logo-text">TRIP<span>VISUALS</span></span>
     </a>
 
     <div class="cust-actions">
-
-        <!-- Search -->
         <div class="search-wrap">
-            <button class="search-btn" id="searchToggle" onclick="toggleSearch()" title="Buscar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="search-btn" id="searchToggle" onclick="toggleSearch()" aria-label="Buscar produtos" title="Buscar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
             </button>
-            <input
-                class="search-input"
-                id="searchInput"
-                type="text"
-                placeholder="Buscar produto..."
-                oninput="filtrarProdutos(this.value)"
-                onblur="fecharSearchSeVazio()"
-            >
+            <input class="search-input" id="searchInput" type="text"
+                   placeholder="Buscar produto..."
+                   aria-label="Buscar produto no catálogo"
+                   oninput="filtrarProdutos(this.value)"
+                   onblur="fecharSearchSeVazio()">
         </div>
 
-        <div class="hdr-divider"></div>
+        <div class="hdr-divider" aria-hidden="true"></div>
 
-        <!-- Layout Toggle -->
-        <div class="layout-toggle" id="layoutToggle">
-            <button class="lt-btn" id="lt-grid-3" onclick="setLayout('grid-3')" title="Grade">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+        <div class="layout-toggle" role="group" aria-label="Modo de exibição">
+            <button class="lt-btn" id="lt-grid-3" onclick="setLayout('grid-3')" aria-label="Grade — 3 colunas" title="Grade">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <rect x="3"  y="3"  width="7" height="7" rx="1"/>
                     <rect x="14" y="3"  width="7" height="7" rx="1"/>
                     <rect x="3"  y="14" width="7" height="7" rx="1"/>
                     <rect x="14" y="14" width="7" height="7" rx="1"/>
                 </svg>
             </button>
-            <button class="lt-btn" id="lt-grid-2" onclick="setLayout('grid-2')" title="Duo">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+            <button class="lt-btn" id="lt-grid-2" onclick="setLayout('grid-2')" aria-label="Duo — 2 colunas" title="Duo">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <rect x="3"  y="3" width="8" height="18" rx="1"/>
                     <rect x="13" y="3" width="8" height="18" rx="1"/>
                 </svg>
             </button>
-            <button class="lt-btn" id="lt-grid-1" onclick="setLayout('grid-1')" title="Lista">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+            <button class="lt-btn" id="lt-grid-1" onclick="setLayout('grid-1')" aria-label="Lista — 1 coluna" title="Lista">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <rect x="3" y="4"  width="18" height="4" rx="1"/>
                     <rect x="3" y="10" width="18" height="4" rx="1"/>
                     <rect x="3" y="16" width="18" height="4" rx="1"/>
@@ -368,51 +382,65 @@
             </button>
         </div>
 
-        <div class="hdr-divider"></div>
+        <div class="hdr-divider" aria-hidden="true"></div>
 
-        <!-- Instagram -->
-        <a href="https://www.instagram.com/tripvisuals.wear/" target="_blank" class="icon-btn" title="Instagram">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <a href="https://www.instagram.com/tripvisuals.wear/" target="_blank" rel="noopener" class="icon-btn" aria-label="Instagram da Trip Visuals" title="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                 <circle cx="12" cy="12" r="4"/>
                 <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
             </svg>
         </a>
 
-        <!-- WhatsApp -->
-        <a id="whatsappBtn" href="#" target="_blank" class="icon-btn" title="Comprar via WhatsApp"
+        <a id="whatsappBtn" href="#" target="_blank" rel="noopener" class="icon-btn"
+           aria-label="Falar com a Trip Visuals no WhatsApp" title="Comprar via WhatsApp"
            style="border-color: rgba(37,211,102,0.3); color: #25d366;">
-            <svg viewBox="0 0 24 24" fill="currentColor">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
         </a>
     </div>
 </header>
 
-<!-- Search results dropdown -->
-<div class="search-results" id="searchResults"></div>
+<div class="search-results" id="searchResults" role="region" aria-live="polite"></div>
 
-<!-- ══════════════════════════════════════════
-     CATALOG
-══════════════════════════════════════════ -->
+<!-- CATALOG -->
 <div class="vitrine-wrap">
-    <main id="vitrine" class="grid-3"></main>
+    <main id="vitrine" class="grid-3" aria-label="Catálogo de produtos"></main>
 </div>
 
 <script>
-    // ✅ FIX: número unificado com index.html — troque pelo número real da loja
-    const NUMERO_LOJA = "5511940537169"; // ← NÚMERO DA LOJA
+    // ⚠️ VERIFICAR: este é o número da loja em WhatsApp.
+    //   Formato: código país (55) + DDD + número, sem espaços ou símbolos.
+    //   Atualmente: 5511 = São Paulo. Confirme com a cliente se for outro estado.
+    const NUMERO_LOJA = "5511940537169";
 
     let todosProdutos = [];
     let searchAberta  = false;
+
+    // XSS-safe helpers
+    const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+
+    // Inline SVG fallback (no external dependency on placeholder.com)
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320">' +
+            '<rect fill="#0a0a0a" width="400" height="320"/>' +
+            '<text x="200" y="160" fill="#444" text-anchor="middle" dy=".3em" ' +
+                  'font-family="sans-serif" font-size="14" letter-spacing="2">SEM IMAGEM</text>' +
+        '</svg>'
+    );
 
     // ── LAYOUT ───────────────────────────────────────────
     function setLayout(layout) {
         document.getElementById('vitrine').className = layout;
         ['grid-1','grid-2','grid-3'].forEach(l => {
-            document.getElementById('lt-' + l).classList.toggle('active', l === layout);
+            const btn = document.getElementById('lt-' + l);
+            btn.classList.toggle('active', l === layout);
+            btn.setAttribute('aria-pressed', l === layout ? 'true' : 'false');
         });
-        sessionStorage.setItem('cliente_layout', layout);
+        try { sessionStorage.setItem('cliente_layout', layout); } catch (_) { /* private mode */ }
     }
 
     // ── SEARCH ────────────────────────────────────────────
@@ -455,24 +483,29 @@
         box.classList.add('visible');
 
         if (found.length === 0) {
-            box.innerHTML = `<p class="sr-label">Resultados</p><p class="sr-empty">Nenhum produto encontrado para "${query}"</p>`;
+            box.innerHTML = `<p class="sr-label">Resultados</p>
+                <p class="sr-empty">Nenhum produto encontrado para "${escapeHTML(query)}"</p>`;
             return;
         }
 
-        box.innerHTML = `
-            <p class="sr-label">${found.length} resultado${found.length > 1 ? 's' : ''}</p>
-            <div class="sr-grid">
-                ${found.map(p => `
-                    <div class="sr-item" onclick="comprarItem('${p.nome}', '${p.preco.toFixed(2)}')">
-                        <img src="${p.imagem_url}" onerror="this.src='https://via.placeholder.com/44x44/111/333?text=?'">
-                        <div class="sr-item-info">
-                            <div class="sr-item-name">${p.nome}</div>
-                            <div class="sr-item-price">R$ ${p.preco.toFixed(2)}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        box.innerHTML = `<p class="sr-label">${found.length} resultado${found.length > 1 ? 's' : ''}</p>
+            <div class="sr-grid" id="srGrid"></div>`;
+
+        const grid = document.getElementById('srGrid');
+        found.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'sr-item';
+            btn.type      = 'button';
+            btn.innerHTML = `
+                <img src="${escapeHTML(p.imagem_url || '')}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+                <div class="sr-item-info">
+                    <div class="sr-item-name">${escapeHTML(p.nome)}</div>
+                    <div class="sr-item-price">R$ ${Number(p.preco).toFixed(2)}</div>
+                </div>
+            `;
+            btn.addEventListener('click', () => comprarItem(p.nome, p.preco));
+            grid.appendChild(btn);
+        });
     }
 
     document.addEventListener('click', (e) => {
@@ -483,48 +516,57 @@
 
     // ── COMPRA ────────────────────────────────────────────
     function comprarItem(nome, preco) {
-        const texto = `Olá, equipe Trip Visuals! 🛸\n\nVim pelo site e tenho interesse neste artefato:\n*Item:* ${nome}\n*Valor:* R$ ${preco}\n\nPoderiam me ajudar com os tamanhos e o cálculo do frete para o meu CEP?`;
-        window.open(`https://wa.me/${NUMERO_LOJA}?text=${encodeURIComponent(texto)}`, '_blank');
+        const texto = `Olá, equipe Trip Visuals! 🛸\n\nVim pelo site e tenho interesse neste artefato:\n*Item:* ${nome}\n*Valor:* R$ ${Number(preco).toFixed(2)}\n\nPoderiam me ajudar com os tamanhos e o cálculo do frete para o meu CEP?`;
+        window.open(`https://wa.me/${NUMERO_LOJA}?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
     }
 
     // ── RENDER ────────────────────────────────────────────
     function renderProdutos(lista) {
         const vitrine = document.getElementById('vitrine');
+        vitrine.innerHTML = '';
+
         if (lista.length === 0) {
             vitrine.innerHTML = `
                 <div class="state-msg">
-                    <span class="icon">👕</span>
+                    <span class="icon" aria-hidden="true">👕</span>
                     <p>Nenhum produto disponível no momento.</p>
                 </div>`;
             return;
         }
-        vitrine.innerHTML = lista.map(p => `
-            <div class="card-produto" onclick="comprarItem('${p.nome}', '${p.preco.toFixed(2)}')">
-                <img src="${p.imagem_url}" alt="${p.nome}"
-                     onerror="this.src='https://via.placeholder.com/400x320/0a0a0a/222?text=SEM+IMAGEM'">
+
+        lista.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'card-produto';
+            btn.type      = 'button';
+            btn.setAttribute('aria-label', `${p.nome} — R$ ${Number(p.preco).toFixed(2)} — Comprar via WhatsApp`);
+            btn.innerHTML = `
+                <img src="${escapeHTML(p.imagem_url || '')}" alt="${escapeHTML(p.nome)}"
+                     onerror="this.src='${FALLBACK_IMG}'">
                 <div class="buy-overlay">
                     <div class="buy-pill">Adquirir via WhatsApp</div>
                 </div>
                 <div class="card-info">
-                    <h3>${p.nome}</h3>
-                    <div class="price">R$ ${p.preco.toFixed(2)}</div>
+                    <h3>${escapeHTML(p.nome)}</h3>
+                    <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
                 </div>
-            </div>
-        `).join('');
+            `;
+            btn.addEventListener('click', () => comprarItem(p.nome, p.preco));
+            vitrine.appendChild(btn);
+        });
     }
 
     // ── INIT ──────────────────────────────────────────────
     async function carregar() {
         const vitrine = document.getElementById('vitrine');
-        vitrine.innerHTML = `<div class="state-msg"><span class="icon">⏳</span><p>Carregando catálogo...</p></div>`;
+        vitrine.innerHTML = `<div class="state-msg"><span class="icon" aria-hidden="true">⏳</span><p>Carregando catálogo...</p></div>`;
 
         try {
-            const resCfg    = await fetch('/api/config');
-            const cfg       = await resCfg.json();
-            const adminLayout   = cfg.layout_padrao || 'grid-3';
-            const sessaoLayout  = sessionStorage.getItem('cliente_layout');
+            const resCfg = await fetch('/api/config');
+            const cfg    = await resCfg.json();
+            const adminLayout  = cfg.layout_padrao || 'grid-3';
+            const sessaoLayout = sessionStorage.getItem('cliente_layout');
             setLayout(sessaoLayout || adminLayout);
-        } catch(e) {
+        } catch (e) {
             setLayout('grid-3');
         }
 
@@ -534,8 +576,8 @@
             renderProdutos(todosProdutos);
             document.getElementById('whatsappBtn').href =
                 `https://wa.me/${NUMERO_LOJA}?text=${encodeURIComponent('Olá! Vim pelo catálogo Trip Visuals 🛸')}`;
-        } catch(e) {
-            vitrine.innerHTML = `<div class="state-msg"><span class="icon">⚠️</span><p>Erro ao carregar produtos. Tente novamente.</p></div>`;
+        } catch (e) {
+            vitrine.innerHTML = `<div class="state-msg"><span class="icon" aria-hidden="true">⚠️</span><p>Erro ao carregar produtos. Tente novamente.</p></div>`;
         }
     }
 
