@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trip Visuals Wear | Links</title>
-  <meta name="description" content="Trip Visuals Wear — moda imersiva. Catálogo, Instagram e WhatsApp da loja.">
+  <meta name="description" content="Trip Visuals Wear — Catálogo com estampas exclusivas!">
   <meta name="theme-color" content="#0a0510">
 
   <!-- OG tags preserved -->
@@ -15,6 +15,7 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+  <img id="lplogo" class="logo-glow" src="logo.jpeg" alt="...">
 
   <!-- Fonts: bubbly retro display + clean mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -304,6 +305,18 @@
     <footer class="footer">By Rory 💀</footer>
 
   </main>
-
+<script>
+(function () {
+  fetch('/api/config')
+    .then(r => r.ok ? r.json() : null)
+    .then(cfg => {
+      if (cfg && cfg.landing_logo_url) {
+        var el = document.getElementById('landingLogo');
+        if (el) el.src = cfg.landing_logo_url;
+      }
+    })
+    .catch(function () {});
+})();
+</script>
 </body>
 </html>
