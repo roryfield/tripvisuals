@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Catálogo Trip Visuals Wear — moda imersiva. Camisetas, regatas e moletons.">
+    <meta name="description" content="Catálogo Trip Visuals Wear — Camisetas, regatas e moletons.">
     <title>Trip Visuals Wear | Catálogo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -339,6 +339,7 @@
 <header class="cust-header">
     <a href="/index.html" class="cust-logo" aria-label="Trip Visuals Wear — página inicial">
         <img src="/logo.jpeg" alt="" onerror="this.style.display='none'">
+        <img id="landingLogo" class="logo-glow" src="logo.jpeg" alt="...">
         <span class="cust-logo-text">TRIP<span>VISUALS</span></span>
     </a>
 
@@ -582,6 +583,19 @@
     }
 
     carregar();
+    
+(function () {
+  fetch('/api/config')
+    .then(r => r.ok ? r.json() : null)
+    .then(cfg => {
+      if (cfg && cfg.landing_logo_url) {
+        var el = document.getElementById('landingLogo');
+        if (el) el.src = cfg.landing_logo_url;
+      }
+    })
+    .catch(function () {});
+})();
 </script>
+
 </body>
 </html>
