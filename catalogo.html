@@ -338,8 +338,7 @@
 <!-- CUSTOMER HEADER -->
 <header class="cust-header">
     <a href="/index.html" class="cust-logo" aria-label="Trip Visuals Wear — página inicial">
-        <img src="/logo.jpeg" alt="" onerror="this.style.display='none'">
-        <img id="landingLogo" class="logo-glow" src="logo.jpeg" alt="...">
+        <img id="landingLogo" src="/logo.jpeg" alt="" onerror="this.style.display='none'">
         <span class="cust-logo-text">TRIP<span>VISUALS</span></span>
     </a>
 
@@ -583,15 +582,18 @@
     }
 
     carregar();
-    
+
 (function () {
   fetch('/api/config')
-    .then(r => r.ok ? r.json() : null)
-    .then(cfg => {
-      if (cfg && cfg.landing_logo_url) {
-        var el = document.getElementById('landingLogo');
-        if (el) el.src = cfg.landing_logo_url;
-      }
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (cfg) {
+      if (!cfg) return;
+      var set = function (id, prop, val) {
+        if (val == null || val === '') return;
+        var el = document.getElementById(id);
+        if (el) el[prop] = val;
+      };
+      set('landingLogo', 'src', cfg.landing_logo_url);
     })
     .catch(function () {});
 })();
