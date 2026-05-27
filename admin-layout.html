@@ -9,125 +9,27 @@
     <link rel="stylesheet" href="/admin.css">
 
     <!-- ✅ Auth + Theme bootstrap -->
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) { console.warn('Init bootstrap:', e.message); }
-        finally {
-            if (document.documentElement.classList.contains('apply-light') && document.body) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .layout-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 48px 40px;
-            width: 90%;
-            max-width: 760px;
-            text-align: center;
-        }
-        .layout-card .eyebrow {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--cyan);
-            margin-bottom: 10px;
-        }
-        .layout-card h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2.2rem;
-            letter-spacing: 3px;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-        .layout-card .subtitle {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 36px;
-        }
-
-        .layout-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 36px;
-        }
-        .opt {
-            border: 1px solid var(--border-strong);     /* ✅ FIX: was hardcoded #2a2a2a */
-            background: transparent;
-            padding: 24px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
-            position: relative;
-            text-align: center;
-            font-family: inherit;
-            color: var(--text);
-            width: 100%;
-        }
-        .opt:hover { border-color: rgba(157,0,255,0.4); background: rgba(157,0,255,0.04); }
-        .opt:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-        .opt.active {
-            border-color: var(--cyan);
-            box-shadow: 0 0 20px rgba(0,229,255,0.12);
-            background: rgba(0,229,255,0.04);
-        }
-        .opt.active::after {
-            content: '✓';
-            position: absolute;
-            top: 10px; right: 12px;
-            font-size: 12px; color: var(--cyan); font-weight: 700;
-        }
-
-        .opt-preview {
-            display: flex; gap: 4px;
-            justify-content: center; align-items: flex-end;
-            height: 40px; margin-bottom: 14px;
-        }
-        .preview-bar { background: var(--border-strong); border-radius: 3px; transition: background 0.3s; }
-        .opt.active .preview-bar { background: rgba(0,229,255,0.4); }
-
-        .prev-grid3 .preview-bar { width: 18px; height: 28px; }
-        .prev-grid2 .preview-bar { width: 28px; height: 34px; }
-        .prev-grid1 { flex-direction: column; align-items: stretch; gap: 5px; }
-        .prev-grid1 .preview-bar { width: 100%; height: 10px; }
-
-        .opt strong { display: block; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .opt p      { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
-
-        @media (max-width: 600px) {
-            .layout-options { grid-template-columns: 1fr; }
-            .layout-card    { padding: 32px 20px; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <div class="layout-card">
-        <p class="eyebrow">Configuração da Loja</p>
-        <h2>PAINEL DE LAYOUT</h2>
+        <div class="vz-page-hdr-mb">
+            <div>
+                <p class="eyebrow">Configuração da Loja</p>
+                <h2>PAINEL DE LAYOUT</h2>
+            </div>
+            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
+        </div>
         <p class="subtitle">Escolha como os produtos aparecem para os clientes por padrão</p>
 
         <div class="layout-options" role="radiogroup" aria-label="Layout padrão">
@@ -205,15 +107,7 @@
                 <line x1="8" y1="22" x2="16" y2="22"/>
                 <line x1="12" y1="18" x2="12" y2="22"/>
             </svg>
-            Landing
-        </a>
-        <a href="/admin-help.html" class="nav-tab" id="tab-help">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            Ajuda
+            Landing Page
         </a>
         <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -224,56 +118,9 @@
         </a>
     </nav>
 
-    <script>
-        function mostrarToast(msg, erro = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
+    <script src="/admin-layout.js"></script>
 
-        async function definirLayout(layout) {
-            document.querySelectorAll('.opt').forEach(o => {
-                const active = o.id === `opt-${layout}`;
-                o.classList.toggle('active', active);
-                o.setAttribute('aria-checked', active ? 'true' : 'false');
-            });
 
-            try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chave: 'layout_padrao', valor: layout })
-                });
-                const labels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
-                if (res.ok) {
-                    mostrarToast(`✓ Layout "${labels[layout]}" aplicado para todos!`);
-                } else if (res.status === 401) {
-                    window.location.replace('/login.html');
-                } else {
-                    mostrarToast('⚠️ Erro ao salvar. Tente novamente.', true);
-                }
-            } catch (e) {
-                mostrarToast('⚠️ Sem conexão com o servidor.', true);
-            }
-        }
-
-        window.onload = async () => {
-            try {
-                const res  = await fetch('/api/config');
-                if (!res.ok) return;
-                const data = await res.json();
-                const layout = data.layout_padrao || 'grid-3';
-                const el = document.getElementById(`opt-${layout}`);
-                if (el) {
-                    el.classList.add('active');
-                    el.setAttribute('aria-checked', 'true');
-                }
-            } catch (e) { /* silent */ }
-        };
-    </script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>

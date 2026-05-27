@@ -9,53 +9,25 @@
     <link rel="stylesheet" href="/admin.css">
 
     <!-- ✅ Auth + Theme bootstrap -->
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) { console.warn('Init bootstrap:', e.message); }
-        finally {
-            if (document.documentElement.classList.contains('apply-light') && document.body) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        .main {
-            padding: 40px;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-        .upload-help {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-top: 8px;
-            text-align: center;
-        }
-        @media (max-width: 600px) {
-            .main { padding: 20px 16px; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
 <main class="main">
 
-    <div class="page-header">
+    <div class="page-header vz-page-hdr-flex">
         <div>
             <p class="page-eyebrow">Gestão de Produtos</p>
             <h2 class="page-title">UPLOAD DE PRODUTOS</h2>
         </div>
+        <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
     </div>
 
     <!-- Drop zone -->
@@ -65,15 +37,15 @@
         <h3>+ ADICIONAR PRODUTOS</h3>
         <p>Clique para selecionar imagens — nomenclatura e precificação automáticas</p>
         <p class="upload-help">JPG, PNG, WEBP ou GIF · máx. 10MB por imagem</p>
-        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
+        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
     </div>
 
     <!-- Revisão — exibida após seleção de imagens -->
-    <div id="revisao" style="display:none">
+    <div id="revisao" hidden>
         <table class="vz-table">
             <thead>
                 <tr>
-                    <th style="width:70px">Foto</th>
+                    <th class="vz-w-70">Foto</th>
                     <th>Tipo</th>
                     <th>Estampa / Nome</th>
                     <th>Cor</th>
@@ -136,16 +108,8 @@
         <line x1="8" y1="22" x2="16" y2="22"/>
         <line x1="12" y1="18" x2="12" y2="22"/>
     </svg>
-    Landing
+    Landing Page
 </a>
-    <a href="/admin-help.html" class="nav-tab" id="tab-help">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        Ajuda
-    </a>
     <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
@@ -155,123 +119,9 @@
     </a>
 </nav>
 
-<script>
-    const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
-    const MAX_BYTES = 10 * 1024 * 1024;                       // 10MB — matches server multer limit
-    const ALLOWED   = ['image/jpeg','image/png','image/webp','image/gif'];
+<script src="/admin-upload.js"></script>
 
-    // Simple HTML escape to prevent XSS from filenames in display
-    const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
 
-    let filaFiles = [];
-
-    document.getElementById('fileInput').onchange = (e) => {
-        const escolhidos = Array.from(e.target.files);
-        if (escolhidos.length === 0) return;
-
-        // ✅ Filter invalid files client-side
-        const validos    = [];
-        const rejeitados = [];
-        for (const f of escolhidos) {
-            if (!ALLOWED.includes(f.type)) {
-                rejeitados.push(`${f.name}: tipo não permitido`);
-            } else if (f.size > MAX_BYTES) {
-                rejeitados.push(`${f.name}: maior que 10MB`);
-            } else {
-                validos.push(f);
-            }
-        }
-        if (rejeitados.length) {
-            alert('Os seguintes arquivos foram ignorados:\n\n' + rejeitados.join('\n'));
-        }
-        if (validos.length === 0) {
-            e.target.value = '';
-            return;
-        }
-
-        filaFiles = validos;
-        document.getElementById('revisao').style.display = 'block';
-        const lista = document.getElementById('lista');
-        lista.innerHTML = '';
-
-        filaFiles.forEach((file, i) => {
-            const nomeRaw     = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-            const nomeDisplay = escapeHTML(nomeRaw.toUpperCase()
-                .replace(/[-_]/g, ' ')
-                .replace(/whatsapp image/gi, '')
-                .trim());
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><img src="${URL.createObjectURL(file)}" alt="Pré-visualização do produto"></td>
-                <td>
-                    <select id="t-${i}" aria-label="Tipo de produto" onchange="document.getElementById('p-${i}').value = PRECOS[this.value].toFixed(2)">
-                        <option value="Camiseta">Camiseta</option>
-                        <option value="Regata">Regata</option>
-                        <option value="Moletom">Moletom</option>
-                    </select>
-                </td>
-                <td><input type="text" id="e-${i}" value="${nomeDisplay}" aria-label="Nome ou estampa"></td>
-                <td>
-                    <select id="c-${i}" aria-label="Cor">
-                        <option value="Preta">Preta</option>
-                        <option value="Branca">Branca</option>
-                    </select>
-                </td>
-                <td><input type="number" id="p-${i}" value="99.90" step="0.01" min="0" max="999999" style="max-width:100px" aria-label="Preço em reais"></td>
-                <td class="status-cell" id="status-${i}">—</td>
-            `;
-            lista.appendChild(tr);
-        });
-    };
-
-    async function enviarTudo() {
-        if (filaFiles.length === 0) return;
-        if (!confirm(`Confirmar envio de ${filaFiles.length} produto(s)?`)) return;
-
-        const btn = document.getElementById('btnLancar');
-        btn.disabled  = true;
-        btn.innerText = 'ENVIANDO...';
-
-        let sucesso = 0, falha = 0;
-
-        for (let i = 0; i < filaFiles.length; i++) {
-            const status = document.getElementById(`status-${i}`);
-            status.innerText = '⏳';
-
-            const tipo      = document.getElementById(`t-${i}`).value;
-            const estampa   = document.getElementById(`e-${i}`).value.trim();
-            const cor       = document.getElementById(`c-${i}`).value;
-            const preco     = document.getElementById(`p-${i}`).value;
-            const nomeFinal = `${tipo} ${estampa} ${cor}`.toUpperCase().trim();
-
-            if (!estampa) {
-                status.innerText = '⚠️';
-                falha++;
-                continue;
-            }
-
-            const fd = new FormData();
-            fd.append('imagem', filaFiles[i]);
-            fd.append('nome',   nomeFinal);
-            fd.append('preco',  preco);
-
-            try {
-                const res = await fetch('/api/produtos', { method: 'POST', body: fd });
-                if (res.ok) { status.innerText = '✅'; sucesso++; }
-                else        { status.innerText = '❌'; falha++; console.error(`Item ${i}:`, await res.text()); }
-            } catch (e) {
-                status.innerText = '⚠️';
-                falha++;
-                console.error(`Rede item ${i}:`, e);
-            }
-        }
-
-        btn.innerText = `${sucesso} ✅  ${falha ? falha + ' ❌' : ''} — REDIRECIONANDO...`;
-        setTimeout(() => window.location.href = '/admin-hub.html', 2000);
-    }
-</script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>

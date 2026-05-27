@@ -1,0 +1,234 @@
+
+
+/* ═══ landing-retro.html → extracted styles ═══ */
+:root {
+      --bg-deep:       #0a0510;
+      --bg-purple:     #6B2D9B;
+      --bg-magenta:    #ff2d8a;
+      --accent-yellow: #f4e830;
+      --accent-cream:  #f0e9d2;
+      --text-soft:     #e8d8ff;
+      --shadow-purple: rgba(107, 45, 155, 0.6);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg-deep);
+      color: var(--accent-cream);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient mesh — kept lower z-index so an uploaded
+       bg image (set as body background) shows through subtly */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(107, 45, 155, 0.45), transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(255, 45, 138, 0.35), transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(244, 232, 48, 0.15), transparent 55%);
+      z-index: -2;
+      animation: drift 18s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    /* When a custom bg image is set, hide the mesh so the photo
+       reads cleanly. JS adds this class. */
+    body.has-bg-image::before { display: none; }
+
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(-3%, 2%) scale(1.05); }
+      100% { transform: translate(2%, -2%) scale(1.02); }
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, rgba(0,0,0,0.16) 0px, rgba(0,0,0,0.16) 1px,
+        transparent 1px, transparent 3px);
+      z-index: 100;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .stage {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 24px;
+      gap: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-wrap {
+      position: relative;
+      width: min(260px, 65vw);
+      aspect-ratio: 1;
+    }
+    .logo-wrap::before {
+      content: '';
+      position: absolute; inset: -8%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(244, 232, 48, 0.35), transparent 65%);
+      filter: blur(20px);
+      z-index: -1;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50%      { opacity: 1;   transform: scale(1.08); }
+    }
+    .logo-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 4px rgba(244, 232, 48, 0.2),
+        0 20px 60px var(--shadow-purple),
+        0 0 80px rgba(255, 45, 138, 0.3);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    .logo-wrap {
+      animation:
+        enter 0.9s 0s both cubic-bezier(.2,.8,.2,1),
+        float 5s 1s ease-in-out infinite;
+    }
+
+    .title { text-align: center; animation: enter 0.9s 0.2s both cubic-bezier(.2,.8,.2,1); }
+    .title h1 {
+      font-family: 'Bagel Fat One', cursive;
+      font-size: clamp(38px, 8vw, 64px);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 0.95;
+      color: var(--accent-yellow);
+      text-shadow:
+        2px 2px 0 var(--bg-magenta),
+        4px 4px 0 var(--bg-purple),
+        6px 6px 24px rgba(0,0,0,0.6);
+      filter: drop-shadow(0 0 12px rgba(244,232,48,0.25));
+    }
+    .title .tagline {
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(11px, 2.2vw, 13px);
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      opacity: 0.85;
+      display: inline-block;
+    }
+    .title .tagline::before, .title .tagline::after {
+      content: '◆'; margin: 0 12px; color: var(--accent-yellow); opacity: 0.7;
+    }
+
+    .links {
+      display: flex; flex-direction: column; gap: 14px;
+      width: 100%; max-width: 360px;
+      animation: enter 0.9s 0.4s both cubic-bezier(.2,.8,.2,1);
+    }
+    .link-btn {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 18px 24px;
+      background: transparent; color: var(--accent-cream);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800; font-size: 14px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      text-decoration: none;
+      border: 2px solid var(--accent-yellow);
+      border-radius: 4px; overflow: hidden;
+      transition: transform 0.2s ease, color 0.25s ease, box-shadow 0.2s ease;
+      cursor: pointer; isolation: isolate;
+    }
+    .link-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--accent-yellow);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(.7,0,.3,1);
+      z-index: -1;
+    }
+    .link-btn:hover { color: var(--bg-deep); transform: translate(-2px, -2px); }
+    .link-btn:hover::before { transform: translateX(0); }
+    .link-btn:active { transform: translate(0, 0); }
+    .link-btn:focus-visible { outline: 2px solid var(--accent-yellow); outline-offset: 4px; }
+    .link-btn { box-shadow: 3px 3px 0 var(--bg-magenta); }
+    .link-btn:hover { box-shadow: 5px 5px 0 var(--bg-magenta); }
+
+    .link-btn.instagram { border-color: var(--bg-magenta); box-shadow: 3px 3px 0 var(--accent-yellow); }
+    .link-btn.instagram::before { background: var(--bg-magenta); }
+
+    .link-btn.whatsapp { border-color: #25d366; box-shadow: 3px 3px 0 var(--accent-yellow); }
+    .link-btn.whatsapp::before { background: #25d366; }
+
+    .footer {
+      position: absolute; bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-soft); opacity: 0.5;
+      animation: enter 0.9s 0.8s both ease-out;
+      z-index: 2;
+    }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+.landing-about {
+    border-top: 1px solid rgba(244,232,48,0.1);
+    margin-top: 40px;
+    padding: 32px 24px;
+    max-width: 420px; margin-left: auto; margin-right: auto;
+    text-align: center;
+  }
+  .about-inner { max-width: 380px; margin: 0 auto; }
+  .about-title {
+    font-family: 'Bagel Fat One', cursive;
+    font-size: 1.2rem; letter-spacing: 2px;
+    color: var(--accent-yellow);
+    margin-bottom: 14px;
+  }
+  .about-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem; color: var(--text-soft);
+    line-height: 1.75; white-space: pre-line; opacity: 0.8;
+  }
+  .landing-howto {
+    border-top: 1px solid rgba(244,232,48,0.07);
+    padding: 28px 24px 48px;
+    max-width: 420px; margin-left: auto; margin-right: auto;
+  }
+  .howto-inner { max-width: 380px; margin: 0 auto; }
+  .howto-heading {
+    font-family: 'Bagel Fat One', cursive;
+    font-size: 1rem; letter-spacing: 3px; color: var(--accent-yellow);
+    margin-bottom: 18px; text-align: center;
+    text-transform: uppercase;
+  }
+  .howto-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .howto-step  { display: flex; align-items: baseline; gap: 14px; }
+  .step-n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; color: var(--accent-yellow); letter-spacing: 1px;
+    flex-shrink: 0; opacity: 0.6;
+  }
+  .step-t {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem; color: var(--text-soft); opacity: 0.75; line-height: 1.5;
+  }

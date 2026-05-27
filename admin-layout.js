@@ -1,0 +1,57 @@
+// [VZ] admin-layout — extracted from admin-layout.html
+(function () {
+    'use strict';
+
+function mostrarToast(msg, erro = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        async function definirLayout(layout) {
+            document.querySelectorAll('.opt').forEach(o => {
+                const active = o.id === `opt-${layout}`;
+                o.classList.toggle('active', active);
+                o.setAttribute('aria-checked', active ? 'true' : 'false');
+            });
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chave: 'layout_padrao', valor: layout })
+                });
+                const labels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
+                if (res.ok) {
+                    mostrarToast(`✓ Layout "${labels[layout]}" aplicado para todos!`);
+                } else if (res.status === 401) {
+                    window.location.replace('/login.html');
+                } else {
+                    mostrarToast('⚠️ Erro ao salvar. Tente novamente.', true);
+                }
+            } catch (e) {
+                mostrarToast('⚠️ Sem conexão com o servidor.', true);
+            }
+        }
+
+        window.onload = async () => {
+            try {
+                const res  = await fetch('/api/config');
+                if (!res.ok) return;
+                const data = await res.json();
+                const layout = data.layout_padrao || 'grid-3';
+                const el = document.getElementById(`opt-${layout}`);
+                if (el) {
+                    el.classList.add('active');
+                    el.setAttribute('aria-checked', 'true');
+                }
+            } catch (e) { /* silent */ }
+        };
+
+    // Expose 'definirLayout' for inline onclick attributes
+    window.definirLayout = definirLayout;
+})();

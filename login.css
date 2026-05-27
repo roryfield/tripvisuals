@@ -1,0 +1,139 @@
+
+
+/* ═══ login.html → extracted styles ═══ */
+:root {
+            --cyan:   #00e5ff;
+            --purple: #9d00ff;
+            --danger: #ff4d4d;
+            --bg:     #050505;
+            --panel:  #0c0c0c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'DM Sans', sans-serif;
+            color: #fff;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--panel);
+            padding: 50px 40px;
+            border: 1px solid var(--purple);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(157, 0, 255, 0.2);
+            text-align: center;
+            transition: opacity 0.5s ease;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .login-brand {
+            font-family: 'Bebas Neue', sans-serif;
+            color: var(--cyan);
+            letter-spacing: 6px;
+            margin: 0 0 4px;
+            font-size: 1.8rem;
+        }
+        .login-sub {
+            font-size: 0.7rem;
+            color: #777;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .input-wrap { position: relative; margin: 20px 0 8px; }
+        input {
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 15px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus {
+            border-color: var(--cyan);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+        }
+
+        .erro-msg {
+            font-size: 0.78rem;
+            color: var(--danger);
+            min-height: 18px;
+            margin-bottom: 14px;
+            letter-spacing: 0.3px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-auth {
+            background: #fff;
+            color: #000;
+            font-weight: 700;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.3s, opacity 0.3s;
+        }
+        .btn-auth:hover:not(:disabled) { background: var(--cyan); }
+        .btn-auth:disabled              { opacity: 0.5; cursor: not-allowed; }
+        .btn-auth:focus-visible         { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* Loading screen */
+        .loading-screen {
+            position: absolute; inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        .loading-screen.active { opacity: 1; pointer-events: all; }
+
+        .void-loader {
+            width: 50px; height: 50px;
+            border: 2px solid transparent;
+            border-top-color: var(--cyan);
+            border-bottom-color: var(--purple);
+            border-radius: 50%;
+            animation: void-spin 1.5s cubic-bezier(0.68,-0.55,0.265,1.55) infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes void-spin {
+            0%   { transform: rotate(0deg);   opacity: 0.5; }
+            50%  { transform: rotate(180deg); opacity: 1; box-shadow: 0 0 15px var(--cyan); }
+            100% { transform: rotate(360deg); opacity: 0.5; }
+        }
+
+        @keyframes shake {
+            0%,100%{transform:translateX(0)}
+            20%{transform:translateX(-8px)}
+            40%{transform:translateX(8px)}
+            60%{transform:translateX(-5px)}
+            80%{transform:translateX(5px)}
+        }
+        .login-card.shake { animation: shake 0.4s ease; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .void-loader { animation: none; }
+            .login-card.shake { animation: none; }
+        }

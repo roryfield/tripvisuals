@@ -9,168 +9,7 @@
     <link rel="stylesheet" href="/admin.css">
 
     <!-- ✅ Auth + Theme bootstrap -->
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) { console.warn('Init bootstrap:', e.message); }
-        finally {
-            if (document.documentElement.classList.contains('apply-light') && document.body) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        .main { padding: 40px; max-width: 1100px; margin: 0 auto; }
-
-        .page-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .produto-count {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.8rem;
-            color: var(--cyan);
-            letter-spacing: 2px;
-            line-height: 1;
-        }
-        .produto-count-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-        }
-
-        .state-msg {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 40vh;
-            color: var(--text-muted);
-            gap: 12px;
-            text-align: center;
-        }
-        .state-msg .icon { font-size: 2.5rem; }
-        .state-msg p     { font-size: 0.9rem; }
-        .state-msg a     { color: var(--cyan); text-decoration: none; }
-        .state-msg a:hover { text-decoration: underline; }
-
-        .produtos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .produto-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            transition: border-color 0.2s, background-color 0.25s;
-        }
-        .produto-card:hover { border-color: rgba(0,229,255,0.2); }
-
-        .produto-card img {
-            width: 100%; height: 200px;
-            object-fit: cover; display: block;
-            background: var(--panel-2);
-        }
-
-        .produto-card-body { padding: 16px; }
-        .produto-fields    { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-        .field-group       { display: flex; flex-direction: column; gap: 4px; }
-        .field-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-        }
-
-        /* ✅ FIX: theme-aware inputs (were hardcoded #000/#fff) */
-        .produto-card input[type="text"],
-        .produto-card input[type="number"] {
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--input-text);
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.85rem;
-            width: 100%;
-        }
-        .produto-card input:focus {
-            border-color: var(--cyan);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
-        }
-
-        .produto-actions { display: flex; gap: 8px; }
-        .btn-salvar-item {
-            flex: 1;
-            background: rgba(0,229,255,0.1);
-            border: 1px solid rgba(0,229,255,0.25);
-            color: var(--cyan);
-            padding: 9px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: background 0.2s, box-shadow 0.2s;
-        }
-        .btn-salvar-item:hover:not(:disabled) { background: rgba(0,229,255,0.18); box-shadow: 0 0 12px rgba(0,229,255,0.2); }
-        .btn-salvar-item:disabled              { opacity: 0.5; cursor: not-allowed; }
-        .btn-salvar-item:focus-visible         { outline: 2px solid var(--cyan); outline-offset: 2px; }
-
-        .btn-remover-item {
-            background: rgba(255,77,77,0.08);
-            border: 1px solid rgba(255,77,77,0.2);
-            color: var(--danger);
-            padding: 9px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: background 0.2s;
-        }
-        .btn-remover-item:hover         { background: rgba(255,77,77,0.15); }
-        .btn-remover-item:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
-
-        .card-status {
-            font-size: 0.75rem;
-            min-height: 16px;
-            margin-bottom: 8px;
-            color: var(--cyan);
-        }
-        .card-status.erro { color: var(--danger); }
-
-        @media (max-width: 600px) {
-            .main { padding: 20px 16px; }
-            .produtos-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
@@ -182,7 +21,15 @@
                 <p class="page-eyebrow">Catálogo</p>
                 <h2 class="page-title">GERENCIAR PRODUTOS</h2>
             </div>
-            <div style="text-align:right">
+            <div class="vz-flex-actions">
+                <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
                 <div class="produto-count" id="totalCount">—</div>
                 <div class="produto-count-label">produtos ativos</div>
             </div>
@@ -241,9 +88,9 @@
         <line x1="8" y1="22" x2="16" y2="22"/>
         <line x1="12" y1="18" x2="12" y2="22"/>
     </svg>
-    Landing
+    Landing Page
 </a>
-        <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
+                <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
                 <line x1="1" y1="6" x2="1" y2="22"/>
@@ -252,165 +99,9 @@
         </a>
     </nav>
 
-    <script>
-        let produtos = [];
+    <script src="/admin-produtos.js"></script>
 
-        // XSS-safe helpers
-        const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
-            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-        }[c]));
-        const escapeAttr = s => escapeHTML(s);
 
-        function mostrarToast(msg, erro = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
-
-        function renderProdutos(lista) {
-            const area = document.getElementById('listaArea');
-            document.getElementById('totalCount').innerText = lista.length;
-
-            if (lista.length === 0) {
-                area.innerHTML = `
-                    <div class="state-msg">
-                        <span class="icon" aria-hidden="true">📭</span>
-                        <p>Nenhum produto cadastrado ainda.</p>
-                        <p><a href="/admin.html">Adicionar produtos →</a></p>
-                    </div>`;
-                return;
-            }
-
-            // Build cards via DOM creation (safer than innerHTML with interpolation)
-            area.innerHTML = '<div class="produtos-grid" id="grid"></div>';
-            const grid = document.getElementById('grid');
-
-            lista.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'produto-card';
-                card.id = `card-${p.id}`;
-                card.innerHTML = `
-                    <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}"
-                         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 200%22><rect fill=%22%230a0a0a%22 width=%22300%22 height=%22200%22/><text x=%22150%22 y=%22100%22 fill=%22%23444%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22sans-serif%22>SEM IMAGEM</text></svg>'">
-                    <div class="produto-card-body">
-                        <div class="produto-fields">
-                            <div class="field-group">
-                                <label class="field-label" for="nome-${p.id}">Nome</label>
-                                <input type="text" id="nome-${p.id}" value="${escapeAttr(p.nome)}">
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label" for="preco-${p.id}">Preço (R$)</label>
-                                <input type="number" id="preco-${p.id}" value="${Number(p.preco).toFixed(2)}" step="0.01" min="0" max="999999">
-                            </div>
-                        </div>
-                        <p class="card-status" id="st-${p.id}" role="status" aria-live="polite"></p>
-                        <div class="produto-actions">
-                            <button class="btn-salvar-item" id="btn-${p.id}" data-id="${p.id}" data-action="salvar">Salvar</button>
-                            <button class="btn-remover-item" data-id="${p.id}" data-nome="${escapeAttr(p.nome)}" data-action="remover">Remover</button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-
-            // Event delegation (safer than inline onclick with template strings)
-            grid.addEventListener('click', (e) => {
-                const btn = e.target.closest('button[data-action]');
-                if (!btn) return;
-                const id     = parseInt(btn.dataset.id, 10);
-                const action = btn.dataset.action;
-                if (action === 'salvar')  salvar(id);
-                if (action === 'remover') remover(id, btn.dataset.nome);
-            });
-        }
-
-        async function carregar() {
-            try {
-                const res = await fetch('/api/produtos');
-                if (!res.ok) throw new Error();
-                produtos = await res.json();
-                renderProdutos(produtos);
-            } catch (e) {
-                document.getElementById('listaArea').innerHTML = `
-                    <div class="state-msg">
-                        <span class="icon" aria-hidden="true">⚠️</span>
-                        <p>Erro ao carregar produtos. Verifique o servidor.</p>
-                    </div>`;
-            }
-        }
-
-        async function salvar(id) {
-            const nome  = document.getElementById(`nome-${id}`).value.trim();
-            const preco = parseFloat(document.getElementById(`preco-${id}`).value);
-            const st    = document.getElementById(`st-${id}`);
-            const btn   = document.getElementById(`btn-${id}`);
-
-            if (!nome || !Number.isFinite(preco) || preco < 0) {
-                st.innerText = '⚠️ Nome e preço válidos são obrigatórios.';
-                st.className = 'card-status erro';
-                return;
-            }
-
-            btn.disabled  = true;
-            btn.innerText = 'Salvando...';
-            st.innerText  = '';
-            st.className  = 'card-status';
-
-            try {
-                const res = await fetch(`/api/produtos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: nome.toUpperCase(), preco })
-                });
-                if (res.ok) {
-                    st.innerText = '✅ Salvo!';
-                    mostrarToast('✓ Produto atualizado');
-                } else if (res.status === 401) {
-                    window.location.replace('/login.html');
-                } else {
-                    st.innerText = '❌ Erro ao salvar.';
-                    st.className = 'card-status erro';
-                }
-            } catch (e) {
-                st.innerText = '⚠️ Sem conexão com o servidor.';
-                st.className = 'card-status erro';
-            } finally {
-                btn.disabled  = false;
-                btn.innerText = 'Salvar';
-            }
-        }
-
-        async function remover(id, nome) {
-            if (!confirm(`Remover o produto "${nome}" permanentemente?\n\nEsta ação não pode ser desfeita.`)) return;
-
-            try {
-                const res = await fetch(`/api/produtos/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    const card = document.getElementById(`card-${id}`);
-                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                    card.style.opacity    = '0';
-                    card.style.transform  = 'scale(0.95)';
-                    setTimeout(() => {
-                        card.remove();
-                        produtos = produtos.filter(p => p.id !== id);
-                        document.getElementById('totalCount').innerText = produtos.length;
-                    }, 300);
-                    mostrarToast(`✓ "${nome}" removido`);
-                } else if (res.status === 401) {
-                    window.location.replace('/login.html');
-                } else {
-                    mostrarToast('❌ Erro ao remover produto.', true);
-                }
-            } catch (e) {
-                mostrarToast('⚠️ Sem conexão com o servidor.', true);
-            }
-        }
-
-        carregar();
-    </script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>
