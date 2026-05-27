@@ -154,9 +154,41 @@ input:focus, select:focus {
     color: var(--text);
 }
 .vz-table img {
-    width: 50px; height: 50px;
+    width: 60px; height: 60px;
     object-fit: cover; border-radius: 6px;
     border: 1px solid var(--border-strong);
+    cursor: zoom-in;
+    transition: opacity 0.15s, border-color 0.15s;
+}
+.vz-table img:hover { opacity: 0.85; border-color: var(--cyan); }
+
+/* ── HOVER ZOOM PANEL ───────────────────────────────── */
+.vz-zoom-panel {
+    position: fixed;
+    z-index: 9999;
+    width: 320px;
+    height: 320px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.85);
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.vz-zoom-panel.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+.vz-zoom-panel img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+    border-radius: 0;
+    border: none;
+    cursor: default;
 }
 .status-cell { text-align: center; font-size: 1.1rem; }
 
@@ -181,6 +213,114 @@ input:focus, select:focus {
 .btn-launch:disabled             { opacity: 0.5; cursor: not-allowed; transform: none; }
 .btn-launch:focus-visible        { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .btn-launch-full { width: 100%; text-align: center; }
+
+/* ── BATCH CONFIG PANEL ─────────────────────────────── */
+.batch-cfg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.batch-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+}
+.batch-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+.batch-label-hint {
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    opacity: 0.7;
+    font-weight: 300;
+}
+.batch-select,
+.batch-input {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+.batch-select:focus,
+.batch-input:focus { outline: none; border-color: var(--cyan); }
+.batch-colecao {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.batch-input-wide { width: 100%; box-sizing: border-box; }
+.batch-preview {
+    font-size: 0.8rem;
+    color: var(--cyan);
+    opacity: 0.8;
+    margin: 0;
+    display: none;
+}
+.batch-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+.batch-summary {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+.batch-ok   { color: var(--cyan); }
+.batch-warn { color: #ffbe00; }
+
+/* ── COLLAPSIBLE REVIEW TABLE ───────────────────────── */
+.batch-details {
+    margin-top: 24px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.batch-details-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    background: var(--panel);
+    transition: color 0.15s;
+}
+.batch-details-toggle::-webkit-details-marker { display: none; }
+.batch-details-toggle::before {
+    content: '▸';
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+.batch-details[open] .batch-details-toggle::before { transform: rotate(90deg); }
+.batch-details[open] .batch-details-toggle { color: var(--text); }
+.batch-details-toggle:hover { color: var(--text); }
+.batch-details .vz-table { margin-top: 0; }
 
 /* ── TOAST ─────────────────────────────────────────── */
 .toast {
