@@ -1,0 +1,55 @@
+// [VZ] admin-hub — extracted from admin-hub.html
+(function () {
+    'use strict';
+
+window.onload = async () => {
+        try {
+            const res = await fetch('/api/config');
+            if (!res.ok) throw new Error('config');
+            const configs = await res.json();
+
+            const layoutLabels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
+            document.getElementById('statLayout').innerText =
+                layoutLabels[configs.layout_padrao] || '—';
+            document.getElementById('statTema').innerText =
+                configs.tema_admin === 'claro' ? '☀️ Claro' : '🌑 Escuro';
+
+            marcarTemaBtn(configs.tema_admin || 'escuro');
+        } catch (e) {
+            document.getElementById('statLayout').innerHTML = '<span class="stat-error">Erro ao carregar</span>';
+            document.getElementById('statTema').innerHTML   = '<span class="stat-error">Erro ao carregar</span>';
+            // Default theme button state
+            marcarTemaBtn(document.body.classList.contains('tema-claro') ? 'claro' : 'escuro');
+        }
+
+        try {
+            const res  = await fetch('/api/produtos');
+            if (!res.ok) throw new Error('produtos');
+            const data = await res.json();
+            document.getElementById('statProdutos').innerText = data.length;
+        } catch (e) {
+            document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
+        }
+    };
+
+    function marcarTemaBtn(tema) {
+        document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
+        document.getElementById('btnEscuro').classList.toggle('active', tema === 'escuro');
+    }
+
+    async function setTema(tema) {
+        document.body.classList.toggle('tema-claro', tema === 'claro');
+        marcarTemaBtn(tema);
+        document.getElementById('statTema').innerText = tema === 'claro' ? '☀️ Claro' : '🌑 Escuro';
+        try {
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chave: 'tema_admin', valor: tema })
+            });
+        } catch (e) { /* visual change applied; persistence retried on next load */ }
+    }
+
+    // Expose 'setTema' for inline onclick attributes
+    window.setTema = setTema;
+})();

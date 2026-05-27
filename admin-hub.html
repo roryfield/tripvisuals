@@ -9,146 +9,7 @@
     <link rel="stylesheet" href="/admin.css">
 
     <!-- ✅ Auth + Theme bootstrap (no flash of unauthed/wrong-theme content) -->
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) {
-            console.warn('Init bootstrap:', e.message);
-        } finally {
-            // Apply theme class to body if needed (body now exists)
-            if (document.documentElement.classList.contains('apply-light')) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        .hub-wrap {
-            padding: 48px 40px 0;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .hub-header {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 24px;
-            margin-bottom: 36px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-        .hub-header-text { flex: 1; min-width: 240px; }
-        .hub-header .eyebrow {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--cyan);
-            margin-bottom: 8px;
-        }
-        .hub-header h1 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            letter-spacing: 3px;
-            line-height: 1;
-            color: var(--text);
-        }
-        .hub-header p.hub-desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 8px;
-        }
-
-        /* Stats row */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin-bottom: 36px;
-        }
-        .stat-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px 24px;
-        }
-        .stat-card .stat-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-        .stat-card .stat-value {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2.2rem;
-            letter-spacing: 1px;
-            color: var(--text);        /* ✅ FIX: was #fff, now theme-aware */
-            line-height: 1;
-        }
-        .stat-card .stat-value.small {
-            font-size: 1.1rem;
-            padding-top: 8px;
-        }
-        .stat-error { color: var(--danger) !important; font-size: 0.8rem !important; font-family: 'DM Sans', sans-serif !important; }
-        .stat-loading { font-size: 0.85rem; color: var(--text-muted); }
-
-        /* Action cards */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .action-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px;
-            text-decoration: none;
-            color: var(--text);        /* ✅ FIX: was #fff, now theme-aware */
-            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s, background-color 0.25s;
-            display: block;
-            position: relative;
-            overflow: hidden;
-        }
-        .action-card:hover {
-            border-color: rgba(0,229,255,0.35);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,229,255,0.07);
-        }
-        .action-card:focus-visible {
-            outline: 2px solid var(--cyan);
-            outline-offset: 2px;
-        }
-        .action-card .card-icon { font-size: 1.6rem; margin-bottom: 14px; display: block; }
-        .action-card h3         { font-size: 1rem; font-weight: 600; color: var(--cyan); margin-bottom: 8px; }
-        .action-card p          { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
-        .action-card .arrow {
-            position: absolute; right: 20px; bottom: 20px;
-            color: var(--cyan); font-size: 1.2rem;
-            opacity: 0; transform: translateX(-6px);
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .action-card:hover .arrow { opacity: 1; transform: translateX(0); }
-        .action-card.external { border-color: rgba(157,0,255,0.2); }
-        .action-card.external .arrow { color: var(--purple); }
-
-        @media (max-width: 600px) {
-            .hub-wrap { padding: 24px 16px 0; }
-            .hub-header { flex-direction: column; align-items: stretch; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
@@ -161,13 +22,24 @@
             <p class="hub-desc">Gestão de produtos, catálogo e configurações da loja.</p>
         </div>
 
-        <!-- ✅ Theme toggle relocated: top-right pill, icon-only -->
+        <div class="page-header-actions">
+        <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
+
+        <!-- Theme toggle (pill) -->
         <div class="theme-pill" role="group" aria-label="Tema do admin">
             <button class="theme-icon-btn" id="btnClaro" onclick="setTema('claro')"
                     aria-label="Tema claro" title="Tema claro">☀️</button>
             <button class="theme-icon-btn" id="btnEscuro" onclick="setTema('escuro')"
                     aria-label="Tema escuro" title="Tema escuro">🌑</button>
         </div>
+        </div><!-- /page-header-actions -->
     </header>
 
     <!-- Stats -->
@@ -273,15 +145,7 @@
             <line x1="8" y1="22" x2="16" y2="22"/>
             <line x1="12" y1="18" x2="12" y2="22"/>
         </svg>
-        Landing
-    </a>
-    <a href="/admin-help.html" class="nav-tab" id="tab-help">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        Ajuda
+        Landing Page
     </a>
     <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -292,54 +156,9 @@
     </a>
 </nav>
 
-<script>
-    window.onload = async () => {
-        try {
-            const res = await fetch('/api/config');
-            if (!res.ok) throw new Error('config');
-            const configs = await res.json();
+<script src="/admin-hub.js"></script>
 
-            const layoutLabels = { 'grid-1': 'Lista', 'grid-2': 'Duo', 'grid-3': 'Grade' };
-            document.getElementById('statLayout').innerText =
-                layoutLabels[configs.layout_padrao] || '—';
-            document.getElementById('statTema').innerText =
-                configs.tema_admin === 'claro' ? '☀️ Claro' : '🌑 Escuro';
 
-            marcarTemaBtn(configs.tema_admin || 'escuro');
-        } catch (e) {
-            document.getElementById('statLayout').innerHTML = '<span class="stat-error">Erro ao carregar</span>';
-            document.getElementById('statTema').innerHTML   = '<span class="stat-error">Erro ao carregar</span>';
-            // Default theme button state
-            marcarTemaBtn(document.body.classList.contains('tema-claro') ? 'claro' : 'escuro');
-        }
-
-        try {
-            const res  = await fetch('/api/produtos');
-            if (!res.ok) throw new Error('produtos');
-            const data = await res.json();
-            document.getElementById('statProdutos').innerText = data.length;
-        } catch (e) {
-            document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
-        }
-    };
-
-    function marcarTemaBtn(tema) {
-        document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
-        document.getElementById('btnEscuro').classList.toggle('active', tema === 'escuro');
-    }
-
-    async function setTema(tema) {
-        document.body.classList.toggle('tema-claro', tema === 'claro');
-        marcarTemaBtn(tema);
-        document.getElementById('statTema').innerText = tema === 'claro' ? '☀️ Claro' : '🌑 Escuro';
-        try {
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chave: 'tema_admin', valor: tema })
-            });
-        } catch (e) { /* visual change applied; persistence retried on next load */ }
-    }
-</script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>

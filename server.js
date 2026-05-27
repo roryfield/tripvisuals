@@ -1,16 +1,47 @@
 // ============================================================
 //  Trip Visuals Wear — Production Server
-//  v7 — Voidzone admin: themes + logos + content + background
+//  v8 — Persistent sessions · Cloudinary transforms · Strict CSP
 // ============================================================
 
 process.chdir(__dirname);
 
 const path       = require('path');
+const crypto     = require('crypto');
 const express    = require('express');
 const multer     = require('multer');
 const rateLimit  = require('express-rate-limit');
 const { Pool }   = require('pg');
 const cloudinary = require('cloudinary').v2;
+
+// [VZ] Optional Sentry error monitoring.
+// Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
+let Sentry = null;
+if (process.env.SENTRY_DSN) {
+    try {
+        Sentry = require('@sentry/node');
+        Sentry.init({
+            dsn: process.env.SENTRY_DSN,
+            tracesSampleRate: 0.1,
+            environment: process.env.RAILWAY_ENVIRONMENT || 'production'
+        });
+        console.log('✅ Sentry inicializado.');
+    } catch (e) {
+        console.warn('⚠️  Sentry não disponível:', e.message);
+        Sentry = null;
+    }
+}
+
+// ── Constant-time string compare (prevents login timing attacks) ──
+function timingSafeStringCompare(a, b) {
+    const ba = Buffer.from(String(a || ''));
+    const bb = Buffer.from(String(b || ''));
+    if (ba.length !== bb.length) {
+        // Still do a comparison of equal-length buffers to keep timing flat.
+        crypto.timingSafeEqual(bb, bb);
+        return false;
+    }
+    return crypto.timingSafeEqual(ba, bb);
+}
 
 // ── ENV VALIDATION ─────────────────────────────────────────────
 const REQUIRED_ENV = [
@@ -61,6 +92,20 @@ async function initDB() {
             valor TEXT
         )
     `);
+
+    // [VZ] Persistent sessions — survives server restarts and Railway redeploys.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS sessoes (
+            token      TEXT PRIMARY KEY,
+            criado_em  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            expira_em  TIMESTAMPTZ NOT NULL
+        )
+    `);
+    await pool.query(
+        `CREATE INDEX IF NOT EXISTS idx_sessoes_expira ON sessoes (expira_em)`
+    );
+    // Clean up any expired sessions from previous runs
+    await pool.query(`DELETE FROM sessoes WHERE expira_em < NOW()`);
     // [VZ] Seeds — all empty by default; landings fall back to their hardcoded
     // values if the corresponding config is empty.
     await pool.query(`
@@ -71,11 +116,21 @@ async function initDB() {
             ('landing_logo_url',      ''),
             ('landing_bg_color',      ''),
             ('landing_bg_image_url',  ''),
+            ('landing_bg_position',   'cover'),
             ('landing_title',         ''),
             ('landing_tagline',       ''),
             ('landing_instagram',     ''),
             ('landing_whatsapp',      ''),
-            ('landing_footer',        '')
+            ('about_visible',         '1'),
+            ('about_title',           ''),
+            ('about_text',            ''),
+            ('about_bg_color',        ''),
+            ('about_bg_image_url',    ''),
+            ('howto_visible',         '1'),
+            ('howto_step_1',          ''),
+            ('howto_step_2',          ''),
+            ('howto_step_3',          ''),
+            ('howto_step_4',          '')
         ON CONFLICT (chave) DO NOTHING
     `);
 
@@ -99,6 +154,37 @@ app.set('trust proxy', 1);
 
 // ── BODY PARSER ────────────────────────────────────────────────
 app.use(express.json({ limit: '100kb' }));
+
+// [VZ] SECURITY HEADERS ────────────────────────────────────────
+// All JS and CSS is now external — both script-src and style-src
+// have NO 'unsafe-inline'. This is a complete CSP.
+// The only remaining inline-ish item is style= attributes injected
+// dynamically by JS at runtime (e.g. color picker → body.style.backgroundColor)
+// which is NOT covered by style-src (it's DOM manipulation, always allowed).
+const CSP_COMMON =
+    "default-src 'self'; " +
+    "img-src 'self' data: blob: https://res.cloudinary.com; " +
+    "style-src 'self' https://fonts.googleapis.com; " +  // ← no unsafe-inline
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "script-src 'self'; " +
+    "connect-src 'self'; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'";
+
+const CSP_PUBLIC = CSP_COMMON;
+const CSP_ADMIN  = CSP_COMMON;
+
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=()');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    const isAdmin = /^\/admin[-\w]*\.html$/i.test(req.path);
+    res.setHeader('Content-Security-Policy', isAdmin ? CSP_ADMIN : CSP_PUBLIC);
+    next();
+});
 
 // ── BLOCKED PATHS ──────────────────────────────────────────────
 const BLOCKED_PATHS = [
@@ -141,14 +227,46 @@ app.use(express.static(ROOT_DIR, {
     dotfiles: 'deny'
 }));
 
-// ── SESSION (in-memory; resets per deploy) ─────────────────────
-const sessoes = new Set();
+// ── SESSION (PostgreSQL-backed — survives redeploys) ───────────
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-function requireAuth(req, res, next) {
+async function dbCreateSession(token) {
+    const exp = new Date(Date.now() + SESSION_TTL_MS);
+    await pool.query(
+        'INSERT INTO sessoes (token, expira_em) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [token, exp]
+    );
+}
+
+async function dbValidateSession(token) {
+    if (!token) return false;
+    const r = await pool.query(
+        'SELECT 1 FROM sessoes WHERE token = $1 AND expira_em > NOW()',
+        [token]
+    );
+    return r.rows.length > 0;
+}
+
+async function dbDeleteSession(token) {
+    if (!token) return;
+    await pool.query('DELETE FROM sessoes WHERE token = $1', [token]);
+}
+
+// Periodic cleanup — runs every 30 min; no-op if nothing expired
+setInterval(() => {
+    pool.query('DELETE FROM sessoes WHERE expira_em < NOW()')
+        .catch(e => console.error('Session cleanup error:', e.message));
+}, 30 * 60 * 1000).unref();
+
+async function requireAuth(req, res, next) {
     const cookie = req.headers.cookie || '';
     const match  = cookie.match(/vztoken=([^;]+)/);
     const token  = match ? decodeURIComponent(match[1]) : null;
-    if (token && sessoes.has(token)) return next();
+    try {
+        if (await dbValidateSession(token)) return next();
+    } catch (e) {
+        console.error('requireAuth DB error:', e.message);
+    }
     res.status(401).json({ error: 'Não autenticado.' });
 }
 function setSessionCookie(res, token) {
@@ -182,10 +300,35 @@ function uploadToCloudinary(buffer, filename, folder = 'tripvisuals') {
     });
 }
 
+// [VZ] Inject Cloudinary URL transformation to reduce payload size.
+// Uses URL-based transforms (no extra upload step).
+// c_limit = only downscale, never upscale; q_auto = smart compression;
+// f_auto = best format (WebP/AVIF in supporting browsers).
+function cloudTransform(url, transform) {
+    if (!url || !url.includes('/upload/')) return url;
+    return url.replace('/upload/', `/upload/${transform}/`);
+}
+const TRANSFORM_PRODUCT = 'w_800,h_800,c_limit,q_auto,f_auto';
+const TRANSFORM_LOGO    = 'w_600,h_600,c_limit,q_auto,f_auto';
+const TRANSFORM_BG      = 'w_1920,q_auto,f_auto,c_limit';
+
 // ── LOGIN RATE LIMIT ───────────────────────────────────────────
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, max: 5,
     message: { success: false, message: 'Muitas tentativas. Tente novamente em 15 minutos.' },
+    standardHeaders: true, legacyHeaders: false
+});
+
+// ── UPLOAD / WRITE RATE LIMITS (defense-in-depth on authed routes) ─
+// Even with auth, cap how fast someone can blast uploads or config writes.
+const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 30,
+    message: { error: 'Muitos uploads. Espere um momento.' },
+    standardHeaders: true, legacyHeaders: false
+});
+const writeLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 120,
+    message: { error: 'Muitas alterações. Espere um momento.' },
     standardHeaders: true, legacyHeaders: false
 });
 
@@ -229,13 +372,18 @@ app.get('/api/config', async (req, res) => {
 //  AUTH
 // ════════════════════════════════════════════════════════════
 
-app.post('/api/login', loginLimiter, (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
     const { senha } = req.body || {};
     if (typeof senha !== 'string' || !senha)
         return res.status(400).json({ success: false, message: 'Senha obrigatória.' });
-    if (senha === process.env.ADMIN_PASSWORD) {
-        const token = Date.now().toString(36) + Math.random().toString(36).slice(2);
-        sessoes.add(token);
+    if (timingSafeStringCompare(senha, process.env.ADMIN_PASSWORD)) {
+        const token = crypto.randomBytes(32).toString('hex');
+        try {
+            await dbCreateSession(token);
+        } catch (e) {
+            console.error('POST /api/login session create:', e.message);
+            return res.status(500).json({ success: false, message: 'Erro interno. Tente novamente.' });
+        }
         setSessionCookie(res, token);
         res.json({ success: true });
     } else {
@@ -243,28 +391,32 @@ app.post('/api/login', loginLimiter, (req, res) => {
     }
 });
 
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', async (req, res) => {
     const cookie = req.headers.cookie || '';
     const m = cookie.match(/vztoken=([^;]+)/);
     const token = m ? decodeURIComponent(m[1]) : null;
-    if (token) sessoes.delete(token);
+    await dbDeleteSession(token).catch(() => {});
     clearSessionCookie(res);
     res.json({ success: true });
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', async (req, res) => {
     const cookie = req.headers.cookie || '';
     const m = cookie.match(/vztoken=([^;]+)/);
     const token = m ? decodeURIComponent(m[1]) : null;
-    if (token && sessoes.has(token)) res.json({ autenticado: true });
-    else res.status(401).json({ autenticado: false });
+    try {
+        if (await dbValidateSession(token)) return res.json({ autenticado: true });
+    } catch (e) {
+        console.error('GET /api/me:', e.message);
+    }
+    res.status(401).json({ autenticado: false });
 });
 
 // ════════════════════════════════════════════════════════════
 //  PROTECTED ROUTES
 // ════════════════════════════════════════════════════════════
 
-app.post('/api/produtos', requireAuth, upload.single('imagem'), async (req, res) => {
+app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), async (req, res) => {
     const erro = validarProduto(req.body);
     if (erro) return res.status(400).json({ error: erro });
     const { nome, preco } = req.body;
@@ -273,7 +425,8 @@ app.post('/api/produtos', requireAuth, upload.single('imagem'), async (req, res)
         if (req.file) {
             const baseName = req.file.originalname.replace(/\.[^.]+$/, '').replace(/[^\w-]/g, '_').slice(0, 60);
             const result = await uploadToCloudinary(req.file.buffer, Date.now() + '_' + baseName);
-            imagem_url = result.url; cloudinary_id = result.public_id;
+            imagem_url   = cloudTransform(result.url, TRANSFORM_PRODUCT);
+            cloudinary_id = result.public_id;
         }
         const r = await pool.query(
             'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id) VALUES ($1, $2, $3, $4) RETURNING id',
@@ -285,7 +438,7 @@ app.post('/api/produtos', requireAuth, upload.single('imagem'), async (req, res)
     }
 });
 
-app.put('/api/produtos/:id', requireAuth, async (req, res) => {
+app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const erro = validarProduto(req.body);
     if (erro) return res.status(400).json({ error: erro });
     const id = parseInt(req.params.id, 10);
@@ -303,7 +456,7 @@ app.put('/api/produtos/:id', requireAuth, async (req, res) => {
     }
 });
 
-app.delete('/api/produtos/:id', requireAuth, async (req, res) => {
+app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     try {
@@ -324,11 +477,11 @@ app.delete('/api/produtos/:id', requireAuth, async (req, res) => {
     }
 });
 
-app.post('/api/config', requireAuth, async (req, res) => {
+app.post('/api/config', requireAuth, writeLimiter, async (req, res) => {
     const { chave, valor } = req.body || {};
     if (typeof chave !== 'string' || chave.length < 1 || chave.length > 60)
         return res.status(400).json({ error: 'Chave inválida.' });
-    if (typeof valor !== 'string' || valor.length > 500)
+    if (typeof valor !== 'string' || valor.length > 2000)
         return res.status(400).json({ error: 'Valor inválido.' });
     try {
         await pool.query(
@@ -345,28 +498,30 @@ app.post('/api/config', requireAuth, async (req, res) => {
 // [VZ] LANDING UPLOADS — logo + background image
 // ════════════════════════════════════════════════════════════
 
-app.post('/api/landing/logo', requireAuth, upload.single('imagem'), async (req, res) => {
+app.post('/api/landing/logo', requireAuth, uploadLimiter, upload.single('imagem'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória.' });
     try {
         const result = await uploadToCloudinary(req.file.buffer, 'landing-logo-' + Date.now(), 'tripvisuals/landing');
+        const url = cloudTransform(result.url, TRANSFORM_LOGO);
         await pool.query(
             "INSERT INTO configuracoes (chave, valor) VALUES ('landing_logo_url', $1) ON CONFLICT (chave) DO UPDATE SET valor = $1",
-            [result.url]);
-        res.json({ success: true, url: result.url });
+            [url]);
+        res.json({ success: true, url });
     } catch (e) {
         console.error('POST /api/landing/logo:', e.message);
         res.status(500).json({ error: 'Erro ao enviar logo.' });
     }
 });
 
-app.post('/api/landing/bg', requireAuth, upload.single('imagem'), async (req, res) => {
+app.post('/api/landing/bg', requireAuth, uploadLimiter, upload.single('imagem'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória.' });
     try {
         const result = await uploadToCloudinary(req.file.buffer, 'landing-bg-' + Date.now(), 'tripvisuals/landing');
+        const url = cloudTransform(result.url, TRANSFORM_BG);
         await pool.query(
             "INSERT INTO configuracoes (chave, valor) VALUES ('landing_bg_image_url', $1) ON CONFLICT (chave) DO UPDATE SET valor = $1",
-            [result.url]);
-        res.json({ success: true, url: result.url });
+            [url]);
+        res.json({ success: true, url });
     } catch (e) {
         console.error('POST /api/landing/bg:', e.message);
         res.status(500).json({ error: 'Erro ao enviar imagem de fundo.' });
@@ -382,6 +537,7 @@ app.get('*', (req, res) => {
 // ── ERROR HANDLER ──────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('Erro não tratado:', err.message);
+    if (Sentry) Sentry.captureException(err);
     if (err.message && (err.message.includes('Tipo de imagem') || err.message.includes('File too large')))
         return res.status(400).json({ error: err.message });
     res.status(500).json({ error: 'Erro interno do servidor.' });

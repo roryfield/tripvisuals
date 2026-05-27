@@ -8,186 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
 
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) { console.warn('Init bootstrap:', e.message); }
-        finally {
-            if (document.documentElement.classList.contains('apply-light') && document.body) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        .main { padding: 40px 32px 80px; max-width: 1100px; margin: 0 auto; }
-
-        .help-layout {
-            display: grid;
-            grid-template-columns: 220px 1fr;
-            gap: 32px;
-            align-items: start;
-        }
-        .help-sidenav {
-            position: sticky;
-            top: 20px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 12px;
-        }
-        .help-sidenav h4 {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            margin: 4px 10px 10px;
-        }
-        .help-sidenav a {
-            display: block;
-            padding: 8px 12px;
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.85rem;
-            border-radius: 6px;
-            transition: background 0.15s ease, color 0.15s ease;
-            border-left: 2px solid transparent;
-        }
-        .help-sidenav a:hover { background: var(--panel-2); color: var(--text); }
-        .help-sidenav a.current {
-            color: var(--cyan);
-            background: rgba(0,229,255,0.06);
-            border-left-color: var(--cyan);
-        }
-
-        .help-section {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px 32px;
-            margin-bottom: 18px;
-            scroll-margin-top: 20px;
-        }
-        .help-section h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.6rem;
-            letter-spacing: 2px;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-        .help-section .sub {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--cyan);
-            margin-bottom: 16px;
-        }
-        .help-section p {
-            color: var(--text-dim);
-            line-height: 1.65;
-            font-size: 0.95rem;
-            margin-bottom: 12px;
-        }
-        .help-section h3 {
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text);
-            margin: 20px 0 8px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .help-section ul, .help-section ol {
-            color: var(--text-dim);
-            padding-left: 22px;
-            line-height: 1.7;
-            font-size: 0.92rem;
-            margin-bottom: 12px;
-        }
-        .help-section li { margin-bottom: 4px; }
-        .help-section strong { color: var(--text); }
-        .help-section code {
-            background: var(--panel-2);
-            border: 1px solid var(--border);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-family: ui-monospace, monospace;
-            font-size: 0.85em;
-            color: var(--cyan);
-        }
-        .help-section a {
-            color: var(--cyan);
-            text-decoration: none;
-            border-bottom: 1px dashed var(--cyan);
-        }
-        .help-section a:hover { border-bottom-style: solid; }
-
-        .callout {
-            border-left: 3px solid var(--cyan);
-            background: rgba(0,229,255,0.05);
-            padding: 12px 16px;
-            border-radius: 0 6px 6px 0;
-            margin: 16px 0;
-            font-size: 0.9rem;
-            color: var(--text-dim);
-        }
-        .callout.warn {
-            border-left-color: #ffb800;
-            background: rgba(255,184,0,0.05);
-        }
-        .callout strong { color: var(--text); }
-
-        kbd {
-            background: var(--panel-2);
-            border: 1px solid var(--border-strong);
-            border-bottom-width: 2px;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-family: ui-monospace, monospace;
-            font-size: 0.82em;
-            color: var(--text);
-        }
-
-        .help-hero {
-            background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(157,0,255,0.06));
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            margin-bottom: 22px;
-        }
-        .help-hero p { font-size: 1rem; max-width: 680px; }
-
-        @media (max-width: 800px) {
-            .main { padding: 24px 16px 80px; }
-            .help-layout { grid-template-columns: 1fr; gap: 16px; }
-            .help-sidenav { position: static; padding: 12px; }
-            .help-sidenav h4 { display: none; }
-            .help-sidenav .nav-inner {
-                display: flex; gap: 6px;
-                overflow-x: auto;
-                scrollbar-width: thin;
-            }
-            .help-sidenav a {
-                white-space: nowrap;
-                padding: 8px 14px;
-                border-left: none;
-                border-bottom: 2px solid transparent;
-            }
-            .help-sidenav a.current {
-                border-left: none;
-                border-bottom-color: var(--cyan);
-            }
-            .help-section { padding: 22px 20px; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
@@ -198,7 +19,15 @@
                 <p class="page-eyebrow">Manual</p>
                 <h2 class="page-title">COMO USAR</h2>
             </div>
-        </header>
+        <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
+    </header>
 
         <div class="help-hero">
             <p>
@@ -466,15 +295,7 @@
                 <line x1="2" y1="9" x2="22" y2="9"/>
                 <line x1="8" y1="22" x2="16" y2="22"/><line x1="12" y1="18" x2="12" y2="22"/>
             </svg>
-            Landing
-        </a>
-        <a href="/admin-help.html" class="nav-tab active" id="tab-help" aria-current="page">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            Ajuda
+            Landing Page
         </a>
         <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -485,37 +306,9 @@
         </a>
     </nav>
 
-    <script>
-    const links    = document.querySelectorAll('.help-sidenav a');
-    const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+    <script src="/admin-help.js"></script>
 
-    function activeSection() {
-        const y = window.scrollY + 100;
-        let current = sections[0];
-        for (const sec of sections) {
-            if (sec && sec.offsetTop <= y) current = sec;
-        }
-        return current ? current.id : sections[0].id;
-    }
-    let lastId = null;
-    function syncNav() {
-        const id = activeSection();
-        if (id === lastId) return;
-        lastId = id;
-        links.forEach(a => a.classList.toggle('current', a.getAttribute('href') === '#' + id));
-    }
-    window.addEventListener('scroll', syncNav, { passive: true });
-    syncNav();
 
-    links.forEach(a => {
-        a.addEventListener('click', e => {
-            const target = document.querySelector(a.getAttribute('href'));
-            if (!target) return;
-            e.preventDefault();
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            history.replaceState(null, '', a.getAttribute('href'));
-        });
-    });
-    </script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>

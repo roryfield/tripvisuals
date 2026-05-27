@@ -7,338 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
+    <link rel="stylesheet" href="/admin-landing.css">
 
-    <script>
-    document.documentElement.dataset.init = 'pending';
-    (async () => {
-        try {
-            const [me, cfg] = await Promise.all([fetch('/api/me'), fetch('/api/config')]);
-            if (me.status === 401 || me.status === 403) { window.location.replace('/login.html'); return; }
-            if (cfg.ok) {
-                const data = await cfg.json();
-                if (data.tema_admin === 'claro') document.documentElement.classList.add('apply-light');
-            }
-        } catch (e) { console.warn('Init bootstrap:', e.message); }
-        finally {
-            if (document.documentElement.classList.contains('apply-light') && document.body) {
-                document.body.classList.add('tema-claro');
-            }
-            document.documentElement.removeAttribute('data-init');
-        }
-    })();
-    </script>
-    <noscript><style>html[data-init] body { visibility: visible !important; }</style></noscript>
-
-    <style>
-        .main { padding: 40px 32px; max-width: 1100px; margin: 0 auto; }
-
-        /* ── SECTIONS — unified card style ───────────────── */
-        .section {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px;
-            margin-bottom: 22px;
-            transition: border-color 0.2s ease;
-        }
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 14px;
-            margin-bottom: 22px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .section-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            color: var(--text);
-            line-height: 1;
-        }
-        .section-hint {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-        }
-
-        /* ── INTERACTIVE CARDS — unified for presets + themes ── */
-        .card-grid-presets {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 14px;
-        }
-        .card-grid-themes {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
-        }
-
-        .vz-card {
-            background: var(--panel-2);
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            font-family: inherit;
-            color: var(--text);
-            text-align: left;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .vz-card:hover {
-            border-color: rgba(0,229,255,0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-        }
-        .vz-card.active {
-            border-color: var(--cyan);
-            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
-        }
-        .vz-card:focus-visible {
-            outline: 2px solid var(--cyan);
-            outline-offset: 3px;
-        }
-
-        /* Preset variant */
-        .vz-card.preset { padding: 14px; align-items: center; gap: 10px; }
-        .preset-thumb {
-            width: 96px; height: 96px;
-            border-radius: 50%;
-            overflow: hidden;
-            background: var(--bg);
-            border: 1px solid var(--border-strong);
-        }
-        .preset-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .preset-label {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.05rem;
-            letter-spacing: 2px;
-            text-align: center;
-        }
-        .vz-card.preset.active .preset-label { color: var(--cyan); }
-
-        /* Theme variant */
-        .theme-thumb {
-            height: 110px;
-            position: relative;
-            overflow: hidden;
-        }
-        .theme-thumb-classico { background: #050505; }
-        .theme-thumb-classico::before {
-            content: ''; position: absolute;
-            top: 32%; left: 50%; transform: translate(-50%, -50%);
-            width: 44px; height: 44px; border-radius: 50%;
-            background: radial-gradient(circle, #9d00ff 0%, #050505 70%);
-            box-shadow: 0 0 18px #9d00ff;
-        }
-        .theme-thumb-classico::after {
-            content: ''; position: absolute;
-            bottom: 16px; left: 22%; right: 22%; height: 12px;
-            border-radius: 50px;
-            background: linear-gradient(90deg, #9d00ff, #00e5ff);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            padding: 1.5px;
-            -webkit-mask-composite: xor; mask-composite: exclude;
-        }
-        .theme-thumb-retro {
-            background-image:
-                radial-gradient(circle at 30% 40%, rgba(107,45,155,0.55), #0a0510 60%),
-                repeating-linear-gradient(0deg, rgba(0,0,0,0.25), rgba(0,0,0,0.25) 1px, transparent 1px, transparent 3px);
-        }
-        .theme-thumb-retro::before {
-            content: ''; position: absolute;
-            top: 32%; left: 50%; transform: translate(-50%, -50%);
-            width: 44px; height: 44px; border-radius: 50%;
-            background: #6B2D9B;
-            box-shadow: 0 0 24px rgba(244,232,48,0.5);
-        }
-        .theme-thumb-retro::after {
-            content: ''; position: absolute;
-            bottom: 16px; left: 22%; right: 22%; height: 13px;
-            border: 2px solid #f4e830;
-            border-radius: 3px;
-            box-shadow: 3px 3px 0 #ff2d8a;
-        }
-        .theme-body {
-            padding: 12px 14px;
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-        }
-        .theme-name {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            color: var(--text);
-        }
-        .theme-active-tag {
-            font-size: 9px;
-            text-transform: uppercase; letter-spacing: 1.5px;
-            color: var(--cyan); border: 1px solid var(--cyan);
-            padding: 2px 7px; border-radius: 50px;
-        }
-        .vz-card:not(.active) .theme-active-tag { display: none; }
-
-        /* ── UPLOAD ZONES — unified ──────────────────────── */
-        .upload-area {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 24px;
-            align-items: center;
-            padding: 18px;
-            border: 2px dashed var(--border-strong);
-            border-radius: var(--radius);
-            background: var(--panel-2);
-            transition: border-color 0.2s ease, background-color 0.2s ease;
-        }
-        .upload-area.dragover {
-            border-color: var(--cyan);
-            background: rgba(0,229,255,0.05);
-        }
-        .upload-preview {
-            width: 110px; height: 110px;
-            background: var(--bg);
-            border: 1px solid var(--border-strong);
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; flex-shrink: 0;
-        }
-        .upload-preview.circle { border-radius: 50%; }
-        .upload-preview.square { border-radius: var(--radius); }
-        .upload-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .upload-preview .placeholder {
-            font-size: 11px; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-        .upload-controls { display: flex; flex-direction: column; gap: 10px; }
-        .upload-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .upload-hint { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
-        .filename-display { font-size: 0.8rem; color: var(--text-muted); }
-
-        /* ── BUTTONS — unified hierarchy ─────────────────── */
-        /* Primary action: .btn-launch (already in admin.css) */
-        /* Secondary action: .vz-btn-secondary (cyan-tinted ghost) */
-        .vz-btn-secondary {
-            background: rgba(0,229,255,0.1);
-            border: 1px solid rgba(0,229,255,0.25);
-            color: var(--cyan);
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: background 0.2s ease, transform 0.15s ease;
-            display: inline-flex; align-items: center; gap: 6px;
-            text-decoration: none;
-        }
-        .vz-btn-secondary:hover { background: rgba(0,229,255,0.18); }
-        .vz-btn-secondary:active { transform: scale(0.98); }
-        .vz-btn-secondary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-
-        /* Tertiary / neutral: .vz-btn-ghost (no fill, muted) */
-        .vz-btn-ghost {
-            background: transparent;
-            border: 1px solid var(--border-strong);
-            color: var(--text-muted);
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: color 0.2s ease, border-color 0.2s ease;
-        }
-        .vz-btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-muted); }
-        .vz-btn-ghost:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
-        .vz-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* ── CONTENT EDITOR ──────────────────────────────── */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        .field { display: flex; flex-direction: column; gap: 6px; }
-        .field.full { grid-column: 1 / -1; }
-        .field label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .field-status {
-            font-size: 10px; font-weight: 600;
-            opacity: 0; transition: opacity 0.3s ease;
-        }
-        .field-status.show    { opacity: 1; }
-        .field-status.saving  { color: var(--text-muted); }
-        .field-status.success { color: var(--cyan); }
-        .field-status.error   { color: var(--danger); }
-
-        /* ── COLOR PICKER ────────────────────────────────── */
-        .color-row {
-            display: flex; gap: 12px; align-items: center;
-            flex-wrap: wrap;
-        }
-        .color-swatch-wrap {
-            position: relative;
-            width: 56px; height: 56px;
-            border-radius: var(--radius);
-            overflow: hidden;
-            border: 1px solid var(--border-strong);
-            flex-shrink: 0;
-        }
-        .color-swatch-wrap input[type="color"] {
-            position: absolute; inset: -2px;
-            width: calc(100% + 4px); height: calc(100% + 4px);
-            border: none; padding: 0; cursor: pointer;
-        }
-        .color-text-input {
-            font-family: ui-monospace, monospace !important;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            max-width: 160px;
-        }
-
-        /* ── SAVE STATUS ─────────────────────────────────── */
-        .save-status {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 14px;
-            min-height: 16px;
-        }
-        .save-status.success { color: var(--cyan); }
-        .save-status.error   { color: var(--danger); }
-
-        @media (prefers-reduced-motion: reduce) {
-            .vz-card, .vz-btn-secondary, .vz-btn-ghost, .upload-area {
-                animation: none !important; transition: none !important;
-            }
-        }
-
-        /* ── MOBILE ──────────────────────────────────────── */
-        @media (max-width: 700px) {
-            .main { padding: 24px 16px; }
-            .section { padding: 20px 18px; }
-            .upload-area { grid-template-columns: 1fr; text-align: center; }
-            .upload-controls { align-items: center; }
-            .upload-row { justify-content: center; }
-            .content-grid { grid-template-columns: 1fr; }
-            .card-grid-presets { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-            .preset-thumb { width: 80px; height: 80px; }
-            .color-row { justify-content: center; }
-        }
-    </style>
+    <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
@@ -351,10 +22,20 @@
                 <p class="page-eyebrow">Configurações</p>
                 <h2 class="page-title">LANDING PAGE</h2>
             </div>
+            <div class="page-header-actions">
+            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
             <a href="/" target="_blank" rel="noopener" class="vz-btn-secondary" aria-label="Ver landing ao vivo em nova aba">
                 Ver ao vivo ↗
             </a>
-        </header>
+        </div><!-- /page-header-actions -->
+    </header>
 
         <!-- ═══════════════════════ ESTILO ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-estilo">
@@ -392,7 +73,7 @@
                     </p>
                     <div class="upload-row">
                         <label class="vz-btn-secondary" for="logoFile">📁 Escolher</label>
-                        <input type="file" id="logoFile" accept="image/*" style="display:none;">
+                        <input type="file" id="logoFile" accept="image/*" hidden>
                         <button class="btn-launch" id="btnUploadLogo" type="button" disabled>Enviar</button>
                         <button class="vz-btn-ghost" id="btnRevertLogo" type="button">Reverter ao padrão</button>
                     </div>
@@ -409,19 +90,49 @@
                 <span class="section-hint">Cor ou imagem de fundo</span>
             </div>
 
-            <!-- Color picker row -->
-            <div class="field full" style="margin-bottom: 22px;">
-                <label for="bgColor">Cor de fundo <span class="field-status" id="st-bg-color"></span></label>
-                <div class="color-row">
-                    <div class="color-swatch-wrap">
-                        <input type="color" id="bgColor" value="#050505" aria-label="Seletor de cor de fundo">
+            <!-- ── COLOR PICKER (Figma-style) ──────────────────────── -->
+            <div class="field full vz-mb-22">
+                <label>Cor de fundo <span class="field-status" id="st-bg-color"></span></label>
+
+                <!-- Trigger row (always visible) -->
+                <div class="vz-cp" id="vzColorPicker">
+                    <button class="vz-cp-trigger" id="cpTrigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+                        <span class="vz-cp-swatch" id="cpSwatch" aria-hidden="true"></span>
+                        <span class="vz-cp-hex-label" id="cpHexLabel">#050505</span>
+                        <svg class="vz-cp-chevron" viewBox="0 0 12 12" aria-hidden="true">
+                            <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button class="vz-btn-ghost vz-ml-10" id="btnClearBgColor" type="button">Limpar cor</button>
+
+                    <!-- Popover panel -->
+                    <div class="vz-cp-panel" id="cpPanel" role="dialog" aria-label="Seletor de cor" hidden>
+                        <div class="vz-cp-area" id="cpArea" tabindex="0" role="slider"
+                             aria-label="Saturação e luminosidade" aria-valuemin="0" aria-valuemax="100">
+                            <div class="vz-cp-area-cursor" id="cpAreaCursor" aria-hidden="true"></div>
+                        </div>
+                        <div class="vz-cp-hue" id="cpHue" tabindex="0" role="slider"
+                             aria-label="Matiz" aria-valuemin="0" aria-valuemax="360">
+                            <div class="vz-cp-hue-thumb" id="cpHueThumb" aria-hidden="true"></div>
+                        </div>
+                        <div class="vz-cp-footer">
+                            <button class="vz-cp-eyedropper" id="cpEyedropper" type="button"
+                                    aria-label="Selecionar cor da tela" title="Selecionar cor da tela">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M11 5L6 10l-3 3v3h3l3-3 5-5"/>
+                                    <path d="M14 8l4-4 2 2-4 4"/>
+                                </svg>
+                            </button>
+                            <div class="vz-cp-hex-input">
+                                <span class="vz-cp-hex-prefix">Hex</span>
+                                <input type="text" id="cpHexInput" maxlength="7" value="#050505" spellcheck="false" autocomplete="off">
+                            </div>
+                        </div>
                     </div>
-                    <input type="text" id="bgColorText" class="color-text-input" placeholder="#050505" maxlength="9" aria-label="Hex da cor de fundo">
-                    <button class="vz-btn-ghost" id="btnClearBgColor" type="button">Limpar cor</button>
                 </div>
             </div>
 
-            <!-- Image upload (same pattern as logo) -->
+            <!-- ── BACKGROUND IMAGE ────────────────────────────────── -->
             <div class="upload-area" id="bgUploadArea">
                 <div class="upload-preview square" id="bgPreview">
                     <span class="placeholder">SEM IMAGEM</span>
@@ -432,12 +143,31 @@
                     </p>
                     <div class="upload-row">
                         <label class="vz-btn-secondary" for="bgFile">📁 Escolher</label>
-                        <input type="file" id="bgFile" accept="image/*" style="display:none;">
+                        <input type="file" id="bgFile" accept="image/*" hidden>
                         <button class="btn-launch" id="btnUploadBg" type="button" disabled>Enviar</button>
                         <button class="vz-btn-ghost" id="btnClearBgImage" type="button">Remover imagem</button>
                     </div>
                     <p class="filename-display" id="bgFilename"></p>
                     <p class="save-status" id="bgStatus" role="status" aria-live="polite"></p>
+                </div>
+            </div>
+
+            <!-- ── BG POSITION (only useful with an image) ─────────── -->
+            <div class="field full vz-mt-18">
+                <label>Encaixe da imagem <span class="field-status" id="st-bg-position"></span></label>
+                <div class="vz-radio-row" role="radiogroup" aria-label="Encaixe da imagem de fundo">
+                    <label class="vz-radio">
+                        <input type="radio" name="bgPosition" value="cover" checked>
+                        <span>Cobrir (recortando se preciso)</span>
+                    </label>
+                    <label class="vz-radio">
+                        <input type="radio" name="bgPosition" value="contain">
+                        <span>Conter (caber inteira)</span>
+                    </label>
+                    <label class="vz-radio">
+                        <input type="radio" name="bgPosition" value="center">
+                        <span>Tamanho original (centralizada)</span>
+                    </label>
                 </div>
             </div>
         </section>
@@ -466,9 +196,121 @@
                     <label for="cf-whatsapp">Link do WhatsApp <span class="field-status" id="st-cf-whatsapp"></span></label>
                     <input type="text" id="cf-whatsapp" data-key="landing_whatsapp" maxlength="200" placeholder="https://wa.me/5511940537169">
                 </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════ SOBRE ═══════════════════════ -->
+        <section class="section" aria-labelledby="sec-sobre">
+            <div class="section-header">
+                <h3 class="section-title" id="sec-sobre">SOBRE</h3>
+                <span class="section-hint">Seção de apresentação da loja</span>
+            </div>
+
+            <div class="content-grid vz-mb-18">
+                <div class="field full vz-toggle-row">
+                    <span class="vz-toggle-label">Exibir a seção "Sobre" na landing</span>
+                    <label class="vz-toggle" aria-label="Visibilidade da seção Sobre">
+                        <input type="checkbox" id="aboutVisible" checked>
+                        <span class="vz-toggle-track"></span>
+                    </label>
+                </div>
+
                 <div class="field full">
-                    <label for="cf-footer">Assinatura no rodapé <span class="field-status" id="st-cf-footer"></span></label>
-                    <input type="text" id="cf-footer" data-key="landing_footer" maxlength="80" placeholder="By Rory 💀">
+                    <label for="cf-about-title">Título da seção <span class="field-status" id="st-cf-about-title"></span></label>
+                    <input type="text" id="cf-about-title" data-key="about_title" maxlength="80" placeholder="Sobre a Loja">
+                </div>
+                <div class="field full">
+                    <label for="cf-about-text">Bio / descrição da loja <span class="field-status" id="st-cf-about-text"></span></label>
+                    <textarea id="cf-about-text" data-key="about_text" rows="5" maxlength="2000"
+                              placeholder="Conta a história da loja, a dona, a proposta..."></textarea>
+                </div>
+            </div>
+
+            <div class="vz-grid-2">
+                <div>
+                    <div class="field vz-mb-12">
+                        <label>Cor de fundo da seção "Sobre" <span class="field-status" id="st-about-bg-color"></span></label>
+                    </div>
+                    <div class="vz-cp" id="vzAboutColorPicker">
+                        <button class="vz-cp-trigger" id="aboutCpTrigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+                            <span class="vz-cp-swatch" id="aboutCpSwatch"></span>
+                            <span class="vz-cp-hex-label" id="aboutCpHexLabel">#000000</span>
+                            <svg class="vz-cp-chevron" viewBox="0 0 12 12" aria-hidden="true">
+                                <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button class="vz-btn-ghost vz-ml-10" id="btnClearAboutColor" type="button">Limpar</button>
+                        <div class="vz-cp-panel" id="aboutCpPanel" role="dialog" aria-label="Cor da seção Sobre" hidden>
+                            <div class="vz-cp-area" id="aboutCpArea" tabindex="0" role="slider" aria-label="Saturação e luminosidade" aria-valuemin="0" aria-valuemax="100">
+                                <div class="vz-cp-area-cursor" id="aboutCpAreaCursor"></div>
+                            </div>
+                            <div class="vz-cp-hue" id="aboutCpHue" tabindex="0" role="slider" aria-label="Matiz" aria-valuemin="0" aria-valuemax="360">
+                                <div class="vz-cp-hue-thumb" id="aboutCpHueThumb"></div>
+                            </div>
+                            <div class="vz-cp-footer">
+                                <button class="vz-cp-eyedropper" id="aboutCpEyedropper" type="button" aria-label="Selecionar cor da tela">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M11 5L6 10l-3 3v3h3l3-3 5-5"/>
+                                        <path d="M14 8l4-4 2 2-4 4"/>
+                                    </svg>
+                                </button>
+                                <div class="vz-cp-hex-input">
+                                    <span class="vz-cp-hex-prefix">Hex</span>
+                                    <input type="text" id="aboutCpHexInput" maxlength="7" value="#000000" spellcheck="false" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="field vz-mb-12">
+                        <label>Imagem de fundo da seção "Sobre"</label>
+                    </div>
+                    <div class="vz-flex-gap-8">
+                        <label class="vz-btn-secondary vz-clickable" for="aboutBgFile">📁 Escolher</label>
+                        <input type="file" id="aboutBgFile" accept="image/*" hidden>
+                        <button class="btn-launch" id="btnUploadAboutBg" type="button" disabled>Enviar</button>
+                        <button class="vz-btn-ghost" id="btnClearAboutBg" type="button">Remover</button>
+                    </div>
+                    <p class="save-status" id="aboutBgStatus" role="status" aria-live="polite"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════ COMO FUNCIONA ═══════════════════════ -->
+        <section class="section" aria-labelledby="sec-howto">
+            <div class="section-header">
+                <h3 class="section-title" id="sec-howto">COMO FUNCIONA</h3>
+                <span class="section-hint">Etapas do processo de compra</span>
+            </div>
+
+            <div class="content-grid vz-mb-18">
+                <div class="field full vz-toggle-row">
+                    <span class="vz-toggle-label">Exibir a seção "Como Funciona" na landing</span>
+                    <label class="vz-toggle" aria-label="Visibilidade da seção Como Funciona">
+                        <input type="checkbox" id="howtoVisible" checked>
+                        <span class="vz-toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="vz-grid-2-sm">
+                <div class="field">
+                    <label for="cf-howto-1">Passo 1 <span class="field-status" id="st-cf-howto-1"></span></label>
+                    <input type="text" id="cf-howto-1" data-key="howto_step_1" maxlength="120" placeholder="Escolha um produto no catálogo">
+                </div>
+                <div class="field">
+                    <label for="cf-howto-2">Passo 2 <span class="field-status" id="st-cf-howto-2"></span></label>
+                    <input type="text" id="cf-howto-2" data-key="howto_step_2" maxlength="120" placeholder="Clique em Comprar e fale pelo WhatsApp">
+                </div>
+                <div class="field">
+                    <label for="cf-howto-3">Passo 3 <span class="field-status" id="st-cf-howto-3"></span></label>
+                    <input type="text" id="cf-howto-3" data-key="howto_step_3" maxlength="120" placeholder="Produção em até 5 dias úteis">
+                </div>
+                <div class="field">
+                    <label for="cf-howto-4">Passo 4 <span class="field-status" id="st-cf-howto-4"></span></label>
+                    <input type="text" id="cf-howto-4" data-key="howto_step_4" maxlength="120" placeholder="Produto enviado para todo o Brasil">
                 </div>
             </div>
         </section>
@@ -512,15 +354,7 @@
                 <line x1="2" y1="9" x2="22" y2="9"/>
                 <line x1="8" y1="22" x2="16" y2="22"/><line x1="12" y1="18" x2="12" y2="22"/>
             </svg>
-            Landing
-        </a>
-        <a href="/admin-help.html" class="nav-tab" id="tab-help">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            Ajuda
+            Landing Page
         </a>
         <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -531,487 +365,9 @@
         </a>
     </nav>
 
-    <script>
-    // ═════════════════════════ HELPERS ═══════════════════════════
-    const $ = id => document.getElementById(id);
-    const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
-    const escapeAttr = escapeHTML;
+    <script src="/admin-landing.js"></script>
 
-    function showToast(msg, isError = false) {
-        const t = $('toast');
-        t.innerText = msg;
-        t.style.background  = isError ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-        t.style.borderColor = isError ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-        t.style.color       = isError ? 'var(--danger)'       : 'var(--cyan)';
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
-    }
 
-    async function saveConfig(chave, valor) {
-        const res = await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chave, valor })
-        });
-        if (res.status === 401) { window.location.replace('/login.html'); throw new Error('auth'); }
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || 'Erro ao salvar');
-        }
-        return res.json();
-    }
-
-    // ═════════════════════════ REGISTRIES ═══════════════════════
-    // Add a theme: drop landing-<slug>.html in the repo + one entry below.
-    // Add a preset: drop /defaults/<file> + one entry below.
-    const THEMES = [
-        { slug: 'classico', name: 'Clássico', description: 'Original com botões neon.' },
-        { slug: 'retro',    name: 'Retro',    description: 'Psicodélico, CRT, anos 70.' }
-    ];
-    const PRESET_LOGOS = [
-        { url: '/defaults/logo-estatica-escura.jpeg', name: 'Logo 1' },
-        { url: '/defaults/logo-estatica-clara.jpeg',  name: 'Logo 2' },
-        { url: '/defaults/logo-drippy.jpeg',          name: 'Logo 3' },
-        { url: '/defaults/logo-adesivo.jpeg',         name: 'Logo 4' }
-    ];
-
-    // ═════════════════════════ STATE ═════════════════════════════
-    let currentTheme   = 'classico';
-    let currentLogoUrl = '';
-    let currentBgColor = '';
-    let currentBgImage = '';
-    let pendingLogo    = null;
-    let pendingBg      = null;
-
-    // ═════════════════════════ THEMES ════════════════════════════
-    const themesGrid  = $('themesGrid');
-    const themeStatus = $('themeStatus');
-
-    function renderThemes() {
-        themesGrid.innerHTML = '';
-        THEMES.forEach(t => {
-            const card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'vz-card theme' + (t.slug === currentTheme ? ' active' : '');
-            card.setAttribute('role', 'radio');
-            card.setAttribute('aria-checked', t.slug === currentTheme ? 'true' : 'false');
-            card.tabIndex = t.slug === currentTheme ? 0 : -1;
-            card.dataset.slug = t.slug;
-            card.innerHTML = `
-                <div class="theme-thumb theme-thumb-${escapeAttr(t.slug)}" aria-hidden="true"></div>
-                <div class="theme-body">
-                    <div>
-                        <div class="theme-name">${escapeHTML(t.name)}</div>
-                        <div class="section-hint" style="margin-top:3px;letter-spacing:0.5px">${escapeHTML(t.description)}</div>
-                    </div>
-                    <span class="theme-active-tag" aria-hidden="true">Ativo</span>
-                </div>
-            `;
-            themesGrid.appendChild(card);
-        });
-        themesGrid.querySelectorAll('.vz-card').forEach(card => {
-            card.addEventListener('click', () => selectTheme(card.dataset.slug));
-            card.addEventListener('keydown', e => handleRadioKeys(e, themesGrid, slug => selectTheme(slug), 'slug'));
-        });
-    }
-
-    async function selectTheme(slug) {
-        if (slug === currentTheme) return;
-        const previous = currentTheme;
-        currentTheme = slug;
-        renderThemes();
-        themeStatus.innerText = 'Salvando…';
-        themeStatus.className = 'save-status';
-        try {
-            await saveConfig('landing_theme', slug);
-            themeStatus.innerText = `✓ Estilo "${slug}" ativo. Atualize a aba "Ver ao vivo" pra conferir.`;
-            themeStatus.className = 'save-status success';
-            showToast('✓ Estilo atualizado');
-        } catch (e) {
-            if (e.message === 'auth') return;
-            currentTheme = previous;
-            renderThemes();
-            themeStatus.innerText = '❌ Falha ao salvar.';
-            themeStatus.className = 'save-status error';
-        }
-    }
-
-    // ═════════════════════════ ARSENAL (presets) ═════════════════
-    const presetsGrid = $('presetsGrid');
-
-    function renderPresets() {
-        presetsGrid.innerHTML = '';
-        PRESET_LOGOS.forEach((p, idx) => {
-            const card = document.createElement('button');
-            card.type = 'button';
-            const active = p.url === currentLogoUrl;
-            card.className = 'vz-card preset' + (active ? ' active' : '');
-            card.setAttribute('role', 'radio');
-            card.setAttribute('aria-checked', active ? 'true' : 'false');
-            card.tabIndex = (active || (!currentLogoUrl && idx === 0)) ? 0 : -1;
-            card.dataset.url = p.url;
-            card.innerHTML = `
-                <div class="preset-thumb"><img src="${escapeAttr(p.url)}" alt="" loading="lazy"></div>
-                <span class="preset-label">${escapeHTML(p.name)}</span>
-            `;
-            presetsGrid.appendChild(card);
-        });
-        presetsGrid.querySelectorAll('.vz-card').forEach(card => {
-            card.addEventListener('click', () => selectPreset(card.dataset.url));
-            card.addEventListener('keydown', e => handleRadioKeys(e, presetsGrid, url => selectPreset(url), 'url'));
-        });
-    }
-
-    async function selectPreset(url) {
-        const previous = currentLogoUrl;
-        currentLogoUrl = url;
-        renderPresets();
-        renderLogoPreview(url);
-        updateRevertButton();
-        try {
-            await saveConfig('landing_logo_url', url);
-            showToast('✓ Logo trocada');
-        } catch (e) {
-            if (e.message === 'auth') return;
-            currentLogoUrl = previous;
-            renderPresets();
-            renderLogoPreview(previous);
-            updateRevertButton();
-            showToast('Erro ao trocar logo', true);
-        }
-    }
-
-    // ═════════════════════════ LOGO (custom upload) ══════════════
-    const logoUploadArea = $('logoUploadArea');
-    const logoPreview    = $('logoPreview');
-    const logoFile       = $('logoFile');
-    const btnUploadLogo  = $('btnUploadLogo');
-    const btnRevertLogo  = $('btnRevertLogo');
-    const logoFilename   = $('logoFilename');
-    const logoStatus     = $('logoStatus');
-
-    function renderLogoPreview(src) {
-        logoPreview.innerHTML = src
-            ? `<img src="${escapeAttr(src)}" alt="Logo atual">`
-            : '<img src="/logo.jpeg" alt="Logo padrão do repositório">';
-    }
-    function updateRevertButton() { btnRevertLogo.disabled = !currentLogoUrl; }
-
-    setupUploadZone({
-        area: logoUploadArea, input: logoFile,
-        onSelect: file => {
-            pendingLogo = file;
-            logoFilename.innerText = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-            btnUploadLogo.disabled = false;
-            logoStatus.innerText = '';
-            previewLocal(file, src => renderLogoPreview(src));
-        },
-        onError: msg => { logoStatus.innerText = msg; logoStatus.className = 'save-status error'; }
-    });
-
-    btnUploadLogo.addEventListener('click', async () => {
-        if (!pendingLogo) return;
-        btnUploadLogo.disabled = true;
-        btnUploadLogo.innerText = 'Enviando…';
-        try {
-            const fd = new FormData(); fd.append('imagem', pendingLogo);
-            const res = await fetch('/api/landing/logo', { method: 'POST', body: fd });
-            if (res.status === 401) { window.location.replace('/login.html'); return; }
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro');
-            currentLogoUrl = data.url;
-            renderLogoPreview(currentLogoUrl);
-            renderPresets();
-            updateRevertButton();
-            logoStatus.innerText = '✓ Logo personalizada ativa.';
-            logoStatus.className = 'save-status success';
-            showToast('✓ Logo enviada');
-            pendingLogo = null;
-            logoFile.value = '';
-            logoFilename.innerText = '';
-        } catch (e) {
-            logoStatus.innerText = '❌ ' + e.message;
-            logoStatus.className = 'save-status error';
-            showToast('Erro ao enviar logo', true);
-        } finally {
-            btnUploadLogo.innerText = 'Enviar';
-            btnUploadLogo.disabled = !pendingLogo;
-        }
-    });
-
-    btnRevertLogo.addEventListener('click', async () => {
-        if (!currentLogoUrl) return;
-        if (!confirm('Reverter para a logo padrão do repositório (/logo.jpeg)?')) return;
-        btnRevertLogo.disabled = true;
-        try {
-            await saveConfig('landing_logo_url', '');
-            currentLogoUrl = '';
-            renderLogoPreview('');
-            renderPresets();
-            updateRevertButton();
-            logoStatus.innerText = '✓ Revertido para o padrão.';
-            logoStatus.className = 'save-status success';
-            showToast('✓ Revertido');
-        } catch {
-            updateRevertButton();
-            showToast('Erro ao reverter', true);
-        }
-    });
-
-    // ═════════════════════════ AMBIENTE (background) ═════════════
-    const bgColorPicker  = $('bgColor');
-    const bgColorText    = $('bgColorText');
-    const btnClearBgColor= $('btnClearBgColor');
-    const bgUploadArea   = $('bgUploadArea');
-    const bgPreview      = $('bgPreview');
-    const bgFile         = $('bgFile');
-    const btnUploadBg    = $('btnUploadBg');
-    const btnClearBgImage= $('btnClearBgImage');
-    const bgFilename     = $('bgFilename');
-    const bgStatus       = $('bgStatus');
-    const stBgColor      = $('st-bg-color');
-
-    function renderBgPreview(src) {
-        bgPreview.innerHTML = src
-            ? `<img src="${escapeAttr(src)}" alt="Imagem de fundo atual">`
-            : '<span class="placeholder">SEM IMAGEM</span>';
-    }
-
-    function flashColorStatus(state) {
-        stBgColor.textContent = state === 'saving' ? 'salvando…'
-                              : state === 'success' ? '✓ salvo'
-                              : state === 'error'   ? '✗ erro' : '';
-        stBgColor.className = 'field-status ' + (state ? 'show ' + state : '');
-        if (state === 'success') setTimeout(() => stBgColor.classList.remove('show'), 1500);
-    }
-
-    // Sync color picker ↔ text input
-    let bgColorSaveTimer = null;
-    function scheduleBgColorSave(hex) {
-        clearTimeout(bgColorSaveTimer);
-        flashColorStatus('saving');
-        bgColorSaveTimer = setTimeout(async () => {
-            try {
-                await saveConfig('landing_bg_color', hex);
-                currentBgColor = hex;
-                flashColorStatus('success');
-            } catch (e) {
-                if (e.message === 'auth') return;
-                flashColorStatus('error');
-            }
-        }, 400);
-    }
-    bgColorPicker.addEventListener('input', e => {
-        bgColorText.value = e.target.value.toUpperCase();
-    });
-    bgColorPicker.addEventListener('change', e => scheduleBgColorSave(e.target.value));
-    bgColorText.addEventListener('input', e => {
-        const v = e.target.value.trim();
-        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-            bgColorPicker.value = v.toLowerCase();
-            scheduleBgColorSave(v);
-        }
-    });
-    btnClearBgColor.addEventListener('click', async () => {
-        flashColorStatus('saving');
-        try {
-            await saveConfig('landing_bg_color', '');
-            currentBgColor = '';
-            bgColorText.value = '';
-            bgColorPicker.value = '#050505';
-            flashColorStatus('success');
-            showToast('✓ Cor limpa');
-        } catch {
-            flashColorStatus('error');
-        }
-    });
-
-    setupUploadZone({
-        area: bgUploadArea, input: bgFile,
-        onSelect: file => {
-            pendingBg = file;
-            bgFilename.innerText = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-            btnUploadBg.disabled = false;
-            bgStatus.innerText = '';
-            previewLocal(file, src => renderBgPreview(src));
-        },
-        onError: msg => { bgStatus.innerText = msg; bgStatus.className = 'save-status error'; }
-    });
-
-    btnUploadBg.addEventListener('click', async () => {
-        if (!pendingBg) return;
-        btnUploadBg.disabled = true;
-        btnUploadBg.innerText = 'Enviando…';
-        try {
-            const fd = new FormData(); fd.append('imagem', pendingBg);
-            const res = await fetch('/api/landing/bg', { method: 'POST', body: fd });
-            if (res.status === 401) { window.location.replace('/login.html'); return; }
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro');
-            currentBgImage = data.url;
-            renderBgPreview(currentBgImage);
-            bgStatus.innerText = '✓ Imagem de fundo ativa.';
-            bgStatus.className = 'save-status success';
-            showToast('✓ Fundo enviado');
-            pendingBg = null;
-            bgFile.value = '';
-            bgFilename.innerText = '';
-        } catch (e) {
-            bgStatus.innerText = '❌ ' + e.message;
-            bgStatus.className = 'save-status error';
-            showToast('Erro ao enviar fundo', true);
-        } finally {
-            btnUploadBg.innerText = 'Enviar';
-            btnUploadBg.disabled = !pendingBg;
-        }
-    });
-
-    btnClearBgImage.addEventListener('click', async () => {
-        if (!currentBgImage && !pendingBg) return;
-        if (currentBgImage && !confirm('Remover a imagem de fundo da landing?')) return;
-        try {
-            await saveConfig('landing_bg_image_url', '');
-            currentBgImage = '';
-            renderBgPreview('');
-            bgStatus.innerText = '✓ Imagem removida.';
-            bgStatus.className = 'save-status success';
-            showToast('✓ Imagem removida');
-            pendingBg = null;
-            bgFile.value = '';
-            bgFilename.innerText = '';
-        } catch {
-            showToast('Erro ao remover imagem', true);
-        }
-    });
-
-    // ═════════════════════════ CONTENT EDITOR ════════════════════
-    document.querySelectorAll('.content-grid input[data-key]').forEach(input => {
-        const key = input.dataset.key;
-        const statusEl = $('st-' + input.id);
-        let lastSaved = input.value;
-        input.addEventListener('blur', async () => {
-            const val = input.value.trim();
-            if (val === lastSaved) return;
-            statusEl.textContent = 'salvando…';
-            statusEl.className = 'field-status show saving';
-            try {
-                await saveConfig(key, val);
-                lastSaved = val;
-                statusEl.textContent = '✓ salvo';
-                statusEl.className = 'field-status show success';
-                setTimeout(() => statusEl.classList.remove('show'), 1500);
-            } catch (e) {
-                if (e.message === 'auth') return;
-                statusEl.textContent = '✗ erro';
-                statusEl.className = 'field-status show error';
-            }
-        });
-        input.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-        });
-    });
-
-    // ═════════════════════════ SHARED HELPERS ════════════════════
-    function previewLocal(file, cb) {
-        const reader = new FileReader();
-        reader.onload = ev => cb(ev.target.result);
-        reader.readAsDataURL(file);
-    }
-
-    function setupUploadZone({ area, input, onSelect, onError }) {
-        function handle(file) {
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                onError('Arquivo precisa ser uma imagem.');
-                return;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                onError('Imagem muito grande (máx. 10MB).');
-                return;
-            }
-            onSelect(file);
-        }
-        input.addEventListener('change', e => handle(e.target.files[0]));
-        ['dragenter','dragover'].forEach(ev => {
-            area.addEventListener(ev, e => {
-                e.preventDefault(); e.stopPropagation();
-                area.classList.add('dragover');
-            });
-        });
-        ['dragleave','drop'].forEach(ev => {
-            area.addEventListener(ev, e => {
-                e.preventDefault(); e.stopPropagation();
-                area.classList.remove('dragover');
-            });
-        });
-        area.addEventListener('drop', e => {
-            const file = e.dataTransfer.files && e.dataTransfer.files[0];
-            if (file) handle(file);
-        });
-    }
-
-    function handleRadioKeys(e, container, selectFn, attr) {
-        const cards = Array.from(container.children);
-        const i = cards.indexOf(e.currentTarget);
-        let next = null;
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = cards[(i + 1) % cards.length];
-        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = cards[(i - 1 + cards.length) % cards.length];
-        else if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            selectFn(e.currentTarget.dataset[attr]);
-            return;
-        }
-        if (next) { e.preventDefault(); next.focus(); }
-    }
-
-    // ═════════════════════════ INIT ══════════════════════════════
-    (async () => {
-        try {
-            const cfg = await (await fetch('/api/config')).json();
-
-            // Theme — migrate legacy 'cosmico' silently
-            currentTheme = cfg.landing_theme || 'classico';
-            if (currentTheme === 'cosmico') {
-                currentTheme = 'retro';
-                saveConfig('landing_theme', 'retro').catch(() => {});
-            }
-
-            currentLogoUrl = cfg.landing_logo_url     || '';
-            currentBgColor = cfg.landing_bg_color     || '';
-            currentBgImage = cfg.landing_bg_image_url || '';
-
-            // Content fields
-            const fillIfPresent = (id, key) => {
-                const el = $(id);
-                if (el && cfg[key] != null) el.value = cfg[key];
-            };
-            fillIfPresent('cf-title',     'landing_title');
-            fillIfPresent('cf-tagline',   'landing_tagline');
-            fillIfPresent('cf-instagram', 'landing_instagram');
-            fillIfPresent('cf-whatsapp',  'landing_whatsapp');
-            fillIfPresent('cf-footer',    'landing_footer');
-
-            // Bg color sync
-            if (currentBgColor && /^#[0-9a-fA-F]{6}$/.test(currentBgColor)) {
-                bgColorPicker.value = currentBgColor.toLowerCase();
-                bgColorText.value   = currentBgColor.toUpperCase();
-            }
-
-            renderThemes();
-            renderPresets();
-            renderLogoPreview(currentLogoUrl);
-            renderBgPreview(currentBgImage);
-            updateRevertButton();
-        } catch (e) {
-            console.warn('Init:', e);
-            renderThemes();
-            renderPresets();
-            renderLogoPreview('');
-            renderBgPreview('');
-        }
-    })();
-    </script>
+<script src="/admin-shared.js"></script>
 </body>
 </html>
