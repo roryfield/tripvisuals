@@ -32,6 +32,9 @@
             .replace(/\bat\b\s*\d{2}[.:]\d{2}([.:]\d{2})?/gi, '') // time: at 15.57.17
             .replace(/\d{6,}/g, '')                         // leftover time blobs: 155717
             .replace(/\s*\(\d+\)\s*/g, '')                  // WhatsApp suffix: (1)
+            // Strip type keywords — type is set separately, no need to duplicate in name
+            // e.g. "regata-nirvana" → "nirvana" so final is "REGATA NIRVANA PRETA" not "REGATA REGATA NIRVANA PRETA"
+            .replace(/\b(camiseta|regata|moletom|moleton|hoodie|blusa|tank)\b/gi, '')
             .replace(/[-_]/g, ' ')                          // separators → spaces
             .replace(/\s+/g, ' ')
             .trim();

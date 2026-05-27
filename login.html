@@ -17,13 +17,12 @@
         <div class="input-wrap">
             <label for="senha" class="visually-hidden vz-sr-only">Chave de acesso</label>
             <input type="password" id="senha" placeholder="Chave de acesso"
-                   autocomplete="current-password" autofocus
-                   onkeydown="if(event.key==='Enter') fazerLogin()">
+                   autocomplete="current-password" autofocus>
         </div>
 
         <p class="erro-msg" id="erroMsg" role="alert" aria-live="assertive"></p>
 
-        <button class="btn-auth" id="btnAuth" onclick="fazerLogin()">AUTENTICAR</button>
+        <button class="btn-auth" id="btnAuth" type="button">AUTENTICAR</button>
     </main>
 
     <div class="loading-screen" id="loadScreen" aria-hidden="true">

@@ -1,5 +1,23 @@
+# ── Secrets — NEVER commit these ────────────────────────────
+.env
+.env.local
+.env.production
+
+# ── Dependencies ─────────────────────────────────────────────
 node_modules/
-tripvisuals_catalogo.db
-sessions.db
+
+# ── OS / Editor junk ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ── Logs ─────────────────────────────────────────────────────
 *.log
-uploads/
+npm-debug.log*
+
+# ── Build artifacts ──────────────────────────────────────────
+dist/
+build/

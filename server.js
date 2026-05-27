@@ -320,9 +320,10 @@ const loginLimiter = rateLimit({
 });
 
 // ── UPLOAD / WRITE RATE LIMITS (defense-in-depth on authed routes) ─
-// Even with auth, cap how fast someone can blast uploads or config writes.
+// Cap uploads at 100/min — enough for bulk admin sessions (50-file batches
+// with some retry headroom) while still protecting against abuse.
 const uploadLimiter = rateLimit({
-    windowMs: 60 * 1000, max: 30,
+    windowMs: 60 * 1000, max: 100,
     message: { error: 'Muitos uploads. Espere um momento.' },
     standardHeaders: true, legacyHeaders: false
 });
