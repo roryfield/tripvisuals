@@ -75,7 +75,6 @@ let produtos = [];
                     );
                 };
             });
-            });
 
             // Event delegation (safer than inline onclick with template strings)
             grid.addEventListener('click', (e) => {
