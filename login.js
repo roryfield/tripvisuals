@@ -1,6 +1,23 @@
 // [VZ] Login page handler — extracted from login.html for strict CSP.
 (function () {
-    window.fazerLogin = async function fazerLogin() {
+    'use strict';
+
+    function init() {
+        var btn   = document.getElementById('btnAuth');
+        var input = document.getElementById('senha');
+        if (btn)   btn.addEventListener('click', fazerLogin);
+        if (input) input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') fazerLogin();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    async function fazerLogin() {
         var senhaInput = document.getElementById('senha');
         var senha      = senhaInput.value.trim();
         var erroMsg    = document.getElementById('erroMsg');
@@ -19,9 +36,9 @@
 
         try {
             var res = await fetch('/api/login', {
-                method: 'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ senha: senha })
+                body:    JSON.stringify({ senha: senha })
             });
 
             if (res.ok) {
@@ -56,5 +73,5 @@
             btn.disabled  = false;
             btn.innerText = 'AUTENTICAR';
         }
-    };
+    }
 })();

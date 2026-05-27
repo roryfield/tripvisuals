@@ -43,8 +43,7 @@ let produtos = [];
                 card.className = 'produto-card';
                 card.id = `card-${p.id}`;
                 card.innerHTML = `
-                    <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}"
-                         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 200%22><rect fill=%22%230a0a0a%22 width=%22300%22 height=%22200%22/><text x=%22150%22 y=%22100%22 fill=%22%23444%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22sans-serif%22>SEM IMAGEM</text></svg>'">
+                    <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
                     <div class="produto-card-body">
                         <div class="produto-fields">
                             <div class="field-group">
@@ -64,6 +63,18 @@ let produtos = [];
                     </div>
                 `;
                 grid.appendChild(card);
+
+                // Set onerror via JS property (not attribute) — CSP-safe
+                const img = card.querySelector('img');
+                if (img) img.onerror = function () {
+                    this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">' +
+                        '<rect fill="#0a0a0a" width="300" height="200"/>' +
+                        '<text x="150" y="100" fill="#444" text-anchor="middle" dy=".3em" font-family="sans-serif">SEM IMAGEM</text>' +
+                        '</svg>'
+                    );
+                };
+            });
             });
 
             // Event delegation (safer than inline onclick with template strings)
