@@ -1,72 +1,126 @@
-// [VZ] admin-upload — extracted from admin.html
+// [VZ] admin-upload — Upload de produtos com limite de 50 arquivos
 (function () {
     'use strict';
 
-    // Initialize event listeners
-    function initEventListeners() {
-        const dropzone = document.getElementById('dropzone');
-        const btnLancar = document.getElementById('btnLancar');
-        
-        if (dropzone) {
-            dropzone.addEventListener('click', () => {
-                document.getElementById('fileInput').click();
-            });
-            dropzone.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    document.getElementById('fileInput').click();
-                }
-            });
-        }
-        
-        if (btnLancar) {
-            btnLancar.addEventListener('click', enviarTudo);
-        }
-    }
+    const MAX_FILES = 50;
+    const MAX_BYTES = 10 * 1024 * 1024; // 10MB — matches server multer limit
+    const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const PRECOS    = { 'Camiseta': 99.90, 'Regata': 89.90, 'Moletom': 129.90 };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initEventListeners);
-    } else {
-        initEventListeners();
-    }
-
-const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
-    const MAX_BYTES = 10 * 1024 * 1024;                       // 10MB — matches server multer limit
-    const ALLOWED   = ['image/jpeg','image/png','image/webp','image/gif'];
-
-    // Simple HTML escape to prevent XSS from filenames in display
+    // Simple HTML escape to prevent XSS from filenames
     const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
 
     let filaFiles = [];
 
-    document.getElementById('fileInput').onchange = (e) => {
+    function init() {
+        const dropzone  = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const lista     = document.getElementById('lista');
+
+        // Dropzone click + keyboard — fileInput is outside the dropzone to
+        // prevent the click event from bubbling back up and looping.
+        if (dropzone) {
+            dropzone.addEventListener('click', () => fileInput.click());
+            dropzone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+        }
+
+        // Launch button
+        const btnLancar = document.getElementById('btnLancar');
+        if (btnLancar) btnLancar.addEventListener('click', enviarTudo);
+
+        // Event delegation for type select → auto-fill price (CSP-safe)
+        if (lista) {
+            lista.addEventListener('change', (e) => {
+                const sel = e.target;
+                if (sel.tagName === 'SELECT' && sel.dataset.row !== undefined) {
+                    const priceInput = document.getElementById('p-' + sel.dataset.row);
+                    if (priceInput && PRECOS[sel.value] !== undefined) {
+                        priceInput.value = PRECOS[sel.value].toFixed(2);
+                    }
+                }
+            });
+        }
+
+        // File selection handler
+        if (fileInput) fileInput.addEventListener('change', onFilesSelected);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    function showWarning(msg) {
+        let box = document.getElementById('vzUploadWarning');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'vzUploadWarning';
+            box.style.cssText =
+                'margin:12px 0;padding:12px 16px;border-radius:8px;' +
+                'background:rgba(255,190,0,0.08);border:1px solid rgba(255,190,0,0.3);' +
+                'color:#ffbe00;font-size:.85rem;line-height:1.5;';
+            const dropzone = document.getElementById('dropzone');
+            if (dropzone) dropzone.insertAdjacentElement('afterend', box);
+        }
+        box.innerHTML = msg;
+        box.style.display = 'block';
+    }
+
+    function clearWarning() {
+        const box = document.getElementById('vzUploadWarning');
+        if (box) box.style.display = 'none';
+    }
+
+    function onFilesSelected(e) {
         const escolhidos = Array.from(e.target.files);
+        e.target.value = ''; // reset so the same files can be re-selected
+
         if (escolhidos.length === 0) return;
 
-        // ✅ Filter invalid files client-side
+        // ── 50-file limit ───────────────────────────────────────────
+        if (escolhidos.length > MAX_FILES) {
+            showWarning(
+                '⚠️ <strong>Limite de ' + MAX_FILES + ' arquivos por vez.</strong><br>' +
+                'Você selecionou ' + escolhidos.length + ' arquivos. ' +
+                'Apenas os primeiros ' + MAX_FILES + ' foram carregados. ' +
+                'Envie o restante em um segundo lote após concluir este.'
+            );
+            escolhidos.splice(MAX_FILES);
+        } else {
+            clearWarning();
+        }
+
+        // ── Type and size validation ────────────────────────────────
         const validos    = [];
         const rejeitados = [];
         for (const f of escolhidos) {
             if (!ALLOWED.includes(f.type)) {
-                rejeitados.push(`${f.name}: tipo não permitido`);
+                rejeitados.push(escapeHTML(f.name) + ': tipo não permitido');
             } else if (f.size > MAX_BYTES) {
-                rejeitados.push(`${f.name}: maior que 10MB`);
+                rejeitados.push(escapeHTML(f.name) + ': maior que 10MB');
             } else {
                 validos.push(f);
             }
         }
         if (rejeitados.length) {
-            alert('Os seguintes arquivos foram ignorados:\n\n' + rejeitados.join('\n'));
+            showWarning(
+                '⚠️ <strong>' + rejeitados.length + ' arquivo(s) ignorado(s):</strong><br>' +
+                rejeitados.join('<br>')
+            );
         }
-        if (validos.length === 0) {
-            e.target.value = '';
-            return;
-        }
+        if (validos.length === 0) return;
 
         filaFiles = validos;
-        document.getElementById('revisao').style.display = 'block';
+        const revisao = document.getElementById('revisao');
+        if (revisao) revisao.removeAttribute('hidden');
         const lista = document.getElementById('lista');
         lista.innerHTML = '';
 
@@ -99,18 +153,7 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
             `;
             lista.appendChild(tr);
         });
-
-        // Event delegation: update price when product type changes (CSP-safe)
-        lista.addEventListener('change', (e) => {
-            const sel = e.target;
-            if (sel.tagName === 'SELECT' && sel.dataset.row !== undefined) {
-                const priceInput = document.getElementById('p-' + sel.dataset.row);
-                if (priceInput && PRECOS[sel.value] !== undefined) {
-                    priceInput.value = PRECOS[sel.value].toFixed(2);
-                }
-            }
-        });
-    };
+    }
 
     async function enviarTudo() {
         if (filaFiles.length === 0) return;
@@ -132,11 +175,7 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
             const preco     = document.getElementById(`p-${i}`).value;
             const nomeFinal = `${tipo} ${estampa} ${cor}`.toUpperCase().trim();
 
-            if (!estampa) {
-                status.innerText = '⚠️';
-                falha++;
-                continue;
-            }
+            if (!estampa) { status.innerText = '⚠️'; falha++; continue; }
 
             const fd = new FormData();
             fd.append('imagem', filaFiles[i]);
@@ -155,6 +194,6 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
         }
 
         btn.innerText = `${sucesso} ✅  ${falha ? falha + ' ❌' : ''} — REDIRECIONANDO...`;
-        setTimeout(() => window.location.href = '/admin-hub.html', 2000);
+        setTimeout(() => { window.location.href = '/admin-hub.html'; }, 2000);
     }
 })();
