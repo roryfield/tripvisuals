@@ -31,14 +31,13 @@
     </div>
 
     <!-- Drop zone -->
-    <div class="dropzone" onclick="document.getElementById('fileInput').click()"
-         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('fileInput').click()}"
-         role="button" tabindex="0" aria-label="Selecionar imagens de produtos">
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Selecionar imagens de produtos">
         <h3>+ ADICIONAR PRODUTOS</h3>
         <p>Clique para selecionar imagens — nomenclatura e precificação automáticas</p>
-        <p class="upload-help">JPG, PNG, WEBP ou GIF · máx. 10MB por imagem</p>
-        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        <p class="upload-help">JPG, PNG, WEBP ou GIF · máx. 10MB por imagem · máx. 50 arquivos por vez</p>
     </div>
+    <!-- fileInput lives OUTSIDE the dropzone to prevent click event bubbling loop -->
+    <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
 
     <!-- Revisão — exibida após seleção de imagens -->
     <div id="revisao" hidden>
@@ -56,7 +55,7 @@
             <tbody id="lista"></tbody>
         </table>
 
-        <button id="btnLancar" class="btn-launch btn-launch-full" onclick="enviarTudo()">
+        <button id="btnLancar" type="button" class="btn-launch btn-launch-full">
             Lançar no Abismo
         </button>
     </div>
