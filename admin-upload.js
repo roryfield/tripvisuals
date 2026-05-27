@@ -2,6 +2,34 @@
 (function () {
     'use strict';
 
+    // Initialize event listeners
+    function initEventListeners() {
+        const dropzone = document.getElementById('dropzone');
+        const btnLancar = document.getElementById('btnLancar');
+        
+        if (dropzone) {
+            dropzone.addEventListener('click', () => {
+                document.getElementById('fileInput').click();
+            });
+            dropzone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    document.getElementById('fileInput').click();
+                }
+            });
+        }
+        
+        if (btnLancar) {
+            btnLancar.addEventListener('click', enviarTudo);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEventListeners);
+    } else {
+        initEventListeners();
+    }
+
 const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
     const MAX_BYTES = 10 * 1024 * 1024;                       // 10MB — matches server multer limit
     const ALLOWED   = ['image/jpeg','image/png','image/webp','image/gif'];
@@ -53,7 +81,7 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
             tr.innerHTML = `
                 <td><img src="${URL.createObjectURL(file)}" alt="Pré-visualização do produto"></td>
                 <td>
-                    <select id="t-${i}" aria-label="Tipo de produto" onchange="document.getElementById('p-${i}').value = PRECOS[this.value].toFixed(2)">
+                    <select id="t-${i}" aria-label="Tipo de produto" data-row="${i}">
                         <option value="Camiseta">Camiseta</option>
                         <option value="Regata">Regata</option>
                         <option value="Moletom">Moletom</option>
@@ -70,6 +98,17 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
                 <td class="status-cell" id="status-${i}">—</td>
             `;
             lista.appendChild(tr);
+        });
+
+        // Event delegation: update price when product type changes (CSP-safe)
+        lista.addEventListener('change', (e) => {
+            const sel = e.target;
+            if (sel.tagName === 'SELECT' && sel.dataset.row !== undefined) {
+                const priceInput = document.getElementById('p-' + sel.dataset.row);
+                if (priceInput && PRECOS[sel.value] !== undefined) {
+                    priceInput.value = PRECOS[sel.value].toFixed(2);
+                }
+            }
         });
     };
 
@@ -118,7 +157,4 @@ const PRECOS    = { "Camiseta": 99.90, "Regata": 89.90, "Moletom": 129.90 };
         btn.innerText = `${sucesso} ✅  ${falha ? falha + ' ❌' : ''} — REDIRECIONANDO...`;
         setTimeout(() => window.location.href = '/admin-hub.html', 2000);
     }
-
-    // Expose 'enviarTudo' for inline onclick attributes
-    window.enviarTudo = enviarTudo;
 })();

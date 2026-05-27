@@ -2,7 +2,21 @@
 (function () {
     'use strict';
 
-window.onload = async () => {
+    function init() {
+        var btnClaro  = document.getElementById('btnClaro');
+        var btnEscuro = document.getElementById('btnEscuro');
+        if (btnClaro)  btnClaro.addEventListener('click',  function () { setTema('claro'); });
+        if (btnEscuro) btnEscuro.addEventListener('click', function () { setTema('escuro'); });
+        loadStats();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    async function loadStats() {
         try {
             const res = await fetch('/api/config');
             if (!res.ok) throw new Error('config');
@@ -13,12 +27,10 @@ window.onload = async () => {
                 layoutLabels[configs.layout_padrao] || '—';
             document.getElementById('statTema').innerText =
                 configs.tema_admin === 'claro' ? '☀️ Claro' : '🌑 Escuro';
-
             marcarTemaBtn(configs.tema_admin || 'escuro');
         } catch (e) {
             document.getElementById('statLayout').innerHTML = '<span class="stat-error">Erro ao carregar</span>';
             document.getElementById('statTema').innerHTML   = '<span class="stat-error">Erro ao carregar</span>';
-            // Default theme button state
             marcarTemaBtn(document.body.classList.contains('tema-claro') ? 'claro' : 'escuro');
         }
 
@@ -30,7 +42,7 @@ window.onload = async () => {
         } catch (e) {
             document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
         }
-    };
+    }
 
     function marcarTemaBtn(tema) {
         document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
@@ -49,7 +61,4 @@ window.onload = async () => {
             });
         } catch (e) { /* visual change applied; persistence retried on next load */ }
     }
-
-    // Expose 'setTema' for inline onclick attributes
-    window.setTema = setTema;
 })();

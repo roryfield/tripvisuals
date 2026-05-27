@@ -1,5 +1,4 @@
 // [VZ] Trip Visuals Wear — Catalog page logic (external for strict CSP)
-// Extracted from catalogo.html. No build step needed.
 (function () {
     'use strict';
 
@@ -19,14 +18,17 @@
         '</svg>'
     );
 
+    function setImgFallback(img) {
+        img.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
+    }
+
     // ── STATE ────────────────────────────────────────────────────
     var todosProdutos = [];
     var searchAberta  = false;
-    // WhatsApp number — updated from config on load
     var NUMERO_LOJA   = '5511940537169';
 
-    // ── LAYOUT ────────────────────────────────────────────────────
-    window.setLayout = function setLayout(layout) {
+    // ── LAYOUT ───────────────────────────────────────────────────
+    function setLayout(layout) {
         document.getElementById('vitrine').className = layout;
         ['grid-1', 'grid-2', 'grid-3'].forEach(function (l) {
             var btn = document.getElementById('lt-' + l);
@@ -35,10 +37,10 @@
             btn.setAttribute('aria-pressed', l === layout ? 'true' : 'false');
         });
         try { sessionStorage.setItem('cliente_layout', layout); } catch (_) {}
-    };
+    }
 
-    // ── SEARCH ────────────────────────────────────────────────────
-    window.toggleSearch = function toggleSearch() {
+    // ── SEARCH ───────────────────────────────────────────────────
+    function toggleSearch() {
         var input = document.getElementById('searchInput');
         var btn   = document.getElementById('searchToggle');
         searchAberta = !searchAberta;
@@ -50,9 +52,9 @@
             input.value = '';
             fecharResultados();
         }
-    };
+    }
 
-    window.fecharSearchSeVazio = function fecharSearchSeVazio() {
+    function fecharSearchSeVazio() {
         var input = document.getElementById('searchInput');
         if (!input.value.trim()) {
             setTimeout(function () {
@@ -63,14 +65,14 @@
                 fecharResultados();
             }, 200);
         }
-    };
+    }
 
     function fecharResultados() {
         var el = document.getElementById('searchResults');
         if (el) el.classList.remove('visible');
     }
 
-    window.filtrarProdutos = function filtrarProdutos(query) {
+    function filtrarProdutos(query) {
         var box = document.getElementById('searchResults');
         var q   = query.trim().toLowerCase();
         if (!q) { fecharResultados(); return; }
@@ -96,15 +98,18 @@
             btn.className = 'sr-item';
             btn.type      = 'button';
             btn.innerHTML =
-                '<img src="' + esc(p.imagem_url || '') + '" alt="" onerror="this.src=\'' + FALLBACK_IMG + '\'">' +
+                '<img src="' + esc(p.imagem_url || '') + '" alt="">' +
                 '<div class="sr-item-info">' +
                 '<div class="sr-item-name">' + esc(p.nome) + '</div>' +
                 '<div class="sr-item-price">R$ ' + Number(p.preco).toFixed(2) + '</div>' +
                 '</div>';
+            // Set onerror via JS property — CSP-safe
+            var img = btn.querySelector('img');
+            if (img) setImgFallback(img);
             btn.addEventListener('click', function () { comprarItem(p.nome, p.preco); });
             grid.appendChild(btn);
         });
-    };
+    }
 
     document.addEventListener('click', function (e) {
         if (!e.target.closest('.search-wrap') && !e.target.closest('#searchResults')) {
@@ -160,11 +165,9 @@
             btn.className = 'card-produto';
             btn.type      = 'button';
             btn.setAttribute('aria-label', p.nome + ' — R$ ' + Number(p.preco).toFixed(2) + ' — Comprar via WhatsApp');
-            // Staggered entrance: 40ms per card, max 600ms total
             btn.style.animationDelay = Math.min(i * 40, 600) + 'ms';
             btn.innerHTML =
-                '<img src="' + esc(p.imagem_url || '') + '" alt="' + esc(p.nome) + '"' +
-                ' onerror="this.src=\'' + FALLBACK_IMG + '\'" loading="lazy">' +
+                '<img src="' + esc(p.imagem_url || '') + '" alt="' + esc(p.nome) + '" loading="lazy">' +
                 '<div class="buy-overlay" aria-hidden="true">' +
                 '<div class="buy-pill">Adquirir via WhatsApp</div>' +
                 '</div>' +
@@ -172,48 +175,63 @@
                 '<h3>' + esc(p.nome) + '</h3>' +
                 '<div class="price">R$ ' + Number(p.preco).toFixed(2) + '</div>' +
                 '</div>';
+            // Set onerror via JS property — CSP-safe
+            var img = btn.querySelector('img');
+            if (img) setImgFallback(img);
             btn.addEventListener('click', function () { comprarItem(p.nome, p.preco); });
             vitrine.appendChild(btn);
         });
     }
 
-    // ── INIT — single merged API call ─────────────────────────────
+    // ── INIT ─────────────────────────────────────────────────────
+    function initEventListeners() {
+        var searchToggle = document.getElementById('searchToggle');
+        var searchInput  = document.getElementById('searchInput');
+        var layoutBtns   = document.querySelectorAll('.lt-btn');
+        var logoEl       = document.getElementById('landingLogo');
+
+        if (searchToggle) searchToggle.addEventListener('click', toggleSearch);
+        if (searchInput) {
+            searchInput.addEventListener('input', function () { filtrarProdutos(this.value); });
+            searchInput.addEventListener('blur', fecharSearchSeVazio);
+        }
+        layoutBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () { setLayout(this.id.replace('lt-', '')); });
+        });
+        // Logo onerror — CSP-safe
+        if (logoEl) logoEl.onerror = function () { this.style.display = 'none'; };
+    }
+
     async function carregar() {
         renderSkeleton(6);
 
-        // Single request for config (layout + whatsapp number + logo)
         var cfg = {};
         try {
             var resCfg = await fetch('/api/config');
             cfg = resCfg.ok ? await resCfg.json() : {};
         } catch (_) {}
 
-        // Apply layout preference
         var adminLayout  = cfg.layout_padrao || 'grid-3';
         var sessaoLayout = null;
         try { sessaoLayout = sessionStorage.getItem('cliente_layout'); } catch (_) {}
         setLayout(sessaoLayout || adminLayout);
 
-        // Update WhatsApp number from admin config if set
         if (cfg.landing_whatsapp) {
             var m = cfg.landing_whatsapp.match(/wa\.me\/(\d+)/);
             if (m) NUMERO_LOJA = m[1];
         }
 
-        // Update header logo
         if (cfg.landing_logo_url) {
             var logo = document.getElementById('landingLogo');
             if (logo) logo.src = cfg.landing_logo_url;
         }
 
-        // Update WhatsApp header button greeting link
         var waBtn = document.getElementById('whatsappBtn');
         if (waBtn) {
             waBtn.href = 'https://wa.me/' + NUMERO_LOJA +
                 '?text=' + encodeURIComponent('Olá! Vim pelo catálogo Trip Visuals 🛸');
         }
 
-        // Load products
         try {
             var resProd   = await fetch('/api/produtos');
             todosProdutos = resProd.ok ? await resProd.json() : [];
@@ -227,10 +245,13 @@
         }
     }
 
-    // Run on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', carregar);
+        document.addEventListener('DOMContentLoaded', function () {
+            initEventListeners();
+            carregar();
+        });
     } else {
+        initEventListeners();
         carregar();
     }
 })();
