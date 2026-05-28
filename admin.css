@@ -1450,3 +1450,34 @@ html[data-init] body { visibility: visible !important; }
     text-transform: uppercase;
     animation: vz-brand-fade 0.4s 0.3s both;
 }
+
+/* ── Admin background — same DNA as login, but subtle ──── */
+html { background: var(--bg); }
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,229,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: admin-grid-drift 30s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, rgba(157,0,255,0.04) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes admin-grid-drift {
+    from { background-position: 0 0; }
+    to   { background-position: 60px 60px; }
+}
+#pageContent, main, .page-wrapper { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) {
+    body::before { animation: none; background-position: 0 0; }
+}
