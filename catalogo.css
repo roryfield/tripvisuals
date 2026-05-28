@@ -367,3 +367,6 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+/* CSP-safe utility */
+.vz-ig-hint { font-size: 0.8rem; color: #555; margin-top: 4px; }

@@ -477,3 +477,6 @@ html[data-init] body { visibility: visible !important; }
             .preset-thumb { width: 80px; height: 80px; }
             .color-row { justify-content: center; }
         }
+
+/* section-hint base margin (was inline style) */
+.section-hint { margin-top: 3px; letter-spacing: 0.5px; }

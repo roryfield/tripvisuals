@@ -1371,3 +1371,18 @@ html[data-init] body { visibility: visible !important; }
             }
             .help-section { padding: 22px 20px; }
         }
+
+/* ── CSP-safe utility classes (replaces inline style= in JS) ── */
+.vz-input-warn       { border-color: rgba(255,190,0,0.5) !important; }
+.vz-input-price      { max-width: 100px; }
+.vz-empty-state      { color: #888; padding: 24px; font-size: .85rem; }
+.vz-upload-warning   {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(255,190,0,0.08);
+    border: 1px solid rgba(255,190,0,0.3);
+    color: #ffbe00;
+    font-size: .85rem;
+    line-height: 1.6;
+}
