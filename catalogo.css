@@ -356,6 +356,7 @@
         }
         .card-produto {
             animation: cardIn 0.4s ease both;
+            animation-delay: var(--card-delay, 0ms);
         }
         @media (prefers-reduced-motion: reduce) {
             .skeleton-img, .skeleton-text { animation: none; }
@@ -370,3 +371,268 @@
 
 /* CSP-safe utility */
 .vz-ig-hint { font-size: 0.8rem; color: #555; margin-top: 4px; }
+
+/* ── ZIP "em breve" button ──────────────────────────────── */
+.zip-soon-wrap        { position: relative; display: flex; align-items: center; }
+.zip-soon-btn         { opacity: 0.35; cursor: not-allowed; }
+.zip-soon-btn:hover   { opacity: 0.5; transform: none !important; }
+.zip-soon-badge       {
+    position: absolute;
+    top: -6px; right: -4px;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: var(--bg);
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    padding: 1px 4px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ── Color badge on product card ────────────────────────── */
+.card-meta            { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.cor-badge            {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #888;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 1px 6px;
+    white-space: nowrap;
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   PRODUCT DETAIL MODAL
+   ───────────────────────────────────────────────────────── */
+.product-modal {
+    position: fixed; inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.product-modal.open { display: flex; animation: modal-fade-in 0.25s ease both; }
+
+.product-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(3, 3, 3, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.product-modal-card {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    background: #0a0a0a;
+    border: 1px solid #1f1f1f;
+    border-radius: 12px;
+    max-width: 1100px;
+    width: 100%;
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+    animation: modal-card-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(157, 0, 255, 0.15),
+                0 0 64px rgba(0, 229, 255, 0.04);
+}
+
+.product-modal-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 36px; height: 36px;
+    background: rgba(20, 20, 20, 0.85);
+    border: 1px solid #2a2a2a;
+    color: #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.2s, color 0.2s, transform 0.15s, border-color 0.2s;
+}
+.product-modal-close:hover {
+    background: var(--cyan); color: #000;
+    border-color: var(--cyan);
+    transform: scale(1.05);
+}
+.product-modal-close svg { width: 18px; height: 18px; }
+
+.product-modal-image {
+    background: linear-gradient(135deg, #060606 0%, #0e0e0e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 0;
+}
+.product-modal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: 70vh;
+    animation: modal-img-in 0.45s 0.1s ease both;
+}
+
+.product-modal-info {
+    padding: 40px 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.product-modal-eyebrow {
+    font-size: 0.65rem;
+    color: var(--purple);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.product-modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: #fff;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    margin: 0 0 8px;
+}
+.product-modal-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.product-modal-cor {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #aaa;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+.product-modal-cor:empty { display: none; }
+.product-modal-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--cyan);
+    letter-spacing: 1.5px;
+    line-height: 1;
+}
+.product-modal-desc {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.6;
+    margin: 4px 0 18px;
+}
+.product-modal-buy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #25d366;
+    color: #000;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 8px;
+    padding: 16px 22px;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+    width: 100%;
+}
+.product-modal-buy:hover {
+    background: #2eea75;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(37, 211, 102, 0.3);
+}
+.product-modal-buy:active { transform: translateY(0); }
+.product-modal-buy svg { width: 20px; height: 20px; }
+.product-modal-foot {
+    font-size: 0.65rem;
+    color: #555;
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+}
+
+@keyframes modal-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes modal-card-rise {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes modal-img-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Modal mobile ─────────────────────────────────────── */
+@media (max-width: 760px) {
+    .product-modal { padding: 0; }
+    .product-modal-card {
+        grid-template-columns: 1fr;
+        max-height: 100vh;
+        border-radius: 0;
+        border: none;
+        height: 100vh;
+    }
+    .product-modal-image {
+        min-height: 48vh;
+        max-height: 55vh;
+    }
+    .product-modal-info {
+        padding: 24px 22px 28px;
+    }
+    .product-modal-title { font-size: 1.6rem; letter-spacing: 1.5px; }
+    .product-modal-price { font-size: 1.7rem; }
+    /* a11y: 44px minimum touch target */
+    .product-modal-close { width: 44px; height: 44px; top: 12px; right: 12px; }
+    .product-modal-close svg { width: 20px; height: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product-modal-card,
+    .product-modal-image img { animation: none; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   CARD POLISH — update buy pill text/feel
+   ───────────────────────────────────────────────────────── */
+.buy-pill {
+    background: rgba(255, 255, 255, 0.95);
+    color: #000;
+}
+.card-produto:hover {
+    border-color: rgba(0, 229, 255, 0.5);
+    box-shadow: 0 16px 40px rgba(0, 229, 255, 0.1),
+                0 0 0 1px rgba(0, 229, 255, 0.08);
+}
+.card-produto::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: box-shadow 0.3s;
+}
+.card-produto:hover::after {
+    box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.12);
+}
