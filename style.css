@@ -230,3 +230,12 @@ body {
     color: var(--text-muted, #888);
     line-height: 1.5;
   }
+
+/* ── VOIDZONE credit refinement ─────────────────────── */
+.footer-credits strong {
+    color: #666;
+    letter-spacing: 1px;
+}
+.footer-credits:hover strong {
+    color: #888;
+}

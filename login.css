@@ -1,139 +1,264 @@
-
-
-/* ═══ login.html → extracted styles ═══ */
+/* ═══ Trip Visuals | Login — by VOIDZONE ═══ */
 :root {
-            --cyan:   #00e5ff;
-            --purple: #9d00ff;
-            --danger: #ff4d4d;
-            --bg:     #050505;
-            --panel:  #0c0c0c;
-        }
+    --cyan:   #00e5ff;
+    --purple: #9d00ff;
+    --danger: #ff4d4d;
+    --bg:     #050505;
+    --panel:  #0c0c0c;
+}
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            background: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            font-family: 'DM Sans', sans-serif;
-            color: #fff;
-            overflow: hidden;
-            padding: 20px;
-        }
+body {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    color: #fff;
+    overflow: hidden;
+    padding: 20px;
+}
 
-        .login-card {
-            background: var(--panel);
-            padding: 50px 40px;
-            border: 1px solid var(--purple);
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(157, 0, 255, 0.2);
-            text-align: center;
-            transition: opacity 0.5s ease;
-            width: 100%;
-            max-width: 360px;
-        }
+/* ── Animated background grid ─────────────────────────── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: grid-drift 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(157,0,255,0.07) 0%, transparent 70%);
+    animation: pulse-glow 6s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes grid-drift {
+    from { background-position: 0 0; }
+    to   { background-position: 48px 48px; }
+}
+@keyframes pulse-glow {
+    from { opacity: 0.5; }
+    to   { opacity: 1; }
+}
 
-        .login-brand {
-            font-family: 'Bebas Neue', sans-serif;
-            color: var(--cyan);
-            letter-spacing: 6px;
-            margin: 0 0 4px;
-            font-size: 1.8rem;
-        }
-        .login-sub {
-            font-size: 0.7rem;
-            color: #777;
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            letter-spacing: 1px;
-        }
+/* ── Login card ───────────────────────────────────────── */
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: var(--panel);
+    padding: 50px 40px 40px;
+    border: 1px solid rgba(157,0,255,0.4);
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 1px rgba(0,229,255,0.05),
+        0 0 40px rgba(157,0,255,0.15),
+        0 24px 48px rgba(0,0,0,0.6);
+    text-align: center;
+    width: 100%;
+    max-width: 360px;
+    animation: card-entry 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes card-entry {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.96);
+        box-shadow: 0 0 0 rgba(157,0,255,0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
-        .input-wrap { position: relative; margin: 20px 0 8px; }
-        input {
-            background: #111;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 15px;
-            width: 100%;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-family: 'DM Sans', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input:focus {
-            border-color: var(--cyan);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
-        }
+.login-brand {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--cyan);
+    letter-spacing: 6px;
+    margin: 0 0 4px;
+    font-size: 1.8rem;
+    animation: brand-flicker 0.4s 0.5s both;
+}
+@keyframes brand-flicker {
+    0%   { opacity: 0; text-shadow: none; }
+    40%  { opacity: 1; text-shadow: 0 0 20px var(--cyan); }
+    60%  { opacity: 0.7; }
+    100% { opacity: 1; text-shadow: 0 0 8px rgba(0,229,255,0.4); }
+}
 
-        .erro-msg {
-            font-size: 0.78rem;
-            color: var(--danger);
-            min-height: 18px;
-            margin-bottom: 14px;
-            letter-spacing: 0.3px;
-            transition: opacity 0.2s;
-        }
+.login-sub {
+    font-size: 0.7rem;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    animation: fade-in 0.4s 0.7s both;
+}
 
-        .btn-auth {
-            background: #fff;
-            color: #000;
-            font-weight: 700;
-            padding: 15px;
-            width: 100%;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.9rem;
-            font-family: 'DM Sans', sans-serif;
-            transition: background 0.3s, opacity 0.3s;
-        }
-        .btn-auth:hover:not(:disabled) { background: var(--cyan); }
-        .btn-auth:disabled              { opacity: 0.5; cursor: not-allowed; }
-        .btn-auth:focus-visible         { outline: 2px solid var(--cyan); outline-offset: 2px; }
+/* ── Input ────────────────────────────────────────────── */
+.input-wrap {
+    position: relative;
+    margin: 20px 0 8px;
+    animation: fade-in 0.4s 0.8s both;
+}
+input {
+    background: #0a0a0a;
+    border: 1px solid #222;
+    color: #fff;
+    padding: 15px;
+    width: 100%;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+input:focus {
+    border-color: var(--cyan);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.12), inset 0 0 12px rgba(0,229,255,0.03);
+}
 
-        /* Loading screen */
-        .loading-screen {
-            position: absolute; inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-        .loading-screen.active { opacity: 1; pointer-events: all; }
+/* ── Error message ────────────────────────────────────── */
+.erro-msg {
+    font-size: 0.78rem;
+    color: var(--danger);
+    min-height: 18px;
+    margin-bottom: 14px;
+    letter-spacing: 0.3px;
+    animation: fade-in 0.4s 0.9s both;
+}
 
-        .void-loader {
-            width: 50px; height: 50px;
-            border: 2px solid transparent;
-            border-top-color: var(--cyan);
-            border-bottom-color: var(--purple);
-            border-radius: 50%;
-            animation: void-spin 1.5s cubic-bezier(0.68,-0.55,0.265,1.55) infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes void-spin {
-            0%   { transform: rotate(0deg);   opacity: 0.5; }
-            50%  { transform: rotate(180deg); opacity: 1; box-shadow: 0 0 15px var(--cyan); }
-            100% { transform: rotate(360deg); opacity: 0.5; }
-        }
+/* ── Auth button ──────────────────────────────────────── */
+.btn-auth {
+    background: #fff;
+    color: #000;
+    font-weight: 700;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+    animation: fade-in 0.4s 1s both;
+}
+.btn-auth:hover:not(:disabled) {
+    background: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,229,255,0.35);
+    transform: translateY(-1px);
+}
+.btn-auth:active:not(:disabled) { transform: translateY(0); }
+.btn-auth:disabled  { opacity: 0.45; cursor: not-allowed; }
+.btn-auth:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
-        @keyframes shake {
-            0%,100%{transform:translateX(0)}
-            20%{transform:translateX(-8px)}
-            40%{transform:translateX(8px)}
-            60%{transform:translateX(-5px)}
-            80%{transform:translateX(5px)}
-        }
-        .login-card.shake { animation: shake 0.4s ease; }
+/* ── VOIDZONE credit ──────────────────────────────────── */
+.vz-login-credit {
+    position: relative;
+    z-index: 1;
+    margin-top: 28px;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #2a2a2a;
+    animation: fade-in 0.4s 1.2s both;
+    transition: color 0.3s;
+    text-decoration: none;
+    cursor: default;
+    user-select: none;
+}
+.vz-login-credit:hover { color: #444; }
 
-        @media (prefers-reduced-motion: reduce) {
-            .void-loader { animation: none; }
-            .login-card.shake { animation: none; }
-        }
+/* ── Loading screen ───────────────────────────────────── */
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 100;
+}
+.loading-screen.active {
+    opacity: 1;
+    pointer-events: all;
+}
+.loading-screen.active .load-brand {
+    animation: brand-flicker 0.5s 0.2s both;
+}
+.load-brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 8px;
+    color: var(--cyan);
+    opacity: 0;
+}
+.void-loader {
+    width: 44px;
+    height: 44px;
+    border: 2px solid transparent;
+    border-top-color: var(--cyan);
+    border-bottom-color: var(--purple);
+    border-radius: 50%;
+    animation: void-spin 1.2s ease-in-out infinite;
+}
+@keyframes void-spin {
+    0%   { transform: rotate(0deg);   box-shadow: 0 0 0 rgba(0,229,255,0); }
+    50%  { transform: rotate(180deg); box-shadow: 0 0 16px rgba(0,229,255,0.3); }
+    100% { transform: rotate(360deg); box-shadow: 0 0 0 rgba(0,229,255,0); }
+}
+.vz-muted-label {
+    font-size: 0.7rem;
+    color: #333;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+}
+
+/* ── Shake on error ───────────────────────────────────── */
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    15%     { transform: translateX(-9px); }
+    30%     { transform: translateX(9px); }
+    45%     { transform: translateX(-6px); }
+    60%     { transform: translateX(6px); }
+    75%     { transform: translateX(-3px); }
+    90%     { transform: translateX(3px); }
+}
+.login-card.shake { animation: shake 0.5s ease; }
+
+/* ── Utility ──────────────────────────────────────────── */
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.vz-sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before, body::after { animation: none; }
+    .login-card, .login-brand, .login-sub,
+    .input-wrap, .erro-msg, .btn-auth, .vz-login-credit { animation: none; }
+    .void-loader   { animation: none; border-top-color: var(--cyan); }
+    .login-card.shake { animation: none; }
+}

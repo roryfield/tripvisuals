@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trip Visuals | Acesso Restrito</title>
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/login.css">
@@ -15,7 +16,7 @@
         <p class="login-sub">Acesso Restrito · Painel Admin</p>
 
         <div class="input-wrap">
-            <label for="senha" class="visually-hidden vz-sr-only">Chave de acesso</label>
+            <label for="senha" class="vz-sr-only">Chave de acesso</label>
             <input type="password" id="senha" placeholder="Chave de acesso"
                    autocomplete="current-password" autofocus>
         </div>
@@ -25,11 +26,12 @@
         <button class="btn-auth" id="btnAuth" type="button">AUTENTICAR</button>
     </main>
 
+    <p class="vz-login-credit">Sistema por VOIDZONE</p>
+
     <div class="loading-screen" id="loadScreen" aria-hidden="true">
+        <p class="load-brand">TRIP VISUALS</p>
         <div class="void-loader"></div>
-        <p class="vz-muted-label">
-            Estabelecendo conexão...
-        </p>
+        <p class="vz-muted-label">Autenticando...</p>
     </div>
 
     <script src="/login.js"></script>
