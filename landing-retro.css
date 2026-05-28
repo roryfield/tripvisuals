@@ -232,3 +232,6 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.82rem; color: var(--text-soft); opacity: 0.75; line-height: 1.5;
   }
+
+/* VOIDZONE credit */
+.footer strong { color: inherit; letter-spacing: inherit; }

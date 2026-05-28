@@ -135,8 +135,10 @@
         el.setAttribute('aria-hidden', 'true');
         el.innerHTML =
             '<div class="vz-exit-content">' +
+            '  <p class="vz-exit-brand">TRIP VISUALS</p>' +
             '  <div class="vz-exit-spinner"></div>' +
             '  <p class="vz-exit-msg">Encerrando sessão...</p>' +
+            '  <p class="vz-exit-credit">Sistema por VOIDZONE</p>' +
             '</div>';
         document.body.appendChild(el);
     }
@@ -148,7 +150,7 @@
         var overlay = document.getElementById('vzExitOverlay');
         if (overlay) overlay.classList.add('active');
 
-        fetch('/api/logout', { method: 'POST' })
+        fetch('/api/logout', { method: 'POST', credentials: 'include' })
             .catch(function () { /* still redirect on failure */ })
             .finally(function () {
                 setTimeout(function () {
