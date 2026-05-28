@@ -155,7 +155,7 @@
                 '<div class="state-msg">' +
                 '<span class="icon" aria-hidden="true">👕</span>' +
                 '<p>Coleção sendo montada. Volte em breve!</p>' +
-                '<p style="font-size:0.8rem;color:#555;margin-top:4px">Siga no Instagram para novidades.</p>' +
+                '<p class="vz-ig-hint">Siga no Instagram para novidades.</p>' +
                 '</div>';
             return;
         }

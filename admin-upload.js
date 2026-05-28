@@ -134,11 +134,11 @@
             if (!inp) return;
             if (col) {
                 inp.value = col + ' ' + counter;
-                inp.style.borderColor = '';
+                inp.classList.remove('vz-input-warn');
                 counter++;
             } else {
                 inp.value = '';
-                inp.style.borderColor = 'rgba(255,190,0,0.5)';
+                inp.classList.add('vz-input-warn');
             }
         });
         updatePreview();
@@ -198,10 +198,7 @@
         if (!box) {
             box = document.createElement('div');
             box.id = 'vzUploadWarning';
-            box.style.cssText =
-                'margin:12px 0;padding:12px 16px;border-radius:8px;' +
-                'background:rgba(255,190,0,0.08);border:1px solid rgba(255,190,0,0.3);' +
-                'color:#ffbe00;font-size:.85rem;line-height:1.6;';
+            box.className = 'vz-upload-warning';
             var dropzone = document.getElementById('dropzone');
             if (dropzone) dropzone.insertAdjacentElement('afterend', box);
         }
@@ -276,14 +273,14 @@
                 '</select></td>' +
                 '<td><input type="text" id="e-' + i + '" value="' + esc(nomeAuto) + '" ' +
                     'aria-label="Nome" ' +
-                    (isBlank ? 'placeholder="aguardando coleção..." style="border-color:rgba(255,190,0,0.5)"' : '') +
+                    (isBlank ? 'placeholder="aguardando coleção..." class="vz-input-warn"' : '') +
                 '></td>' +
                 '<td><select id="c-' + i + '" aria-label="Cor">' +
                     '<option value="Preta"'  + (batchCor === 'Preta'  ? ' selected' : '') + '>Preta</option>' +
                     '<option value="Branca"' + (batchCor === 'Branca' ? ' selected' : '') + '>Branca</option>' +
                 '</select></td>' +
                 '<td><input type="number" id="p-' + i + '" value="' + precoAuto + '" ' +
-                    'step="0.01" min="0" max="999999" style="max-width:100px" aria-label="Preço"></td>' +
+                    'step="0.01" min="0" max="999999" class="vz-input-price" aria-label="Preço"></td>' +
                 '<td class="status-cell" id="status-' + i + '">—</td>';
             lista.appendChild(tr);
         });

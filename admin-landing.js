@@ -74,7 +74,7 @@
                 <div class="theme-body">
                     <div>
                         <div class="theme-name">${escapeHTML(t.name)}</div>
-                        <div class="section-hint" style="margin-top:3px;letter-spacing:0.5px">${escapeHTML(t.description)}</div>
+                        <div class="section-hint">${escapeHTML(t.description)}</div>
                     </div>
                     <span class="theme-active-tag" aria-hidden="true">Ativo</span>
                 </div>

@@ -120,7 +120,7 @@
             .catch(function () {
                 var target = document.getElementById('vzHelpBody');
                 if (target) target.innerHTML =
-                    '<p style="color:#888;padding:24px;font-size:.85rem">' +
+                    '<p class="vz-empty-state">' +
                     'Manual temporariamente indisponível.</p>';
             });
     }
