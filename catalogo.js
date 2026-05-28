@@ -106,7 +106,7 @@
             // Set onerror via JS property — CSP-safe
             var img = btn.querySelector('img');
             if (img) setImgFallback(img);
-            btn.addEventListener('click', function () { comprarItem(p.nome, p.preco); });
+            btn.addEventListener('click', function () { abrirModal(p); });
             grid.appendChild(btn);
         });
     }
@@ -164,27 +164,97 @@
             var btn = document.createElement('button');
             btn.className = 'card-produto';
             btn.type      = 'button';
-            btn.setAttribute('aria-label', p.nome + ' — R$ ' + Number(p.preco).toFixed(2) + ' — Comprar via WhatsApp');
-            btn.style.animationDelay = Math.min(i * 40, 600) + 'ms';
+            btn.setAttribute('aria-label', p.nome + (p.cor ? ' — ' + p.cor : '') + ' — R$ ' + Number(p.preco).toFixed(2) + ' — Ver detalhes');
+            btn.style.setProperty('--card-delay', Math.min(i * 40, 600) + 'ms');
             btn.innerHTML =
                 '<img src="' + esc(p.imagem_url || '') + '" alt="' + esc(p.nome) + '" loading="lazy">' +
                 '<div class="buy-overlay" aria-hidden="true">' +
-                '<div class="buy-pill">Adquirir via WhatsApp</div>' +
+                '<div class="buy-pill">Ver detalhes</div>' +
                 '</div>' +
                 '<div class="card-info">' +
                 '<h3>' + esc(p.nome) + '</h3>' +
-                '<div class="price">R$ ' + Number(p.preco).toFixed(2) + '</div>' +
+                '<div class="card-meta">' +
+                (p.cor ? '<span class="cor-badge">' + esc(p.cor) + '</span>' : '') +
+                '<span class="price">R$ ' + Number(p.preco).toFixed(2) + '</span>' +
+                '</div>' +
                 '</div>';
             // Set onerror via JS property — CSP-safe
             var img = btn.querySelector('img');
             if (img) setImgFallback(img);
-            btn.addEventListener('click', function () { comprarItem(p.nome, p.preco); });
+            btn.addEventListener('click', function () { abrirModal(p); });
             vitrine.appendChild(btn);
+        });
+    }
+
+    // ── PRODUCT MODAL ────────────────────────────────────────────
+    var modalProduto = null;
+
+    function abrirModal(p) {
+        modalProduto = p;
+        var modal      = document.getElementById('productModal');
+        var img        = document.getElementById('modalImg');
+        var titleEl    = document.getElementById('modalTitle');
+        var corEl      = document.getElementById('modalCor');
+        var priceEl    = document.getElementById('modalPrice');
+        if (!modal) return;
+
+        img.src    = p.imagem_url || '';
+        img.alt    = p.nome;
+        setImgFallback(img);
+        titleEl.textContent = p.nome;
+        corEl.textContent   = p.cor || '';
+        priceEl.textContent = 'R$ ' + Number(p.preco).toFixed(2);
+
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        // Focus the close button for keyboard users
+        var closeBtn = document.getElementById('modalClose');
+        if (closeBtn) setTimeout(function () { closeBtn.focus(); }, 50);
+    }
+
+    function fecharModal() {
+        var modal = document.getElementById('productModal');
+        if (!modal) return;
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        modalProduto = null;
+    }
+
+    function initModal() {
+        var modal     = document.getElementById('productModal');
+        var backdrop  = document.getElementById('modalBackdrop');
+        var closeBtn  = document.getElementById('modalClose');
+        var buyBtn    = document.getElementById('modalBuy');
+        if (!modal) return;
+
+        if (closeBtn) closeBtn.addEventListener('click', fecharModal);
+        if (backdrop) backdrop.addEventListener('click', fecharModal);
+        if (buyBtn)   buyBtn.addEventListener('click', function () {
+            if (modalProduto) comprarItem(modalProduto.nome, modalProduto.preco);
+        });
+        document.addEventListener('keydown', function (e) {
+            if (!modal.classList.contains('open')) return;
+            if (e.key === 'Escape') { fecharModal(); return; }
+            // Focus trap — keep Tab inside the modal
+            if (e.key === 'Tab') {
+                var focusables = [closeBtn, buyBtn].filter(Boolean);
+                if (focusables.length === 0) return;
+                var first = focusables[0], last = focusables[focusables.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault(); last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault(); first.focus();
+                }
+            }
         });
     }
 
     // ── INIT ─────────────────────────────────────────────────────
     function initEventListeners() {
+        initModal();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');
         var layoutBtns   = document.querySelectorAll('.lt-btn');
