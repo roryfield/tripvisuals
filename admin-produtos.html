@@ -15,6 +15,37 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <datalist id="coresList">
+    <option value="Preta">
+    <option value="Off-White">
+    <option value="Branca">
+    <option value="Preto">
+    <option value="Azul Royal">
+    <option value="Vermelho">
+    <option value="Amarelo Ouro">
+    <option value="Azul Marinho">
+    <option value="Laranja">
+    <option value="Verde Musgo">
+    <option value="Mescla">
+    <option value="Rosa Bebê">
+    <option value="Amarelo Mostarda">
+    <option value="Azul Claro">
+    <option value="Verde Limão">
+    <option value="Bege">
+    <option value="Vinho">
+    <option value="Pink">
+    <option value="Verde Bandeira">
+    <option value="Amarelo Canário">
+    <option value="Azul Turquesa">
+    <option value="Roxo">
+    <option value="Marrom">
+    <option value="Lilás">
+    <option value="Azul Petróleo">
+    <option value="Chumbo">
+    <option value="Caqui">
+    <option value="Cinza Claro">
+</datalist>
+
     <main class="main">
         <div class="page-header-row">
             <div>
@@ -32,6 +63,32 @@
 </button>
                 <div class="produto-count" id="totalCount">—</div>
                 <div class="produto-count-label">produtos ativos</div>
+            </div>
+        </div>
+
+        <!-- VIEW CONTROLS -->
+        <div class="produtos-controls">
+            <div class="produtos-search-wrap">
+                <svg class="produtos-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="produtosSearch" class="produtos-search" placeholder="Buscar por nome ou cor..." autocomplete="off">
+            </div>
+            <div class="view-toggle" role="group" aria-label="Modo de visualização">
+                <button type="button" class="view-toggle-btn active" data-view="grid" aria-label="Visualização em grade" title="Grade">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                </button>
+                <button type="button" class="view-toggle-btn" data-view="compact" aria-label="Visualização compacta" title="Lista">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
             </div>
         </div>
 

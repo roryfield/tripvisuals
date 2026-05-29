@@ -120,10 +120,10 @@
     // ── PURCHASE ─────────────────────────────────────────────────
     function comprarItem(nome, preco) {
         var texto = 'Olá, equipe Trip Visuals! 🛸\n\n' +
-            'Vim pelo site e tenho interesse neste artefato:\n' +
+            'Vim pelo catálogo e tenho interesse neste item:\n\n' +
             '*Item:* ' + nome + '\n' +
-            '*Valor:* R$ ' + Number(preco).toFixed(2) + '\n\n' +
-            'Poderiam me ajudar com os tamanhos e o cálculo do frete para o meu CEP?';
+            '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n\n' +
+            'Poderia me ajudar com tamanhos disponíveis, opções de modelo e cálculo do frete para o meu CEP?';
         window.open(
             'https://wa.me/' + NUMERO_LOJA + '?text=' + encodeURIComponent(texto),
             '_blank', 'noopener'
@@ -192,11 +192,14 @@
     function abrirModal(p) {
         modalProduto = p;
         var modal      = document.getElementById('productModal');
+        var card       = modal && modal.querySelector('.product-modal-card');
         var img        = document.getElementById('modalImg');
         var titleEl    = document.getElementById('modalTitle');
         var corEl      = document.getElementById('modalCor');
         var priceEl    = document.getElementById('modalPrice');
         if (!modal) return;
+        // Always reset to detail view on open
+        if (card) card.setAttribute('data-state', 'detail');
 
         img.src    = p.imagem_url || '';
         img.alt    = p.nome;
@@ -223,6 +226,33 @@
         modalProduto = null;
     }
 
+    function initFaqModal() {
+        var faqModal    = document.getElementById('faqModal');
+        var faqBtn      = document.getElementById('faqBtn');
+        var faqBackdrop = document.getElementById('faqBackdrop');
+        var faqClose    = document.getElementById('faqClose');
+        if (!faqModal || !faqBtn) return;
+
+        function abrirFaq() {
+            faqModal.classList.add('open');
+            faqModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            if (faqClose) setTimeout(function () { faqClose.focus(); }, 50);
+        }
+        function fecharFaq() {
+            faqModal.classList.remove('open');
+            faqModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        faqBtn.addEventListener('click', abrirFaq);
+        if (faqClose)    faqClose.addEventListener('click', fecharFaq);
+        if (faqBackdrop) faqBackdrop.addEventListener('click', fecharFaq);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && faqModal.classList.contains('open')) fecharFaq();
+        });
+    }
+
     function initModal() {
         var modal     = document.getElementById('productModal');
         var backdrop  = document.getElementById('modalBackdrop');
@@ -233,14 +263,30 @@
         if (closeBtn) closeBtn.addEventListener('click', fecharModal);
         if (backdrop) backdrop.addEventListener('click', fecharModal);
         if (buyBtn)   buyBtn.addEventListener('click', function () {
-            if (modalProduto) comprarItem(modalProduto.nome, modalProduto.preco);
+            if (!modalProduto) return;
+            comprarItem(modalProduto.nome, modalProduto.preco);
+            // Flip the modal into success state
+            var card = modal.querySelector('.product-modal-card');
+            if (card) {
+                card.setAttribute('data-state', 'success');
+                var continueBtn = document.getElementById('modalContinue');
+                if (continueBtn) setTimeout(function () { continueBtn.focus(); }, 500);
+            }
         });
+
+        // Continue navigating button closes modal
+        var continueBtn = document.getElementById('modalContinue');
+        if (continueBtn) continueBtn.addEventListener('click', fecharModal);
         document.addEventListener('keydown', function (e) {
             if (!modal.classList.contains('open')) return;
             if (e.key === 'Escape') { fecharModal(); return; }
-            // Focus trap — keep Tab inside the modal
+            // Focus trap — only cycles through VISIBLE focusables so the
+            // hidden buy button (in success state) is never landed on.
             if (e.key === 'Tab') {
-                var focusables = [closeBtn, buyBtn].filter(Boolean);
+                var continueBtn = document.getElementById('modalContinue');
+                var focusables  = [closeBtn, buyBtn, continueBtn].filter(function (el) {
+                    return el && el.offsetParent !== null;  // null when display:none
+                });
                 if (focusables.length === 0) return;
                 var first = focusables[0], last = focusables[focusables.length - 1];
                 if (e.shiftKey && document.activeElement === first) {
@@ -255,6 +301,7 @@
     // ── INIT ─────────────────────────────────────────────────────
     function initEventListeners() {
         initModal();
+        initFaqModal();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');
         var layoutBtns   = document.querySelectorAll('.lt-btn');
@@ -299,7 +346,7 @@
         var waBtn = document.getElementById('whatsappBtn');
         if (waBtn) {
             waBtn.href = 'https://wa.me/' + NUMERO_LOJA +
-                '?text=' + encodeURIComponent('Olá! Vim pelo catálogo Trip Visuals 🛸');
+                '?text=' + encodeURIComponent('Olá, equipe Trip Visuals! 🛸\n\nVim pelo catálogo e gostaria de mais informações sobre os modelos, cores e tamanhos disponíveis.');
         }
 
         try {
@@ -315,13 +362,66 @@
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            initEventListeners();
-            carregar();
-        });
-    } else {
+    // ── CATALOG INTRO — shown on first session visit only ──────
+    var INTRO_MIN_MS = 1500;   // ensure animation is visible
+    var INTRO_MAX_MS = 4000;   // never block more than 4s
+    var introStart    = 0;
+    var introHidden   = false;
+
+    function shouldShowIntro() {
+        try {
+            return !sessionStorage.getItem('vz-intro-seen');
+        } catch (_) { return true; }
+    }
+
+    function markIntroSeen() {
+        try { sessionStorage.setItem('vz-intro-seen', '1'); } catch (_) {}
+    }
+
+    function mostrarIntro() {
+        var el = document.getElementById('catalogIntro');
+        if (!el) return;
+        introStart = Date.now();
+        el.classList.add('active');
+        el.setAttribute('aria-hidden', 'false');
+        el.addEventListener('click', esconderIntro, { once: true });
+        // Hard cap — never get stuck
+        setTimeout(function () { esconderIntro(); }, INTRO_MAX_MS);
+    }
+
+    function esconderIntro() {
+        if (introHidden) return;
+        introHidden = true;
+        var el = document.getElementById('catalogIntro');
+        if (!el) return;
+        var elapsed = Date.now() - introStart;
+        var wait    = Math.max(0, INTRO_MIN_MS - elapsed);
+        setTimeout(function () {
+            el.classList.add('leaving');
+            el.setAttribute('aria-hidden', 'true');
+            setTimeout(function () {
+                el.classList.remove('active', 'leaving');
+                el.parentNode && el.parentNode.removeChild(el);
+            }, 650);
+            markIntroSeen();
+        }, wait);
+    }
+
+    function bootCatalog() {
+        var showIntro = shouldShowIntro();
+        if (showIntro) mostrarIntro();
         initEventListeners();
-        carregar();
+        // Wrap carregar to trigger intro hide after products load
+        var origCarregar = carregar;
+        Promise.resolve()
+            .then(function () { return origCarregar(); })
+            .catch(function () { /* errors are handled inside carregar */ })
+            .then(function () { if (showIntro) esconderIntro(); });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootCatalog);
+    } else {
+        bootCatalog();
     }
 })();

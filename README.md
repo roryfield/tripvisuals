@@ -10,12 +10,12 @@ para uma marca de streetwear de Recife, BR.
 
 ## O que o sistema faz
 
-**Para o cliente (público):**
+**Para o usuário (público):**
 - Landing page com links diretos para catálogo, Instagram e WhatsApp
 - Catálogo dinâmico com busca em tempo real e toggle de layout (grade/duo/lista)
 - Cada produto tem botão de compra com mensagem pré-preenchida no WhatsApp
 
-**Para a dona da loja (admin):**
+**Para a cliente (admin):**
 - Login com autenticação segura
 - Upload em massa de produtos com nomenclatura automática
 - Precificação automática por tipo de peça
