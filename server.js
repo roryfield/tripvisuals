@@ -1,42 +1,25 @@
 // ============================================================
 //  Trip Visuals Wear — Production Server
-//  v8 — Persistent sessions · Cloudinary transforms · Strict CSP
+//  v10 — morgan logging · /health · DELETE atômico · Sentry removido
 // ============================================================
 
 process.chdir(__dirname);
 
-const path       = require('path');
-const crypto     = require('crypto');
-const express    = require('express');
-const multer     = require('multer');
-const rateLimit  = require('express-rate-limit');
-const { Pool }   = require('pg');
-const cloudinary = require('cloudinary').v2;
-
-// [VZ] Optional Sentry error monitoring.
-// Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
-let Sentry = null;
-if (process.env.SENTRY_DSN) {
-    try {
-        Sentry = require('@sentry/node');
-        Sentry.init({
-            dsn: process.env.SENTRY_DSN,
-            tracesSampleRate: 0.1,
-            environment: process.env.RAILWAY_ENVIRONMENT || 'production'
-        });
-        console.log('✅ Sentry inicializado.');
-    } catch (e) {
-        console.warn('⚠️  Sentry não disponível:', e.message);
-        Sentry = null;
-    }
-}
+const path        = require('path');
+const crypto      = require('crypto');
+const express     = require('express');
+const compression = require('compression');
+const morgan      = require('morgan');         // [FIX-5] request logging para diagnóstico em produção
+const multer      = require('multer');
+const rateLimit   = require('express-rate-limit');
+const { Pool }    = require('pg');
+const cloudinary  = require('cloudinary').v2;  // mantido em v1.41.x — downgrade anterior foi intencional
 
 // ── Constant-time string compare (prevents login timing attacks) ──
 function timingSafeStringCompare(a, b) {
     const ba = Buffer.from(String(a || ''));
     const bb = Buffer.from(String(b || ''));
     if (ba.length !== bb.length) {
-        // Still do a comparison of equal-length buffers to keep timing flat.
         crypto.timingSafeEqual(bb, bb);
         return false;
     }
@@ -74,6 +57,12 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
+// [FIX-3] Handler de erro no pool: evita unhandledRejection silencioso
+// se a conexão cair inesperadamente no Railway.
+pool.on('error', (err) => {
+    console.error('❌ PostgreSQL pool error inesperado:', err.message);
+});
+
 async function initDB() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS produtos (
@@ -84,7 +73,6 @@ async function initDB() {
             cloudinary_id TEXT
         )
     `);
-    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS cloudinary_id TEXT`);
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS configuracoes (
@@ -104,8 +92,8 @@ async function initDB() {
     await pool.query(
         `CREATE INDEX IF NOT EXISTS idx_sessoes_expira ON sessoes (expira_em)`
     );
-    // Clean up any expired sessions from previous runs
     await pool.query(`DELETE FROM sessoes WHERE expira_em < NOW()`);
+
     // [VZ] Seeds — all empty by default; landings fall back to their hardcoded
     // values if the corresponding config is empty.
     await pool.query(`
@@ -134,8 +122,7 @@ async function initDB() {
         ON CONFLICT (chave) DO NOTHING
     `);
 
-    // [VZ migration] If a previous deploy stored the old "cosmico" slug,
-    // normalize it silently to the new "retro" name.
+    // [VZ migration] Normalize legacy theme slug.
     await pool.query(`
         UPDATE configuracoes SET valor = 'retro'
          WHERE chave = 'landing_theme' AND valor = 'cosmico'
@@ -152,19 +139,24 @@ initDB().catch(err => {
 // ── PROXY (Railway) ────────────────────────────────────────────
 app.set('trust proxy', 1);
 
+// ── COMPRESSION ────────────────────────────────────────────────
+app.use(compression());
+
+// ── REQUEST LOGGING ────────────────────────────────────────────
+// [FIX-5] Loga método, url, status e tempo de resposta no Railway.
+// Ignora /health para não poluir logs com checks de uptime.
+app.use(morgan('combined', {
+    skip: (req) => req.path === '/health'
+}));
+
 // ── BODY PARSER ────────────────────────────────────────────────
 app.use(express.json({ limit: '100kb' }));
 
 // [VZ] SECURITY HEADERS ────────────────────────────────────────
-// All JS and CSS is now external — both script-src and style-src
-// have NO 'unsafe-inline'. This is a complete CSP.
-// The only remaining inline-ish item is style= attributes injected
-// dynamically by JS at runtime (e.g. color picker → body.style.backgroundColor)
-// which is NOT covered by style-src (it's DOM manipulation, always allowed).
 const CSP_COMMON =
     "default-src 'self'; " +
     "img-src 'self' data: blob: https://res.cloudinary.com; " +
-    "style-src 'self' https://fonts.googleapis.com; " +  // ← no unsafe-inline
+    "style-src 'self' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "script-src 'self'; " +
     "connect-src 'self'; " +
@@ -201,8 +193,6 @@ app.use((req, res, next) => {
 
 // ════════════════════════════════════════════════════════════
 // [VZ] DYNAMIC ROOT — resolves landing_theme → HTML file.
-// Convention: slug 'classico' → index.html; any other slug → landing-<slug>.html
-// Must be BEFORE express.static so / is dynamic.
 // ════════════════════════════════════════════════════════════
 app.get('/', async (req, res) => {
     try {
@@ -252,16 +242,21 @@ async function dbDeleteSession(token) {
     await pool.query('DELETE FROM sessoes WHERE token = $1', [token]);
 }
 
-// Periodic cleanup — runs every 30 min; no-op if nothing expired
 setInterval(() => {
     pool.query('DELETE FROM sessoes WHERE expira_em < NOW()')
         .catch(e => console.error('Session cleanup error:', e.message));
 }, 30 * 60 * 1000).unref();
 
-async function requireAuth(req, res, next) {
+// [FIX-4] Extração do token centralizada — elimina a duplicação em
+// requireAuth, POST /api/logout e GET /api/me.
+function getTokenFromRequest(req) {
     const cookie = req.headers.cookie || '';
     const match  = cookie.match(/vztoken=([^;]+)/);
-    const token  = match ? decodeURIComponent(match[1]) : null;
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+async function requireAuth(req, res, next) {
+    const token = getTokenFromRequest(req);
     try {
         if (await dbValidateSession(token)) return next();
     } catch (e) {
@@ -269,10 +264,12 @@ async function requireAuth(req, res, next) {
     }
     res.status(401).json({ error: 'Não autenticado.' });
 }
+
 function setSessionCookie(res, token) {
     res.setHeader('Set-Cookie',
         `vztoken=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`);
 }
+
 function clearSessionCookie(res) {
     res.setHeader('Set-Cookie', `vztoken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`);
 }
@@ -300,10 +297,6 @@ function uploadToCloudinary(buffer, filename, folder = 'tripvisuals') {
     });
 }
 
-// [VZ] Inject Cloudinary URL transformation to reduce payload size.
-// Uses URL-based transforms (no extra upload step).
-// c_limit = only downscale, never upscale; q_auto = smart compression;
-// f_auto = best format (WebP/AVIF in supporting browsers).
 function cloudTransform(url, transform) {
     if (!url || !url.includes('/upload/')) return url;
     return url.replace('/upload/', `/upload/${transform}/`);
@@ -319,14 +312,12 @@ const loginLimiter = rateLimit({
     standardHeaders: true, legacyHeaders: false
 });
 
-// ── UPLOAD / WRITE RATE LIMITS (defense-in-depth on authed routes) ─
-// Cap uploads at 100/min — enough for bulk admin sessions (50-file batches
-// with some retry headroom) while still protecting against abuse.
 const uploadLimiter = rateLimit({
     windowMs: 60 * 1000, max: 100,
     message: { error: 'Muitos uploads. Espere um momento.' },
     standardHeaders: true, legacyHeaders: false
 });
+
 const writeLimiter = rateLimit({
     windowMs: 60 * 1000, max: 120,
     message: { error: 'Muitas alterações. Espere um momento.' },
@@ -344,12 +335,27 @@ function validarProduto({ nome, preco }) {
 }
 
 // ════════════════════════════════════════════════════════════
+//  HEALTH CHECK
+// ════════════════════════════════════════════════════════════
+
+// [FIX-6] Endpoint para monitoramento externo (UptimeRobot, Railway healthcheck).
+// Verifica conectividade com o banco antes de responder 200.
+app.get('/health', async (req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.json({ ok: true, db: 'up' });
+    } catch (e) {
+        res.status(503).json({ ok: false, db: 'down', error: e.message });
+    }
+});
+
+// ════════════════════════════════════════════════════════════
 //  PUBLIC ROUTES
 // ════════════════════════════════════════════════════════════
 
 app.get('/api/produtos', async (req, res) => {
     try {
-        const r = await pool.query('SELECT id, nome, preco, imagem_url FROM produtos ORDER BY id DESC');
+        const r = await pool.query('SELECT id, nome, preco, imagem_url FROM produtos ORDER BY id DESC LIMIT 500');
         res.json(r.rows);
     } catch (e) {
         console.error('GET /api/produtos:', e.message);
@@ -393,18 +399,14 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 });
 
 app.post('/api/logout', async (req, res) => {
-    const cookie = req.headers.cookie || '';
-    const m = cookie.match(/vztoken=([^;]+)/);
-    const token = m ? decodeURIComponent(m[1]) : null;
+    const token = getTokenFromRequest(req);   // [FIX-4] usa helper centralizado
     await dbDeleteSession(token).catch(() => {});
     clearSessionCookie(res);
     res.json({ success: true });
 });
 
 app.get('/api/me', async (req, res) => {
-    const cookie = req.headers.cookie || '';
-    const m = cookie.match(/vztoken=([^;]+)/);
-    const token = m ? decodeURIComponent(m[1]) : null;
+    const token = getTokenFromRequest(req);   // [FIX-4] usa helper centralizado
     try {
         if (await dbValidateSession(token)) return res.json({ autenticado: true });
     } catch (e) {
@@ -426,7 +428,7 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
         if (req.file) {
             const baseName = req.file.originalname.replace(/\.[^.]+$/, '').replace(/[^\w-]/g, '_').slice(0, 60);
             const result = await uploadToCloudinary(req.file.buffer, Date.now() + '_' + baseName);
-            imagem_url   = cloudTransform(result.url, TRANSFORM_PRODUCT);
+            imagem_url    = cloudTransform(result.url, TRANSFORM_PRODUCT);
             cloudinary_id = result.public_id;
         }
         const r = await pool.query(
@@ -461,7 +463,12 @@ app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     try {
-        const r = await pool.query('SELECT cloudinary_id, imagem_url FROM produtos WHERE id = $1', [id]);
+        // [FIX-7] DELETE + RETURNING em uma única query atômica.
+        // Elimina a race condition do SELECT → DELETE anterior.
+        const r = await pool.query(
+            'DELETE FROM produtos WHERE id = $1 RETURNING cloudinary_id, imagem_url',
+            [id]
+        );
         if (r.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         const row = r.rows[0];
         if (row.cloudinary_id) {
@@ -470,7 +477,6 @@ app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
             const legacyId = 'tripvisuals/' + row.imagem_url.split('/').pop().split('.')[0];
             await cloudinary.uploader.destroy(legacyId).catch(err => console.error('Cloudinary destroy (legacy):', err.message));
         }
-        await pool.query('DELETE FROM produtos WHERE id = $1', [id]);
         res.json({ success: true });
     } catch (e) {
         console.error('DELETE /api/produtos:', e.message);
@@ -538,7 +544,6 @@ app.get('*', (req, res) => {
 // ── ERROR HANDLER ──────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('Erro não tratado:', err.message);
-    if (Sentry) Sentry.captureException(err);
     if (err.message && (err.message.includes('Tipo de imagem') || err.message.includes('File too large')))
         return res.status(400).json({ error: err.message });
     res.status(500).json({ error: 'Erro interno do servidor.' });
