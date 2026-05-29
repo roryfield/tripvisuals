@@ -18,6 +18,41 @@
 <body>
 
 <!-- CUSTOMER HEADER -->
+<!-- CATALOG OPENING — first paint only, fades out when products are ready -->
+<div class="catalog-intro" id="catalogIntro" aria-hidden="true">
+    <div class="catalog-intro-glow"></div>
+    <div class="catalog-intro-grid"></div>
+    <div class="catalog-intro-inner">
+        <p class="catalog-intro-eyebrow">Bem-vindo ao acervo</p>
+        <h1 class="catalog-intro-brand">TRIP VISUALS</h1>
+        <p class="catalog-intro-tag">Curadoria de estampas exclusivas</p>
+
+        <div class="catalog-intro-pillars">
+            <div class="catalog-pillar">
+                <span class="catalog-pillar-num">2–5</span>
+                <span class="catalog-pillar-label">dias úteis</span>
+            </div>
+            <div class="catalog-pillar-sep" aria-hidden="true"></div>
+            <div class="catalog-pillar">
+                <span class="catalog-pillar-num">BRASIL</span>
+                <span class="catalog-pillar-label">frete nacional</span>
+            </div>
+            <div class="catalog-pillar-sep" aria-hidden="true"></div>
+            <div class="catalog-pillar">
+                <span class="catalog-pillar-num">P–XG</span>
+                <span class="catalog-pillar-label">tamanhos</span>
+            </div>
+        </div>
+
+        <div class="catalog-intro-loader" aria-label="Carregando catálogo">
+            <div class="catalog-intro-spinner"></div>
+        </div>
+
+        <p class="catalog-intro-hint">toque pra entrar</p>
+        <p class="catalog-intro-credit">Sistema por <strong>VOIDZONE</strong></p>
+    </div>
+</div>
+
 <header class="cust-header">
     <a href="/index.html" class="cust-logo" aria-label="Trip Visuals Wear — página inicial">
         <img id="landingLogo" src="/logo.jpeg" alt="">
@@ -64,6 +99,15 @@
 
         <div class="hdr-divider" aria-hidden="true"></div>
 
+        <button id="faqBtn" class="icon-btn faq-trigger" type="button"
+            aria-label="Informações sobre tamanhos, prazos e frete" title="Sobre as peças">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+        </button>
+
         <div class="zip-soon-wrap">
             <button class="icon-btn zip-soon-btn" type="button" disabled
                 aria-label="Download do catálogo em ZIP — em breve"
@@ -104,10 +148,56 @@
     <main id="vitrine" class="grid-3" aria-label="Catálogo de produtos"></main>
 </div>
 
+<!-- FAQ / INFO MODAL -->
+<div class="faq-modal" id="faqModal" role="dialog" aria-modal="true" aria-labelledby="faqTitle" aria-hidden="true">
+    <div class="faq-modal-backdrop" id="faqBackdrop"></div>
+    <div class="faq-modal-card" role="document">
+        <button type="button" class="faq-modal-close" id="faqClose" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+        <h2 class="faq-title" id="faqTitle">SOBRE AS PEÇAS</h2>
+        <p class="faq-sub">Tudo que você precisa saber antes de fazer seu pedido.</p>
+
+        <div class="faq-section">
+            <h3 class="faq-section-title">Prazo de produção</h3>
+            <p class="faq-section-body">Cada peça é confeccionada sob encomenda em <strong>2 a 5 dias úteis</strong> após a confirmação do pagamento.</p>
+        </div>
+
+        <div class="faq-section">
+            <h3 class="faq-section-title">Frete</h3>
+            <p class="faq-section-body">Enviamos para <strong>todo o Brasil</strong>. O valor do frete é calculado com base no seu CEP no momento da conversa pelo WhatsApp.</p>
+        </div>
+
+        <div class="faq-section">
+            <h3 class="faq-section-title">Tamanhos</h3>
+            <p class="faq-section-body">Disponíveis do <strong>P ao XG</strong>. Consulte a tabela de medidas pelo WhatsApp se tiver dúvidas.</p>
+        </div>
+
+        <div class="faq-section">
+            <h3 class="faq-section-title">Opções e preços</h3>
+            <table class="faq-price-table">
+                <tbody>
+                    <tr><td>Camiseta manga curta</td><td>R$ 99,90</td></tr>
+                    <tr><td>Camiseta manga comprida</td><td>R$ 115,90</td></tr>
+                    <tr><td>Regata</td><td>R$ 99,90</td></tr>
+                    <tr><td>Babylook</td><td>R$ 99,90</td></tr>
+                    <tr><td>Moletom careca</td><td>R$ 175,00</td></tr>
+                    <tr><td>Moletom canguru</td><td>R$ 220,00</td></tr>
+                </tbody>
+            </table>
+            <p class="faq-section-foot">Cada design do catálogo pode ser produzido em qualquer dos modelos acima. Combine no WhatsApp.</p>
+        </div>
+
+        <p class="faq-credit">Sistema por <strong>VOIDZONE</strong></p>
+    </div>
+</div>
+
 <!-- PRODUCT DETAIL MODAL -->
 <div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="product-modal-backdrop" id="modalBackdrop"></div>
-    <div class="product-modal-card" role="document">
+    <div class="product-modal-card" role="document" data-state="detail">
         <button type="button" class="product-modal-close" id="modalClose" aria-label="Fechar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -124,7 +214,7 @@
                 <span class="product-modal-price" id="modalPrice">—</span>
             </div>
             <p class="product-modal-desc">
-                Camiseta personalizada com estampa exclusiva. Aperte o botão abaixo para conversar diretamente com a equipe e fechar o pedido pelo WhatsApp.
+                Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.
             </p>
             <button type="button" class="product-modal-buy" id="modalBuy">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -133,6 +223,41 @@
                 Adquirir via WhatsApp
             </button>
             <p class="product-modal-foot">Pagamento e frete combinados direto com a equipe.</p>
+
+            <!-- SUCCESS STATE — shown after WhatsApp button is clicked -->
+            <div class="modal-success-view" aria-live="polite">
+                <div class="modal-success-icon" aria-hidden="true">
+                    <svg viewBox="0 0 52 52">
+                        <circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M14 27 l8 8 l16 -18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3 class="modal-success-title">Mensagem preparada!</h3>
+                <p class="modal-success-sub">Confira o WhatsApp pra finalizar a conversa com a equipe.</p>
+
+                <ol class="order-timeline">
+                    <li class="order-step done">
+                        <span class="order-dot" aria-hidden="true"></span>
+                        <span class="order-label">Item escolhido</span>
+                    </li>
+                    <li class="order-step current">
+                        <span class="order-dot" aria-hidden="true"></span>
+                        <span class="order-label">Aguardando confirmação no WhatsApp</span>
+                    </li>
+                    <li class="order-step">
+                        <span class="order-dot" aria-hidden="true"></span>
+                        <span class="order-label">Em confecção (2–5 dias úteis)</span>
+                    </li>
+                    <li class="order-step">
+                        <span class="order-dot" aria-hidden="true"></span>
+                        <span class="order-label">Enviado pra você</span>
+                    </li>
+                </ol>
+
+                <button type="button" class="modal-success-continue" id="modalContinue">
+                    Continuar navegando
+                </button>
+            </div>
         </div>
     </div>
 </div>

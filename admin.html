@@ -11,6 +11,37 @@
 </head>
 <body>
 
+<datalist id="coresList">
+    <option value="Preta">
+    <option value="Off-White">
+    <option value="Branca">
+    <option value="Preto">
+    <option value="Azul Royal">
+    <option value="Vermelho">
+    <option value="Amarelo Ouro">
+    <option value="Azul Marinho">
+    <option value="Laranja">
+    <option value="Verde Musgo">
+    <option value="Mescla">
+    <option value="Rosa Bebê">
+    <option value="Amarelo Mostarda">
+    <option value="Azul Claro">
+    <option value="Verde Limão">
+    <option value="Bege">
+    <option value="Vinho">
+    <option value="Pink">
+    <option value="Verde Bandeira">
+    <option value="Amarelo Canário">
+    <option value="Azul Turquesa">
+    <option value="Roxo">
+    <option value="Marrom">
+    <option value="Lilás">
+    <option value="Azul Petróleo">
+    <option value="Chumbo">
+    <option value="Caqui">
+    <option value="Cinza Claro">
+</datalist>
+
 <main class="main">
 
     <div class="page-header vz-page-hdr-flex">
@@ -52,10 +83,8 @@
             </div>
             <div class="batch-field">
                 <label class="batch-label" for="batchCor">Cor padrão</label>
-                <select id="batchCor" class="batch-select">
-                    <option value="Preta">Preta</option>
-                    <option value="Branca">Branca</option>
-                </select>
+                <input id="batchCor" class="batch-input" type="text" list="coresList"
+                       value="Preta" maxlength="50" placeholder="Preta, Off-White, ou outra...">
             </div>
             <div class="batch-field">
                 <label class="batch-label" for="batchPreco">Preço padrão (R$)</label>
@@ -71,7 +100,7 @@
                 <span class="batch-label-hint">— nome para arquivos sem identificação (fotos do WhatsApp, câmera, etc.)</span>
             </label>
             <input id="batchColecao" class="batch-input batch-input-wide" type="text"
-                   placeholder="Ex: PANTERA — vira CAMISETA PANTERA 1 PRETA, 2, 3...">
+                   placeholder="Ex: PANTERA — vira CAMISETA PANTERA PRETA">
             <p class="batch-preview" id="batchPreview"></p>
         </div>
 

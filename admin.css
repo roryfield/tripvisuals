@@ -1481,3 +1481,164 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
     body::before { animation: none; background-position: 0 0; }
 }
+
+/* ── Color combobox (input + datalist) — match select style ── */
+.vz-input-cor,
+input[list="coresList"] {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.vz-input-cor:focus,
+input[list="coresList"]:focus {
+    border-color: var(--cyan);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+}
+
+/* ── Produtos page: search + view toggle controls ───────── */
+.produtos-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 18px;
+    flex-wrap: wrap;
+}
+.produtos-search-wrap {
+    flex: 1;
+    position: relative;
+    min-width: 240px;
+}
+.produtos-search-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.produtos-search {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    padding: 10px 12px 10px 38px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.produtos-search:focus {
+    border-color: var(--cyan);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+}
+
+.view-toggle {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.view-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 38px; height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.view-toggle-btn:hover { color: #ccc; background: rgba(255,255,255,0.03); }
+.view-toggle-btn.active {
+    background: rgba(0,229,255,0.1);
+    color: var(--cyan);
+}
+.view-toggle-btn svg { width: 16px; height: 16px; }
+
+/* ── Produtos: compact list view ────────────────────────── */
+.produtos-grid.view-compact {
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+.view-compact .produto-card {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    align-items: stretch;
+}
+.view-compact .produto-card img {
+    height: 100%;
+    min-height: 80px;
+    max-height: 120px;
+}
+.view-compact .produto-card-body { padding: 10px 14px; }
+.view-compact .produto-fields {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.view-compact .field-label { font-size: 9px; }
+.view-compact .produto-card input { font-size: 0.78rem; padding: 6px 8px; }
+.view-compact .produto-actions { gap: 6px; }
+.view-compact .btn-salvar-item,
+.view-compact .btn-remover-item { padding: 6px 10px; font-size: 0.72rem; }
+
+@media (max-width: 640px) {
+    .view-compact .produto-card { grid-template-columns: 60px 1fr; }
+    .view-compact .produto-fields { grid-template-columns: 1fr 1fr; }
+    .produtos-controls { gap: 8px; }
+    .produtos-search-wrap { min-width: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   MOBILE TOUCH-TARGET COMPLIANCE — admin
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    /* Inputs and selects — at least ~44px tall for touch */
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    input[type="email"],
+    input[type="search"],
+    input[list],
+    select,
+    textarea {
+        padding: 12px 12px;
+        font-size: 0.95rem;
+    }
+    /* Compact-view exception — keep inline edit fields tighter
+       (they live inside dense list cards, not full-width forms) */
+    .view-compact .produto-card input { padding: 8px 10px; font-size: 0.85rem; }
+
+    /* Combobox follow */
+    .vz-input-cor,
+    input[list="coresList"] { padding: 12px 12px; font-size: 0.95rem; }
+
+    /* Buttons inside forms */
+    .btn-launch { padding: 14px 22px; min-height: 44px; }
+
+    /* Bottom nav already 72px tall — only adjust text for very narrow screens */
+
+    /* Page padding — give content breathing room without horizontal scroll */
+    .page-wrapper, main { padding-left: 16px; padding-right: 16px; }
+
+    /* Tables in admin — already overflow-x: auto, but ensure
+       headers don't get squashed unreadably */
+    .vz-table th { font-size: 10px; padding: 8px 6px; }
+    .vz-table td { padding: 10px 6px; }
+}
+
+
+@media (max-width: 360px) {
+    .nav-tab { font-size: 8px; gap: 2px; }
+    .nav-icon { width: 18px; height: 18px; }
+}
