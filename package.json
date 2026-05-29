@@ -1,6 +1,6 @@
 {
   "name": "voidzone-tripvisuals",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Trip Visuals Wear — by VOIDZONE",
   "main": "server.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "compression": "^1.8.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.3"
   },
