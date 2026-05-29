@@ -1,6 +1,6 @@
 {
   "name": "voidzone-tripvisuals",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Trip Visuals Wear — by VOIDZONE",
   "main": "server.js",
   "scripts": {
