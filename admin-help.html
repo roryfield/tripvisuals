@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Visuals | Como usar</title>
+    <title>Trip Visuals | Manual</title>
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
-
     <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
-    <main class="main">
+<main class="main">
 
-        <header class="page-header">
-            <div>
-                <p class="page-eyebrow">Manual</p>
-                <h2 class="page-title">COMO USAR</h2>
-            </div>
-        <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <header class="page-header">
+        <div>
+            <p class="page-eyebrow">Manual</p>
+            <h2 class="page-title">COMO USAR</h2>
+        </div>
+        <div class="vz-flex-actions">
+            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16 17 21 12 16 7"/>
@@ -27,288 +28,538 @@
     </svg>
     <span class="label">Sair</span>
 </button>
+        </div>
     </header>
 
-        <div class="help-hero">
-            <p>
-                Esse é o painel pra gerenciar a loja. Você pode adicionar e editar
-                produtos, mudar a aparência da página inicial e do catálogo, trocar
-                a logo, o fundo, os textos. Use o menu lateral pra navegar pelos tópicos.
-            </p>
-        </div>
+    <div class="help-layout">
 
-        <div class="help-layout">
+        <!-- Sidebar navigation -->
+        <nav class="help-sidebar" aria-label="Seções do manual">
+            <p class="sidebar-label">Seções</p>
+            <a href="#tour">Tour rápido</a>
+            <a href="#hub">Hub</a>
+            <a href="#upload">Upload</a>
+            <a href="#produtos">Produtos</a>
+            <a href="#pedidos">Pedidos</a>
+            <a href="#layout">Layout</a>
+            <a href="#landing">Landing Page</a>
+            <a href="#catalogo">Catálogo público</a>
+            <a href="#tarefas">Tarefas comuns</a>
+            <a href="#problemas">Problemas</a>
+            <a href="#seguranca" class="nav-seguranca">Segurança</a>
+            <a href="#contato">Contato</a>
+        </nav>
 
-            <aside class="help-sidenav" aria-label="Tópicos da ajuda">
-                <h4>Tópicos</h4>
-                <div class="nav-inner">
-                    <a href="#tour" class="current">Tour rápido</a>
-                    <a href="#produtos">Produtos</a>
-                    <a href="#layout">Layout</a>
-                    <a href="#landing">Landing</a>
-                    <a href="#tema">Tema do admin</a>
-                    <a href="#tarefas">Tarefas comuns</a>
-                    <a href="#problemas">Problemas</a>
+        <!-- Help content -->
+        <div class="help-content">
+
+            <!-- ═══════════════════════════════════════════════ TOUR -->
+            <section class="help-section" id="tour">
+                <h2>TOUR RÁPIDO</h2>
+                <div class="sub">O que cada aba faz</div>
+                <ul>
+                    <li><strong>Hub</strong> · ponto de partida. Mostra estatísticas da loja: produtos ativos, pedidos em aberto, layout e tema. Atalhos rápidos pra cada área.</li>
+                    <li><strong>Upload</strong> · onde você adiciona produtos novos ao catálogo em lote, com nomenclatura automática a partir do nome do arquivo.</li>
+                    <li><strong>Produtos</strong> · onde você edita, oculta ou remove produtos já cadastrados. Tem busca e alternância de visualização.</li>
+                    <li><strong>Pedidos</strong> · controle de vendas. Registre cada pedido do WhatsApp, acompanhe o status de produção e envio.</li>
+                    <li><strong>Layout</strong> · escolhe como o catálogo aparece pra quem visita: grade de 3, 2 colunas, ou lista.</li>
+                    <li><strong>Landing</strong> · controla a página inicial: estilo visual, logo, fundo, textos e links de contato.</li>
+                    <li><strong>Catálogo</strong> · abre a página pública em outra aba pra você conferir como o cliente vê.</li>
+                    <li><strong>Manual</strong> · você tá aqui.</li>
+                </ul>
+                <div class="callout">
+                    Cada ação salva na hora. Não existe "salvar tudo" — quando você clica em Salvar em qualquer card, aquele item já foi gravado.
                 </div>
-            </aside>
+            </section>
 
-            <div>
+            <!-- ═══════════════════════════════════════════════ HUB -->
+            <section class="help-section" id="hub">
+                <h2>HUB</h2>
+                <div class="sub">Painel principal</div>
+                <p>
+                    O Hub é a primeira tela que você vê ao entrar. Mostra quatro estatísticas no topo:
+                </p>
+                <ul>
+                    <li><strong>Produtos ativos</strong> — total de produtos visíveis no catálogo público.</li>
+                    <li><strong>Pedidos em aberto</strong> — pedidos que ainda não foram marcados como entregues.</li>
+                    <li><strong>Layout padrão</strong> — grade que os clientes veem ao acessar o catálogo.</li>
+                    <li><strong>Tema atual</strong> — claro ou escuro para o painel admin.</li>
+                </ul>
+                <p>
+                    Abaixo dos cards de estatísticas há atalhos diretos pra cada seção. Clique em qualquer um pra ir direto.
+                </p>
+            </section>
 
-                <section class="help-section" id="tour">
-                    <h2>TOUR RÁPIDO</h2>
-                    <div class="sub">O que cada aba faz</div>
-                    <ul>
-                        <li><strong>Hub</strong> · ponto de partida. Atalhos pras outras áreas.</li>
-                        <li><strong>Upload</strong> · onde você adiciona produtos novos no catálogo.</li>
-                        <li><strong>Produtos</strong> · onde você edita ou remove produtos já cadastrados.</li>
-                        <li><strong>Layout</strong> · escolhe como o catálogo aparece pra quem visita (grade, lista, etc.).</li>
-                        <li><strong>Landing</strong> · controla a página inicial: estilo, logo, fundo, textos e links.</li>
-                        <li><strong>Ajuda</strong> · você tá aqui.</li>
-                        <li><strong>Catálogo</strong> · abre a página pública em outra aba pra você conferir como ficou.</li>
-                    </ul>
-                    <div class="callout">
-                        Tudo salva automaticamente. Não tem botão "salvar tudo" — cada ação grava na hora.
+            <!-- ═══════════════════════════════════════════════ UPLOAD -->
+            <section class="help-section" id="upload">
+                <h2>UPLOAD</h2>
+                <div class="sub">Adicionar produtos em lote</div>
+
+                <h3>Como fazer o upload</h3>
+                <ol>
+                    <li>Vá na aba <strong>Upload</strong>.</li>
+                    <li>Configure o lote no painel acima da área de upload:
+                        <ul>
+                            <li><strong>Tipo padrão</strong> — Camiseta, Regata, Babylook ou Moletom. Define o tipo de todos os itens do lote.</li>
+                            <li><strong>Cor padrão</strong> — Preta, Off-White, ou qualquer outra. Pode digitar qualquer cor.</li>
+                            <li><strong>Gênero padrão</strong> — Rock, Metal, Grunge, etc. Usado para filtros no catálogo. Opcional.</li>
+                            <li><strong>Preço padrão</strong> — aplica o mesmo preço a todos. Pode ajustar por item depois.</li>
+                            <li><strong>Coleção</strong> — nome de bandas para imagens sem nome identificável (fotos do WhatsApp, câmera, etc.).</li>
+                        </ul>
+                    </li>
+                    <li>Arraste as imagens pra área de upload, ou clique pra selecionar. Formatos aceitos: JPG, PNG, WEBP. Máximo 10 MB por imagem, até 50 por lote.</li>
+                    <li>O sistema gera automaticamente o nome de cada produto a partir do arquivo: <code>alice-in-chains-preta.jpg</code> vira <strong>CAMISETA ALICE IN CHAINS PRETA</strong>. O número final do arquivo é ignorado.</li>
+                    <li>Revise cada linha na tabela. Você pode alterar tipo, nome, cor, gênero e preço individualmente antes de enviar.</li>
+                    <li>Clique em <strong>Lançar N Produtos</strong>.</li>
+                </ol>
+
+                <h3>Tabela de preços por tipo</h3>
+                <table class="help-price-table">
+                    <tr><td>Camiseta manga curta</td><td>R$ 99,90</td></tr>
+                    <tr><td>Regata</td><td>R$ 99,90</td></tr>
+                    <tr><td>Babylook</td><td>R$ 99,90</td></tr>
+                    <tr><td>Moletom</td><td>R$ 175,00 (base)</td></tr>
+                </table>
+                <p class="help-note">Manga comprida e variações do moletom (canguru) têm preços diferentes. Combine no WhatsApp e ajuste no card do produto se quiser.</p>
+
+                <div class="callout warn">
+                    Suba no máximo 50 imagens por vez. Se quiser enviar mais, faça em lotes. O navegador pode travar com muitos arquivos simultâneos.
+                </div>
+
+                <h3>Pré-visualização hover</h3>
+                <p>Passe o mouse em cima da miniatura na tabela para ver a imagem em tamanho maior antes de enviar.</p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ PRODUTOS -->
+            <section class="help-section" id="produtos">
+                <h2>PRODUTOS</h2>
+                <div class="sub">Editar, ocultar, remover</div>
+
+                <h3>Buscar um produto</h3>
+                <p>
+                    No topo da página há uma barra de busca. Digite qualquer parte do nome ou da cor do produto para filtrar a lista instantaneamente.
+                </p>
+
+                <h3>Modos de visualização</h3>
+                <p>
+                    Os dois botões no canto direito da barra de busca alternam entre:
+                </p>
+                <ul>
+                    <li><strong>Grade</strong> — cards maiores com imagem em destaque. Bom para revisar visualmente.</li>
+                    <li><strong>Lista compacta</strong> — miniaturas à esquerda com campos à direita. Bom para editar muitos produtos rápido.</li>
+                </ul>
+                <p>O modo escolhido é salvo automaticamente no navegador.</p>
+
+                <h3>Editar um produto</h3>
+                <ol>
+                    <li>Encontre o produto na grade ou lista.</li>
+                    <li>Edite os campos diretamente no card: nome, preço, cor, tipo e gênero.</li>
+                    <li>Clique em <strong>Salvar</strong>. Aparece uma notificação quando grava.</li>
+                </ol>
+
+                <h3>Ocultar e mostrar um produto</h3>
+                <p>
+                    O botão <strong>Ocultar</strong> retira o produto do catálogo público sem apagá-lo. Ele continua aqui na área de produtos, com um badge vermelho <em>OCULTO</em> e levemente transparente. Clique em <strong>Mostrar</strong> para torná-lo visível novamente.
+                </p>
+                <div class="callout">
+                    Use Ocultar quando um produto estiver fora de estoque temporariamente, mas você quiser manter o cadastro para reativar depois.
+                </div>
+
+                <h3>Remover um produto</h3>
+                <p>
+                    Clique em <strong>Remover</strong> no card e confirme. Ação <em>irreversível</em> — o produto e a imagem no Cloudinary são apagados permanentemente.
+                </p>
+
+                <h3>Campos disponíveis</h3>
+                <ul>
+                    <li><strong>Nome</strong> — exibido no catálogo. Formato recomendado: TIPO BANDA COR.</li>
+                    <li><strong>Preço</strong> — valor base. O modelo e tamanho exatos são combinados no WhatsApp.</li>
+                    <li><strong>Cor</strong> — dropdown com 28 cores disponíveis. Aceita qualquer valor digitado.</li>
+                    <li><strong>Tipo</strong> — Camiseta, Regata, Babylook ou Moletom. Usado nos filtros do catálogo.</li>
+                    <li><strong>Gênero</strong> — Rock, Metal, Grunge, etc. Usado nos filtros do catálogo. Opcional.</li>
+                </ul>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ PEDIDOS -->
+            <section class="help-section" id="pedidos">
+                <h2>PEDIDOS</h2>
+                <div class="sub">Controle de vendas</div>
+                <p>
+                    A aba <strong>Pedidos</strong> é um registro manual das suas vendas pelo WhatsApp. Ela não processa pagamentos — é uma forma de você acompanhar o que está em andamento sem precisar rolar o histórico do WhatsApp.
+                </p>
+
+                <h3>Criar um pedido novo</h3>
+                <ol>
+                    <li>Clique em <strong>+ Novo Pedido</strong>.</li>
+                    <li>Preencha: produto, tamanho, nome do cliente, WhatsApp, valor e observações (CEP, endereço, etc.).</li>
+                    <li>Defina o status inicial — normalmente <strong>Novo</strong>.</li>
+                    <li>Clique em <strong>Salvar</strong>.</li>
+                </ol>
+
+                <h3>Fluxo de status</h3>
+                <p>Cada pedido passa pelos seguintes estágios:</p>
+                <ul>
+                    <li><strong>Novo</strong> — pedido recebido, ainda não confirmado.</li>
+                    <li><strong>Confirmado</strong> — pagamento confirmado, vai entrar em produção.</li>
+                    <li><strong>Em Produção</strong> — peça sendo confeccionada (2–5 dias úteis).</li>
+                    <li><strong>Enviado</strong> — saiu para entrega.</li>
+                    <li><strong>Entregue</strong> — finalizado.</li>
+                </ul>
+                <p>
+                    No card de cada pedido há um botão de avanço rápido que pula pro próximo status. Você também pode editar o pedido e mudar manualmente para qualquer estágio.
+                </p>
+
+                <h3>Filtrar por status</h3>
+                <p>
+                    Os chips no topo da página filtram por status. Clique em <strong>Todos</strong> para ver tudo, ou em qualquer status para ver apenas aquele grupo. O contador no cabeçalho mostra quantos pedidos estão em aberto (todos que não chegaram em Entregue).
+                </p>
+
+                <h3>Editar e remover</h3>
+                <p>
+                    Clique em <strong>Editar</strong> no card para alterar qualquer campo. <strong>Remover</strong> apaga o pedido permanentemente — use com cuidado.
+                </p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ LAYOUT -->
+            <section class="help-section" id="layout">
+                <h2>LAYOUT</h2>
+                <div class="sub">Como o catálogo aparece</div>
+                <p>
+                    Na aba <strong>Layout</strong> você escolhe a grade padrão do catálogo para todos os visitantes:
+                </p>
+                <ul>
+                    <li><strong>Grade (3 colunas)</strong> — mais produtos visíveis de uma vez. Bom para acervo grande.</li>
+                    <li><strong>Duo (2 colunas)</strong> — equilíbrio entre visualização e detalhe.</li>
+                    <li><strong>Lista (1 coluna)</strong> — imagens maiores, um produto por linha.</li>
+                </ul>
+                <p>
+                    Clique em qualquer opção e o catálogo público atualiza na hora. Os clientes que já estiverem navegando verão a mudança se recarregarem a página.
+                </p>
+                <div class="callout">
+                    Cada cliente pode mudar o layout por conta própria usando os botões no cabeçalho do catálogo. A sua configuração aqui define o padrão para quem entra pela primeira vez.
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ LANDING -->
+            <section class="help-section" id="landing">
+                <h2>LANDING PAGE</h2>
+                <div class="sub">A página inicial da loja</div>
+                <p>
+                    A landing é a primeira tela quando alguém abre <code>tripvisuals.shop</code>. Na aba <strong>Landing</strong> você controla 5 blocos:
+                </p>
+
+                <h3>1 · Estilo</h3>
+                <p>
+                    Escolhe o visual entre os temas disponíveis (Clássico, Retro). Clique num card para ativar — a mudança é imediata. Para ver o resultado, clique em <strong>Ver ao vivo ↗</strong> no canto superior direito.
+                </p>
+
+                <h3>2 · Arsenal</h3>
+                <p>
+                    Coleção de logos prontas do sistema (Logo 1, Logo 2, Logo 3, Logo 4). Clique em qualquer uma para ativar.
+                </p>
+
+                <h3>3 · Logo personalizada</h3>
+                <p>
+                    Use sua própria imagem em vez das do arsenal. PNG, JPG ou WEBP, quadrada de preferência, até 10 MB. Arraste para a área de upload ou clique em <strong>Escolher</strong>, depois <strong>Enviar</strong>. <strong>Reverter ao padrão</strong> volta para a logo original.
+                </p>
+                <div class="callout">
+                    Logos <strong>quadradas</strong> ficam melhores — a landing recorta em círculo. Imagens retangulares têm parte cortada.
+                </div>
+
+                <h3>4 · Ambiente</h3>
+                <p>
+                    Controla o fundo da landing:
+                </p>
+                <ul>
+                    <li><strong>Cor de fundo</strong> — seletor de cor ou hex (ex.: <code>#0A0510</code>). <strong>Limpar cor</strong> volta ao padrão do estilo.</li>
+                    <li><strong>Imagem de fundo</strong> — sobe uma imagem que aparece atrás de tudo. <strong>Remover imagem</strong> apaga.</li>
+                </ul>
+                <p>Os dois podem ser usados juntos. Se nenhum estiver definido, usa o fundo padrão do estilo escolhido.</p>
+
+                <h3>5 · Conteúdo</h3>
+                <p>
+                    Campos de texto editáveis da landing: título, tagline, links do Instagram e WhatsApp, além das seções "Sobre nós" e "Como funciona". <strong>Salva automaticamente ao sair do campo</strong>. Aparece <em>✓ salvo</em> quando grava.
+                </p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ CATÁLOGO -->
+            <section class="help-section" id="catalogo">
+                <h2>CATÁLOGO PÚBLICO</h2>
+                <div class="sub">Como os clientes veem a loja</div>
+                <p>
+                    Acesse em <code>tripvisuals.shop/catalogo.html</code> ou pela aba <strong>Catálogo</strong> no painel. Essa é a tela que seus clientes veem.
+                </p>
+
+                <h3>Abertura animada</h3>
+                <p>
+                    Na primeira visita de cada sessão, o catálogo exibe uma tela de boas-vindas por cerca de 2 segundos com o nome da loja, prazo de entrega, frete e tamanhos. Aparece uma vez por visita — se o cliente fechar a aba e voltar, verá novamente. Toque na tela para pular.
+                </p>
+
+                <h3>Busca em tempo real</h3>
+                <p>
+                    A lupa no cabeçalho abre um campo de busca. Os resultados aparecem enquanto o cliente digita, com miniatura e preço. Clicar em um resultado abre o produto.
+                </p>
+
+                <h3>Filtros de tipo e gênero</h3>
+                <p>
+                    Abaixo do cabeçalho aparecem chips de filtro automáticos para cada tipo (Camiseta, Moletom, Regata, Babylook) e cada gênero cadastrado (Rock, Metal, etc.) disponíveis no catálogo. O cliente pode combinar filtros — por exemplo, só Moletons de Metal. O contador ao lado mostra quantos produtos batem com os filtros. <strong>× Limpar</strong> remove os filtros.
+                </p>
+                <div class="callout">
+                    Os filtros de gênero só aparecem quando você cadastra o campo Gênero nos produtos. Quanto mais produtos tiverem gênero preenchido, mais úteis esses filtros ficam.
+                </div>
+
+                <h3>Layout alternável</h3>
+                <p>
+                    Os três botões no cabeçalho permitem que o cliente escolha entre grade de 3, 2 ou 1 coluna. A escolha é salva no navegador de cada um. O padrão inicial é o que você configurou na aba Layout.
+                </p>
+
+                <h3>Modal de detalhes do produto</h3>
+                <p>
+                    Clicar em qualquer produto abre uma janela com a foto em tamanho maior, tipo, cor, preço e descrição. O botão verde <strong>Adquirir via WhatsApp</strong> manda uma mensagem pré-preenchida com o nome do produto e o preço base diretamente para o WhatsApp da loja.
+                </p>
+
+                <h3>Confirmação após compra</h3>
+                <p>
+                    Depois de clicar no botão de WhatsApp, o modal mostra uma tela de confirmação com uma timeline do pedido (Item escolhido → Aguardando confirmação → Em confecção → Enviado). Isso ajuda o cliente a entender o próximo passo.
+                </p>
+
+                <h3>FAQ — Informações da loja</h3>
+                <p>
+                    O ícone <strong>ⓘ</strong> no cabeçalho do catálogo abre um modal com prazo de produção, frete, tamanhos e a tabela completa de preços por tipo de peça. O cliente consulta antes de perguntar no WhatsApp.
+                </p>
+
+                <h3>Download ZIP</h3>
+                <p>
+                    Há um botão de download no cabeçalho com o badge <em>em breve</em>. Essa função está planejada para versões futuras do sistema.
+                </p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ TAREFAS -->
+            <section class="help-section" id="tarefas">
+                <h2>TAREFAS COMUNS</h2>
+                <div class="sub">Passo a passo das ações mais frequentes</div>
+
+                <h3>Trocar a logo da landing</h3>
+                <p>Landing → seção Arsenal (para logos prontas) ou Logo personalizada (para a sua imagem). Clique na logo desejada ou suba o arquivo e clique em Enviar.</p>
+
+                <h3>Mudar a cor de fundo da landing</h3>
+                <p>Landing → Ambiente → Cor de fundo. Use o seletor ou digite o código hex direto.</p>
+
+                <h3>Colocar uma imagem de fundo</h3>
+                <p>Landing → Ambiente → Imagem de fundo. Suba a imagem, clique em Enviar. Para remover, clique em Remover imagem.</p>
+
+                <h3>Mudar o título ou tagline</h3>
+                <p>Landing → Conteúdo → campos Título e Tagline. Edite e clique fora — salva sozinho.</p>
+
+                <h3>Atualizar o link do WhatsApp</h3>
+                <p>Landing → Conteúdo → campo "Link do WhatsApp". Cole o link completo no formato <code>https://wa.me/5511999999999</code>.</p>
+
+                <h3>Adicionar um produto novo</h3>
+                <p>Upload → configure o lote → arraste as imagens → revise → Lançar.</p>
+
+                <h3>Ocultar um produto temporariamente</h3>
+                <p>Produtos → encontre o produto → clique em Ocultar. O produto sai do catálogo público mas fica cadastrado aqui para você reativar quando quiser.</p>
+
+                <h3>Registrar uma venda do WhatsApp</h3>
+                <p>Pedidos → Novo Pedido → preencha produto, cliente, tamanho e valor → Salvar → avance o status conforme a produção progride.</p>
+
+                <h3>Mudar o estilo visual da loja</h3>
+                <p>Layout (para grade do catálogo) ou Landing → Estilo (para tema visual da página inicial).</p>
+
+                <h3>Sair do painel (logout)</h3>
+                <p>Clique no botão Sair em qualquer página. A sessão expira automaticamente após 8 horas de inatividade, ou use <strong>Segurança → Encerrar todas as sessões</strong> para sair de todos os dispositivos de uma vez.</p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ PROBLEMAS -->
+            <section class="help-section" id="problemas">
+                <h2>PROBLEMAS COMUNS</h2>
+                <div class="sub">Soluções para situações frequentes</div>
+
+                <h3>"Não consigo entrar / a página fica em branco"</h3>
+                <p>
+                    Verifique a senha (ela diferencia maiúsculas e minúsculas). Se esqueceu a senha, entre em contato com o desenvolvedor na seção Contato abaixo.
+                </p>
+
+                <h3>"Fui deslogada sem querer"</h3>
+                <p>
+                    Por segurança, a sessão expira automaticamente depois de 8 horas. Basta entrar novamente. Se precisar ficar mais tempo sem ser deslogada, entre em contato para ajustar o tempo de sessão.
+                </p>
+
+                <h3>"Mudei a logo / o estilo / o fundo mas a loja ainda mostra o antigo"</h3>
+                <p>
+                    O navegador pode ter guardado a versão antiga em cache. Aperta <kbd>Ctrl + Shift + R</kbd> (ou <kbd>Cmd + Shift + R</kbd> no Mac) na aba do catálogo para forçar um recarregamento completo.
+                </p>
+
+                <h3>"O upload travou no meio"</h3>
+                <p>
+                    Aguarde aparecer a mensagem de erro ou sucesso. Se nada aparecer em 30 segundos, recarregue a página e tente de novo com menos imagens por lote. Verifique também se os arquivos são JPG, PNG ou WEBP (outros formatos são rejeitados).
+                </p>
+
+                <h3>"O produto sumiu do catálogo mas ainda aparece aqui"</h3>
+                <p>
+                    Ele foi ocultado. Aparece com o badge vermelho OCULTO nos Produtos. Clique em <strong>Mostrar</strong> para reativar.
+                </p>
+
+                <h3>"Aparece 'Erro ao salvar' nos pedidos"</h3>
+                <p>
+                    O campo <strong>Produto</strong> é obrigatório. Verifique se está preenchido. Se o erro persistir, entre em contato com o desenvolvedor.
+                </p>
+
+                <h3>"Os filtros do catálogo não aparecem"</h3>
+                <p>
+                    Os filtros aparecem automaticamente baseados nos dados dos produtos. O filtro de tipo aparece quando há produtos cadastrados. O filtro de gênero aparece quando pelo menos um produto tem o campo Gênero preenchido. Preencha o gênero nos produtos pelo painel de Produtos.
+                </p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ SEGURANÇA -->
+            <section class="help-section" id="seguranca">
+                <h2>SEGURANÇA</h2>
+                <div class="sub">Ações de segurança da conta</div>
+
+                <h3>Sessão automática</h3>
+                <p>
+                    O painel desconecta automaticamente após <strong>8 horas</strong>. Isso evita que alguém acesse a conta se você esquecer o computador aberto. Ao voltar, basta entrar novamente.
+                </p>
+
+                <h3>Encerrar todas as sessões</h3>
+                <div class="security-card">
+                    <div class="security-card-info">
+                        <h3>Encerrar todas as sessões</h3>
+                        <p>
+                            Desconecta imediatamente todos os dispositivos onde a conta está ativa.
+                            Use se suspeitar que outra pessoa tem acesso à sua conta.
+                        </p>
+                        <p class="security-note">
+                            Você também será desconectada e precisará entrar novamente.
+                        </p>
                     </div>
-                </section>
+                    <button
+                        type="button"
+                        id="btnNukeAll"
+                        class="btn-nuke"
+                        aria-label="Encerrar todas as sessões ativas"
+                    >
+                        <svg class="nuke-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                        </svg>
+                        <span id="nukeLabel">Encerrar tudo</span>
+                    </button>
+                </div>
+            </section>
 
-                <section class="help-section" id="produtos">
-                    <h2>PRODUTOS</h2>
-                    <div class="sub">Adicionar, editar, remover</div>
-
-                    <h3>Adicionar produtos novos</h3>
-                    <ol>
-                        <li>Vai na aba <strong>Upload</strong>.</li>
-                        <li>Arrasta as imagens pra área de upload (ou clica pra escolher).</li>
-                        <li>O sistema sugere nome e preço automaticamente baseado no nome do arquivo. Revise se quiser.</li>
-                        <li>Clica em <strong>Lançar no Abismo</strong> e os produtos vão pro catálogo.</li>
-                    </ol>
-                    <div class="callout warn">
-                        Suba no máximo umas 50 imagens por vez. Se passar muito disso o navegador pode travar — quebra em mais de uma leva.
+            <!-- ═══════════════════════════════════════════════ CONTATO -->
+            <section class="help-section" id="contato">
+                <h2>CONTATO</h2>
+                <div class="sub">Fale com o desenvolvedor do sistema</div>
+                <p>
+                    Se precisar de suporte, ajuste no sistema, nova funcionalidade ou encontrar um problema que não consta aqui, entre em contato:
+                </p>
+                <div class="contact-card">
+                    <div class="contact-info">
+                        <p class="contact-name">Rory · VOIDZONE</p>
+                        <p class="contact-sub">Desenvolvimento · Suporte</p>
                     </div>
-
-                    <h3>Editar um produto</h3>
-                    <ol>
-                        <li>Vai na aba <strong>Produtos</strong>.</li>
-                        <li>Acha o produto na grade.</li>
-                        <li>Muda o nome ou preço direto no card.</li>
-                        <li>Clica em <strong>Salvar</strong> naquele card. Aparece um ✓ quando salva.</li>
-                    </ol>
-
-                    <h3>Remover um produto</h3>
-                    <p>
-                        No mesmo card, clica em <strong>Remover</strong>. O sistema pede confirmação porque essa ação <em>não pode ser desfeita</em> — o produto e a imagem somem pra sempre.
-                    </p>
-                </section>
-
-                <section class="help-section" id="layout">
-                    <h2>LAYOUT</h2>
-                    <div class="sub">Como o catálogo aparece</div>
-                    <p>
-                        Na aba <strong>Layout</strong> você escolhe entre as opções de exibição do catálogo (grade de 3 colunas, em duas, lista, etc.). Clica na opção desejada e o catálogo público atualiza na hora.
-                    </p>
-                    <p>
-                        A opção escolhida vira o <strong>padrão</strong> pra quem entra na loja.
-                    </p>
-                </section>
-
-                <section class="help-section" id="landing">
-                    <h2>LANDING PAGE</h2>
-                    <div class="sub">A página inicial da loja</div>
-
-                    <p>
-                        A landing é a primeira coisa que aparece quando alguém abre <code>tripvisuals.shop</code>. Na aba <strong>Landing</strong> você controla 5 coisas, nessa ordem:
-                    </p>
-
-                    <h3>1 · Estilo</h3>
-                    <p>
-                        Escolhe o visual da landing entre os estilos disponíveis (Clássico, Retro, ou outros que o desenvolvedor cadastrar). Clica num card e a página pública muda imediatamente. Pra ver o resultado, clica em <strong>Ver ao vivo ↗</strong> no canto superior direito.
-                    </p>
-
-                    <h3>2 · Arsenal</h3>
-                    <p>
-                        Coleção de logos prontas do sistema (Logo 1, Logo 2, Logo 3, Logo 4…). Clica em qualquer uma pra ativar — a troca acontece na hora.
-                    </p>
-
-                    <h3>3 · Logo personalizada</h3>
-                    <p>
-                        Pra usar sua própria imagem em vez das do arsenal. PNG, JPG ou WEBP, até 10MB. Arraste pra área de upload ou clique em <strong>Escolher</strong>, depois <strong>Enviar</strong>. <strong>Reverter ao padrão</strong> volta pra logo do repositório.
-                    </p>
-                    <div class="callout">
-                        Dica: logos <strong>quadradas</strong> ficam melhores porque a landing recorta em círculo. Imagens retangulares têm parte cortada.
+                    <div class="contact-actions">
+                        <button type="button" class="contact-btn contact-btn-wa" id="btnContactWa" aria-label="Enviar mensagem pelo WhatsApp"
+                            data-p1="55" data-p2="81" data-p3="8559" data-p4="1929">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            WhatsApp
+                        </button>
+                        <button type="button" class="contact-btn contact-btn-email" id="btnContactEmail" aria-label="Enviar email"
+                            data-u="mroryfield" data-d="gmail.com">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            Email
+                        </button>
                     </div>
+                </div>
+                <p class="contact-note">
+                    Para agilizar o atendimento, descreva o que aconteceu e em qual área do painel o problema ocorreu.
+                </p>
+            </section>
 
-                    <h3>4 · Ambiente</h3>
-                    <p>
-                        Controla o fundo da landing. Duas formas:
-                    </p>
-                    <ul>
-                        <li><strong>Cor de fundo</strong> — escolhe pelo seletor de cor ou digita o hex (ex.: <code>#0A0510</code>). <strong>Limpar cor</strong> volta pra cor do estilo.</li>
-                        <li><strong>Imagem de fundo</strong> — sobe uma imagem que vira o fundo da landing inteira. <strong>Remover imagem</strong> tira ela.</li>
-                    </ul>
-                    <p>
-                        Você pode usar os dois ao mesmo tempo: a imagem aparece por cima da cor. Se nenhum dos dois estiver setado, a landing usa o fundo padrão do estilo escolhido.
-                    </p>
+        </div><!-- /help-content -->
+    </div><!-- /help-layout -->
 
-                    <h3>5 · Conteúdo</h3>
-                    <p>
-                        Campos pra editar o texto da landing: título, tagline, links do Instagram e WhatsApp, assinatura no rodapé. <strong>Salva sozinho quando você clica fora do campo</strong> (ou aperta <kbd>Enter</kbd>). Aparece <em>✓ salvo</em> do lado quando grava.
-                    </p>
-                    <p>
-                        Pra voltar ao texto padrão de um campo, deixa ele vazio e clica fora.
-                    </p>
-                </section>
+</main>
 
-                <section class="help-section" id="tema">
-                    <h2>TEMA DO ADMIN</h2>
-                    <div class="sub">Modo claro ou escuro</div>
-                    <p>
-                        O painel admin tem dois temas: escuro (padrão) e claro. Alterna com o botão de tema (sol/lua) no topo da aba <strong>Hub</strong>. Vale pra todas as telas do admin.
-                    </p>
-                    <div class="callout">
-                        Esse tema é só do admin — não muda a aparência do que o cliente vê na loja. Pro visual público, use a aba <strong>Landing</strong> → <strong>Estilo</strong>.
-                    </div>
-                </section>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-                <section class="help-section" id="tarefas">
-                    <h2>TAREFAS COMUNS</h2>
-                    <div class="sub">Como fazer X em poucos passos</div>
+<nav class="admin-nav" aria-label="Navegação admin">
+    <a href="/admin-hub.html" class="nav-tab" id="tab-hub">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        Hub
+    </a>
+    <a href="/admin.html" class="nav-tab" id="tab-upload">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <polyline points="16 16 12 12 8 16"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+        Upload
+    </a>
+    <a href="/admin-produtos.html" class="nav-tab" id="tab-produtos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Produtos
+    </a>
+    <a href="/admin-layout.html" class="nav-tab" id="tab-layout">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+        </svg>
+        Layout
+    </a>
+    <a href="/admin-landing.html" class="nav-tab" id="tab-landing">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="14" rx="2"/>
+            <line x1="2" y1="9" x2="22" y2="9"/>
+            <line x1="8" y1="22" x2="16" y2="22"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+        </svg>
+        Landing Page
+    </a>
+    <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
+            <line x1="1" y1="6" x2="1" y2="22"/>
+        </svg>
+        Catálogo
+    </a>
+    <a href="/admin-pedidos.html" class="nav-tab" id="tab-pedidos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Pedidos
+    </a>
+    <a href="/admin-help.html" class="nav-tab active" id="tab-help" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Manual
+    </a>
+</nav>
 
-                    <h3>Trocar a logo da landing</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Arsenal</strong>.</li>
-                        <li>Clica no logo desejado.</li>
-                        <li>Pronto. Confere em <strong>Ver ao vivo ↗</strong>.</li>
-                    </ol>
-
-                    <h3>Mudar a cor de fundo da landing</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Ambiente</strong>.</li>
-                        <li>Clica no quadradinho de cor e escolhe a cor.</li>
-                        <li>Pronto, salva sozinho.</li>
-                    </ol>
-
-                    <h3>Colocar uma imagem de fundo na landing</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Ambiente</strong>.</li>
-                        <li>Arrasta a imagem pra zona de upload (ou clica em <strong>Escolher</strong>).</li>
-                        <li>Clica em <strong>Enviar</strong>.</li>
-                    </ol>
-
-                    <h3>Mudar o título ou tagline da landing</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Conteúdo</strong>.</li>
-                        <li>Escreve no campo.</li>
-                        <li>Clica fora ou aperta <kbd>Enter</kbd>. Aparece <em>✓ salvo</em>.</li>
-                    </ol>
-
-                    <h3>Atualizar o link do WhatsApp ou Instagram</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Conteúdo</strong>.</li>
-                        <li>Cola a URL completa (ex.: <code>https://wa.me/5511940537169</code>).</li>
-                        <li>Clica fora pra salvar.</li>
-                    </ol>
-
-                    <h3>Mudar o estilo visual da loja</h3>
-                    <ol>
-                        <li>Aba <strong>Landing</strong> → seção <strong>Estilo</strong>.</li>
-                        <li>Clica no estilo desejado.</li>
-                        <li>Abre <strong>Ver ao vivo ↗</strong> pra conferir.</li>
-                    </ol>
-
-                    <h3>Adicionar um produto novo</h3>
-                    <ol>
-                        <li>Aba <strong>Upload</strong>.</li>
-                        <li>Arrasta a imagem (ou várias) pra zona de upload.</li>
-                        <li>Confere nome e preço (auto-preenchidos).</li>
-                        <li>Clica em <strong>Lançar no Abismo</strong>.</li>
-                    </ol>
-
-                    <h3>Sair (logout)</h3>
-                    <p>Use o botão de sair no Hub. Por segurança, sempre saia em computadores que não são seus.</p>
-                </section>
-
-                <section class="help-section" id="problemas">
-                    <h2>PROBLEMAS COMUNS</h2>
-                    <div class="sub">Se algo não tá funcionando</div>
-
-                    <h3>"Não consigo entrar / a página fica em branco"</h3>
-                    <p>
-                        Normalmente é sessão expirada. Vai em <code>/login.html</code> e entra de novo.
-                    </p>
-
-                    <h3>"Mudei a logo / o estilo / o fundo mas a loja ainda mostra o antigo"</h3>
-                    <p>
-                        Cache do navegador. Força atualização com <kbd>Ctrl</kbd>+<kbd>F5</kbd> (Windows) ou <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (Mac) na página pública.
-                    </p>
-
-                    <h3>"O upload travou no meio"</h3>
-                    <p>
-                        Geralmente é imagem grande demais (acima de 10MB) ou conexão ruim. Verifica o arquivo, atualiza a página e tenta de novo — o que já subiu fica salvo.
-                    </p>
-
-                    <h3>"Removi um produto sem querer"</h3>
-                    <p>
-                        Não dá pra desfazer — a remoção é permanente. Suba a imagem de novo pela aba <strong>Upload</strong>.
-                    </p>
-
-                    <h3>Qualquer outra coisa</h3>
-                    <p>Fala com o Rory.</p>
-                </section>
-
-            </div>
-        </div>
-    </main>
-
-    <nav class="admin-nav" aria-label="Navegação admin">
-        <a href="/admin-hub.html" class="nav-tab" id="tab-hub">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
-                <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
-            </svg>
-            Hub
-        </a>
-        <a href="/admin.html" class="nav-tab" id="tab-upload">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-            </svg>
-            Upload
-        </a>
-        <a href="/admin-produtos.html" class="nav-tab" id="tab-produtos">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-            Produtos
-        </a>
-        <a href="/admin-layout.html" class="nav-tab" id="tab-layout">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
-            </svg>
-            Layout
-        </a>
-        <a href="/admin-landing.html" class="nav-tab" id="tab-landing">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="2" y="4" width="20" height="14" rx="2"/>
-                <line x1="2" y1="9" x2="22" y2="9"/>
-                <line x1="8" y1="22" x2="16" y2="22"/><line x1="12" y1="18" x2="12" y2="22"/>
-            </svg>
-            Landing Page
-        </a>
-        <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
-                <line x1="1" y1="6" x2="1" y2="22"/>
-            </svg>
-            Catálogo
-        </a>
-    </nav>
-
-    <script src="/admin-help.js"></script>
-
-
+<script src="/admin-help.js"></script>
 <script src="/admin-shared.js"></script>
 </body>
 </html>

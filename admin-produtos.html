@@ -15,6 +15,23 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <datalist id="generosList">
+        <option value="Rock">
+        <option value="Metal">
+        <option value="Grunge">
+        <option value="Alternativo">
+        <option value="Punk">
+        <option value="Pop Rock">
+        <option value="Progressivo">
+        <option value="Black Metal">
+        <option value="Death Metal">
+        <option value="Hardcore">
+        <option value="Indie">
+        <option value="Doom">
+        <option value="Thrash">
+        <option value="Stoner">
+    </datalist>
+
     <datalist id="coresList">
     <option value="Preta">
     <option value="Off-White">
@@ -62,7 +79,7 @@
     <span class="label">Sair</span>
 </button>
                 <div class="produto-count" id="totalCount">—</div>
-                <div class="produto-count-label">produtos ativos</div>
+                <div class="produto-count-label" id="totalLabel">produtos no acervo</div>
             </div>
         </div>
 
@@ -154,7 +171,14 @@
             </svg>
             Catálogo
         </a>
-    </nav>
+        <a href="/admin-pedidos.html" class="nav-tab" id="tab-pedidos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Pedidos
+    </a>
+</nav>
 
     <script src="/admin-produtos.js"></script>
 

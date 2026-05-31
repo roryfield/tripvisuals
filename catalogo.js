@@ -23,7 +23,8 @@
     }
 
     // ── STATE ────────────────────────────────────────────────────
-    var todosProdutos = [];
+    var todosProdutos  = [];
+    var activeFilters = { tipo: '', genero: '' };
     var searchAberta  = false;
     var NUMERO_LOJA   = '5511940537169';
 
@@ -146,21 +147,42 @@
     }
 
     // ── RENDER ────────────────────────────────────────────────────
+    function applyFilters(lista) {
+        var f = activeFilters;
+        return lista.filter(function (p) {
+            var matchTipo   = !f.tipo   || (p.tipo   || '').toLowerCase() === f.tipo.toLowerCase();
+            var matchGenero = !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
+            return matchTipo && matchGenero;
+        });
+    }
+
     function renderProdutos(lista) {
         var vitrine = document.getElementById('vitrine');
+        var filtered = applyFilters(lista);
         vitrine.innerHTML = '';
 
-        if (lista.length === 0) {
+        // Update active count
+        var countEl = document.getElementById('filterCount');
+        if (countEl) {
+            var hasFilter = activeFilters.tipo || activeFilters.genero;
+            countEl.textContent = hasFilter
+                ? filtered.length + ' de ' + lista.length + ' produtos'
+                : lista.length + ' produtos';
+        }
+
+        if (filtered.length === 0) {
             vitrine.innerHTML =
                 '<div class="state-msg">' +
-                '<span class="icon" aria-hidden="true">👕</span>' +
-                '<p>Coleção sendo montada. Volte em breve!</p>' +
-                '<p class="vz-ig-hint">Siga no Instagram para novidades.</p>' +
+                '<span class="icon" aria-hidden="true">🔍</span>' +
+                '<p>Nenhum produto nessa combinação de filtros.</p>' +
+                '<button class="state-clear-filters" type="button">Limpar filtros</button>' +
                 '</div>';
+            var clr = vitrine.querySelector('.state-clear-filters');
+            if (clr) clr.addEventListener('click', function () { limparFiltros(); });
             return;
         }
 
-        lista.forEach(function (p, i) {
+        filtered.forEach(function (p, i) {
             var btn = document.createElement('button');
             btn.className = 'card-produto';
             btn.type      = 'button';
@@ -174,16 +196,89 @@
                 '<div class="card-info">' +
                 '<h3>' + esc(p.nome) + '</h3>' +
                 '<div class="card-meta">' +
-                (p.cor ? '<span class="cor-badge">' + esc(p.cor) + '</span>' : '') +
+                (p.genero ? '<span class="genero-badge">' + esc(p.genero) + '</span>' : '') +
+                (p.cor    ? '<span class="cor-badge">'    + esc(p.cor)    + '</span>' : '') +
                 '<span class="price">R$ ' + Number(p.preco).toFixed(2) + '</span>' +
                 '</div>' +
                 '</div>';
-            // Set onerror via JS property — CSP-safe
             var img = btn.querySelector('img');
             if (img) setImgFallback(img);
             btn.addEventListener('click', function () { abrirModal(p); });
             vitrine.appendChild(btn);
         });
+    }
+
+    function limparFiltros() {
+        activeFilters = { tipo: '', genero: '' };
+        renderFiltros(todosProdutos);
+        renderProdutos(todosProdutos);
+    }
+
+    function renderFiltros(lista) {
+        var bar = document.getElementById('filterBar');
+        if (!bar) return;
+
+        // Compute unique tipos and generos in this product set
+        var tipos   = [...new Set(lista.map(p => p.tipo   || '').filter(Boolean))].sort();
+        var generos = [...new Set(lista.map(p => p.genero || '').filter(Boolean))].sort();
+
+        var f = activeFilters;
+
+        var tipoHtml = '';
+        if (tipos.length > 0) {
+            tipoHtml  = '<div class="filter-group" role="group" aria-label="Filtrar por tipo">';
+            tipoHtml += '<button class="filter-chip' + (!f.tipo ? ' active' : '') + '" data-filter="tipo" data-value="">Todos</button>';
+            tipos.forEach(function (t) {
+                tipoHtml += '<button class="filter-chip' + (f.tipo === t ? ' active' : '') + '" data-filter="tipo" data-value="' + esc(t) + '">' + esc(t) + '</button>';
+            });
+            tipoHtml += '</div>';
+        }
+
+        var generoHtml = '';
+        if (generos.length >= 1) {
+            generoHtml  = '<div class="filter-group" role="group" aria-label="Filtrar por gênero">';
+            generoHtml += '<button class="filter-chip' + (!f.genero ? ' active' : '') + '" data-filter="genero" data-value="">Todos</button>';
+            generos.forEach(function (g) {
+                generoHtml += '<button class="filter-chip' + (f.genero === g ? ' active' : '') + '" data-filter="genero" data-value="' + esc(g) + '">' + esc(g) + '</button>';
+            });
+            generoHtml += '</div>';
+        }
+
+        var clearHtml = (f.tipo || f.genero)
+            ? '<button class="filter-clear" type="button" aria-label="Limpar todos os filtros">× Limpar</button>'
+            : '';
+
+        var countHtml = '<span class="filter-count" id="filterCount"></span>';
+
+        bar.innerHTML =
+            '<div class="filter-bar-inner">' +
+            tipoHtml + generoHtml + clearHtml + countHtml +
+            '</div>';
+
+        // Wire chip clicks
+        bar.querySelectorAll('.filter-chip').forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                var key = chip.dataset.filter;
+                var val = chip.dataset.value;
+                activeFilters[key] = (activeFilters[key] === val) ? '' : val;
+                renderFiltros(todosProdutos);
+                renderProdutos(todosProdutos);
+            });
+        });
+
+        // Wire clear button
+        var clearBtn = bar.querySelector('.filter-clear');
+        if (clearBtn) clearBtn.addEventListener('click', limparFiltros);
+
+        // Update count
+        var countEl = document.getElementById('filterCount');
+        if (countEl) {
+            var filtered = applyFilters(lista);
+            var hasFilter = f.tipo || f.genero;
+            countEl.textContent = hasFilter
+                ? filtered.length + ' de ' + lista.length + ' produtos'
+                : lista.length + ' produtos';
+        }
     }
 
     // ── PRODUCT MODAL ────────────────────────────────────────────
@@ -197,6 +292,8 @@
         var titleEl    = document.getElementById('modalTitle');
         var corEl      = document.getElementById('modalCor');
         var priceEl    = document.getElementById('modalPrice');
+        var tipoEl     = document.getElementById('modalTipo');
+        var generoEl   = document.getElementById('modalGenero');
         if (!modal) return;
         // Always reset to detail view on open
         if (card) card.setAttribute('data-state', 'detail');
@@ -205,8 +302,10 @@
         img.alt    = p.nome;
         setImgFallback(img);
         titleEl.textContent = p.nome;
-        corEl.textContent   = p.cor || '';
-        priceEl.textContent = 'R$ ' + Number(p.preco).toFixed(2);
+        corEl.textContent    = p.cor    || '';
+        priceEl.textContent  = 'R$ ' + Number(p.preco).toFixed(2);
+        if (tipoEl)   tipoEl.textContent   = p.tipo   || '';
+        if (generoEl) generoEl.textContent = p.genero || '';
 
         modal.classList.add('open');
         modal.setAttribute('aria-hidden', 'false');
@@ -352,6 +451,7 @@
         try {
             var resProd   = await fetch('/api/produtos');
             todosProdutos = resProd.ok ? await resProd.json() : [];
+            renderFiltros(todosProdutos);
             renderProdutos(todosProdutos);
         } catch (e) {
             document.getElementById('vitrine').innerHTML =
@@ -364,7 +464,7 @@
 
     // ── CATALOG INTRO — shown on first session visit only ──────
     var INTRO_MIN_MS = 1500;   // ensure animation is visible
-    var INTRO_MAX_MS = 4000;   // never block more than 4s
+    var INTRO_MAX_MS = 5000;   // hard cap — brand moment runs up to 5s
     var introStart    = 0;
     var introHidden   = false;
 

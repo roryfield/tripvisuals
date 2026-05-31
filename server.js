@@ -1,6 +1,6 @@
 // ============================================================
 //  Trip Visuals Wear — Production Server
-//  v10 — morgan logging · /health · DELETE atômico · Sentry removido
+//  v8 — Persistent sessions · Cloudinary transforms · Strict CSP
 // ============================================================
 
 process.chdir(__dirname);
@@ -9,17 +9,35 @@ const path        = require('path');
 const crypto      = require('crypto');
 const express     = require('express');
 const compression = require('compression');
-const morgan      = require('morgan');         // [FIX-5] request logging para diagnóstico em produção
 const multer      = require('multer');
-const rateLimit   = require('express-rate-limit');
-const { Pool }    = require('pg');
-const cloudinary  = require('cloudinary').v2;  // mantido em v1.41.x — downgrade anterior foi intencional
+const rateLimit  = require('express-rate-limit');
+const { Pool }   = require('pg');
+const cloudinary = require('cloudinary').v2;
+
+// [VZ] Optional Sentry error monitoring.
+// Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
+let Sentry = null;
+if (process.env.SENTRY_DSN) {
+    try {
+        Sentry = require('@sentry/node');
+        Sentry.init({
+            dsn: process.env.SENTRY_DSN,
+            tracesSampleRate: 0.1,
+            environment: process.env.RAILWAY_ENVIRONMENT || 'production'
+        });
+        console.log('✅ Sentry inicializado.');
+    } catch (e) {
+        console.warn('⚠️  Sentry não disponível:', e.message);
+        Sentry = null;
+    }
+}
 
 // ── Constant-time string compare (prevents login timing attacks) ──
 function timingSafeStringCompare(a, b) {
     const ba = Buffer.from(String(a || ''));
     const bb = Buffer.from(String(b || ''));
     if (ba.length !== bb.length) {
+        // Still do a comparison of equal-length buffers to keep timing flat.
         crypto.timingSafeEqual(bb, bb);
         return false;
     }
@@ -57,12 +75,6 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// [FIX-3] Handler de erro no pool: evita unhandledRejection silencioso
-// se a conexão cair inesperadamente no Railway.
-pool.on('error', (err) => {
-    console.error('❌ PostgreSQL pool error inesperado:', err.message);
-});
-
 async function initDB() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS produtos (
@@ -71,6 +83,36 @@ async function initDB() {
             preco         REAL NOT NULL,
             imagem_url    TEXT,
             cloudinary_id TEXT
+        )
+    `);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS cloudinary_id TEXT`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS cor TEXT NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS oculto BOOLEAN NOT NULL DEFAULT false`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'Camiseta'`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS genero TEXT NOT NULL DEFAULT ''`);
+    // One-time: set tipo from existing product names (idempotent — won't re-set if already correct)
+    await pool.query(`
+        UPDATE produtos SET tipo =
+            CASE
+                WHEN UPPER(nome) LIKE 'MOLETOM%' THEN 'Moletom'
+                WHEN UPPER(nome) LIKE 'REGATA%'  THEN 'Regata'
+                WHEN UPPER(nome) LIKE 'BABYLOOK%' THEN 'Babylook'
+                ELSE 'Camiseta'
+            END
+        WHERE tipo = 'Camiseta'
+    `);
+    // Order tracking table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS pedidos (
+            id SERIAL PRIMARY KEY,
+            produto_nome TEXT NOT NULL,
+            valor NUMERIC(10,2),
+            tamanho TEXT DEFAULT '',
+            cliente_nome TEXT DEFAULT '',
+            cliente_whatsapp TEXT DEFAULT '',
+            notas TEXT DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'novo',
+            criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     `);
 
@@ -92,8 +134,8 @@ async function initDB() {
     await pool.query(
         `CREATE INDEX IF NOT EXISTS idx_sessoes_expira ON sessoes (expira_em)`
     );
+    // Clean up any expired sessions from previous runs
     await pool.query(`DELETE FROM sessoes WHERE expira_em < NOW()`);
-
     // [VZ] Seeds — all empty by default; landings fall back to their hardcoded
     // values if the corresponding config is empty.
     await pool.query(`
@@ -122,7 +164,8 @@ async function initDB() {
         ON CONFLICT (chave) DO NOTHING
     `);
 
-    // [VZ migration] Normalize legacy theme slug.
+    // [VZ migration] If a previous deploy stored the old "cosmico" slug,
+    // normalize it silently to the new "retro" name.
     await pool.query(`
         UPDATE configuracoes SET valor = 'retro'
          WHERE chave = 'landing_theme' AND valor = 'cosmico'
@@ -138,25 +181,21 @@ initDB().catch(err => {
 
 // ── PROXY (Railway) ────────────────────────────────────────────
 app.set('trust proxy', 1);
-
-// ── COMPRESSION ────────────────────────────────────────────────
 app.use(compression());
-
-// ── REQUEST LOGGING ────────────────────────────────────────────
-// [FIX-5] Loga método, url, status e tempo de resposta no Railway.
-// Ignora /health para não poluir logs com checks de uptime.
-app.use(morgan('combined', {
-    skip: (req) => req.path === '/health'
-}));
 
 // ── BODY PARSER ────────────────────────────────────────────────
 app.use(express.json({ limit: '100kb' }));
 
 // [VZ] SECURITY HEADERS ────────────────────────────────────────
+// All JS and CSS is now external — both script-src and style-src
+// have NO 'unsafe-inline'. This is a complete CSP.
+// The only remaining inline-ish item is style= attributes injected
+// dynamically by JS at runtime (e.g. color picker → body.style.backgroundColor)
+// which is NOT covered by style-src (it's DOM manipulation, always allowed).
 const CSP_COMMON =
     "default-src 'self'; " +
     "img-src 'self' data: blob: https://res.cloudinary.com; " +
-    "style-src 'self' https://fonts.googleapis.com; " +
+    "style-src 'self' https://fonts.googleapis.com; " +  // ← no unsafe-inline
     "font-src 'self' https://fonts.gstatic.com; " +
     "script-src 'self'; " +
     "connect-src 'self'; " +
@@ -193,6 +232,8 @@ app.use((req, res, next) => {
 
 // ════════════════════════════════════════════════════════════
 // [VZ] DYNAMIC ROOT — resolves landing_theme → HTML file.
+// Convention: slug 'classico' → index.html; any other slug → landing-<slug>.html
+// Must be BEFORE express.static so / is dynamic.
 // ════════════════════════════════════════════════════════════
 app.get('/', async (req, res) => {
     try {
@@ -218,7 +259,7 @@ app.use(express.static(ROOT_DIR, {
 }));
 
 // ── SESSION (PostgreSQL-backed — survives redeploys) ───────────
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours (security: shorter sessions)
 
 async function dbCreateSession(token) {
     const exp = new Date(Date.now() + SESSION_TTL_MS);
@@ -242,21 +283,32 @@ async function dbDeleteSession(token) {
     await pool.query('DELETE FROM sessoes WHERE token = $1', [token]);
 }
 
+// Logout from ALL devices — deletes every active session in the DB.
+// Protected: requireAuth means you must be logged in to log everyone out.
+// The requestor's own cookie will also be invalidated on the next request.
+app.delete('/api/sessions/all', requireAuth, async (req, res) => {
+    try {
+        const r = await pool.query('DELETE FROM sessoes');
+        console.log(`All sessions revoked (${r.rowCount} deleted)`);
+        // Clear the requestor's own cookie immediately
+        res.setHeader('Set-Cookie', `vztoken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`);
+        res.json({ success: true, deleted: r.rowCount });
+    } catch (e) {
+        console.error('DELETE /api/sessions/all:', e.message);
+        res.status(500).json({ error: 'Erro ao encerrar sessões.' });
+    }
+});
+
+// Periodic cleanup — runs every 30 min; no-op if nothing expired
 setInterval(() => {
     pool.query('DELETE FROM sessoes WHERE expira_em < NOW()')
         .catch(e => console.error('Session cleanup error:', e.message));
 }, 30 * 60 * 1000).unref();
 
-// [FIX-4] Extração do token centralizada — elimina a duplicação em
-// requireAuth, POST /api/logout e GET /api/me.
-function getTokenFromRequest(req) {
+async function requireAuth(req, res, next) {
     const cookie = req.headers.cookie || '';
     const match  = cookie.match(/vztoken=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : null;
-}
-
-async function requireAuth(req, res, next) {
-    const token = getTokenFromRequest(req);
+    const token  = match ? decodeURIComponent(match[1]) : null;
     try {
         if (await dbValidateSession(token)) return next();
     } catch (e) {
@@ -264,12 +316,10 @@ async function requireAuth(req, res, next) {
     }
     res.status(401).json({ error: 'Não autenticado.' });
 }
-
 function setSessionCookie(res, token) {
     res.setHeader('Set-Cookie',
-        `vztoken=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`);
+        `vztoken=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800`);
 }
-
 function clearSessionCookie(res) {
     res.setHeader('Set-Cookie', `vztoken=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`);
 }
@@ -279,11 +329,28 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        const ok = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        // First gate: trust the Content-Type header is at least claiming an image
+        const ok = ['image/jpeg', 'image/png', 'image/webp'];
         if (ok.includes(file.mimetype)) cb(null, true);
-        else cb(new Error('Tipo de imagem não permitido. Use JPG, PNG, WEBP ou GIF.'));
+        else cb(new Error('Tipo de imagem não permitido. Use JPG, PNG ou WEBP.'));
     }
 });
+
+// Binary magic-number check — verifies file BYTES match a real image,
+// regardless of what Content-Type the browser claimed.
+function detectImageType(buffer) {
+    if (!buffer || buffer.length < 12) return null;
+    const b = buffer;
+    // JPEG: FF D8 FF
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return 'jpeg';
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 &&
+        b[4] === 0x0D && b[5] === 0x0A && b[6] === 0x1A && b[7] === 0x0A) return 'png';
+    // WebP: 'RIFF'....'WEBP'
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+        b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'webp';
+    return null;
+}
 
 function uploadToCloudinary(buffer, filename, folder = 'tripvisuals') {
     return new Promise((resolve, reject) => {
@@ -297,6 +364,10 @@ function uploadToCloudinary(buffer, filename, folder = 'tripvisuals') {
     });
 }
 
+// [VZ] Inject Cloudinary URL transformation to reduce payload size.
+// Uses URL-based transforms (no extra upload step).
+// c_limit = only downscale, never upscale; q_auto = smart compression;
+// f_auto = best format (WebP/AVIF in supporting browsers).
 function cloudTransform(url, transform) {
     if (!url || !url.includes('/upload/')) return url;
     return url.replace('/upload/', `/upload/${transform}/`);
@@ -312,12 +383,14 @@ const loginLimiter = rateLimit({
     standardHeaders: true, legacyHeaders: false
 });
 
+// ── UPLOAD / WRITE RATE LIMITS (defense-in-depth on authed routes) ─
+// Cap uploads at 100/min — enough for bulk admin sessions (50-file batches
+// with some retry headroom) while still protecting against abuse.
 const uploadLimiter = rateLimit({
     windowMs: 60 * 1000, max: 100,
     message: { error: 'Muitos uploads. Espere um momento.' },
     standardHeaders: true, legacyHeaders: false
 });
-
 const writeLimiter = rateLimit({
     windowMs: 60 * 1000, max: 120,
     message: { error: 'Muitas alterações. Espere um momento.' },
@@ -335,27 +408,27 @@ function validarProduto({ nome, preco }) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  HEALTH CHECK
-// ════════════════════════════════════════════════════════════
-
-// [FIX-6] Endpoint para monitoramento externo (UptimeRobot, Railway healthcheck).
-// Verifica conectividade com o banco antes de responder 200.
-app.get('/health', async (req, res) => {
-    try {
-        await pool.query('SELECT 1');
-        res.json({ ok: true, db: 'up' });
-    } catch (e) {
-        res.status(503).json({ ok: false, db: 'down', error: e.message });
-    }
-});
-
-// ════════════════════════════════════════════════════════════
 //  PUBLIC ROUTES
 // ════════════════════════════════════════════════════════════
 
 app.get('/api/produtos', async (req, res) => {
     try {
-        const r = await pool.query('SELECT id, nome, preco, imagem_url FROM produtos ORDER BY id DESC LIMIT 500');
+        // Check if requester has a valid admin session
+        const cookie = req.headers.cookie || '';
+        const m = cookie.match(/vztoken=([^;]+)/);
+        let isAdmin = false;
+        if (m) {
+            try {
+                const tokenRow = await pool.query(
+                    'SELECT 1 FROM sessoes WHERE token = $1 AND expira_em > NOW()',
+                    [decodeURIComponent(m[1])]);
+                isAdmin = tokenRow.rows.length > 0;
+            } catch (_) { /* fail closed: treat as public */ }
+        }
+        const sql = isAdmin
+            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero FROM produtos ORDER BY id DESC'
+            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero FROM produtos WHERE oculto = false ORDER BY id DESC';
+        const r = await pool.query(sql);
         res.json(r.rows);
     } catch (e) {
         console.error('GET /api/produtos:', e.message);
@@ -399,14 +472,18 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 });
 
 app.post('/api/logout', async (req, res) => {
-    const token = getTokenFromRequest(req);   // [FIX-4] usa helper centralizado
+    const cookie = req.headers.cookie || '';
+    const m = cookie.match(/vztoken=([^;]+)/);
+    const token = m ? decodeURIComponent(m[1]) : null;
     await dbDeleteSession(token).catch(() => {});
     clearSessionCookie(res);
     res.json({ success: true });
 });
 
 app.get('/api/me', async (req, res) => {
-    const token = getTokenFromRequest(req);   // [FIX-4] usa helper centralizado
+    const cookie = req.headers.cookie || '';
+    const m = cookie.match(/vztoken=([^;]+)/);
+    const token = m ? decodeURIComponent(m[1]) : null;
     try {
         if (await dbValidateSession(token)) return res.json({ autenticado: true });
     } catch (e) {
@@ -423,17 +500,25 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
     const erro = validarProduto(req.body);
     if (erro) return res.status(400).json({ error: erro });
     const { nome, preco } = req.body;
+    const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50) : '';
+    const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)  : 'Camiseta';
+    const genero = typeof req.body.genero === 'string' ? req.body.genero.trim().slice(0, 50) : '';
     try {
         let imagem_url = '', cloudinary_id = '';
         if (req.file) {
+            // Binary content check — defense beyond browser-supplied MIME
+            const detected = detectImageType(req.file.buffer);
+            if (!detected) {
+                return res.status(400).json({ error: 'Arquivo enviado não é uma imagem válida (JPG, PNG ou WebP).' });
+            }
             const baseName = req.file.originalname.replace(/\.[^.]+$/, '').replace(/[^\w-]/g, '_').slice(0, 60);
             const result = await uploadToCloudinary(req.file.buffer, Date.now() + '_' + baseName);
-            imagem_url    = cloudTransform(result.url, TRANSFORM_PRODUCT);
+            imagem_url   = cloudTransform(result.url, TRANSFORM_PRODUCT);
             cloudinary_id = result.public_id;
         }
         const r = await pool.query(
-            'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id) VALUES ($1, $2, $3, $4) RETURNING id',
-            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id]);
+            'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero]);
         res.json({ success: true, id: r.rows[0].id });
     } catch (e) {
         console.error('POST /api/produtos:', e.message);
@@ -447,10 +532,13 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     const { nome, preco } = req.body;
+    const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50)  : '';
+    const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)   : '';
+    const genero = typeof req.body.genero === 'string' ? req.body.genero.trim().slice(0, 50) : '';
     try {
         const r = await pool.query(
-            'UPDATE produtos SET nome = $1, preco = $2 WHERE id = $3',
-            [nome.trim(), parseFloat(preco), id]);
+            'UPDATE produtos SET nome = $1, preco = $2, cor = $3, tipo = $4, genero = $5 WHERE id = $6',
+            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, id]);
         if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         res.json({ success: true });
     } catch (e) {
@@ -459,16 +547,103 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     }
 });
 
+app.patch('/api/produtos/:id/visibility', requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    const { oculto } = req.body;
+    if (typeof oculto !== 'boolean') return res.status(400).json({ error: 'Campo "oculto" deve ser booleano.' });
+    try {
+        const r = await pool.query(
+            'UPDATE produtos SET oculto = $1 WHERE id = $2',
+            [oculto, id]);
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
+        res.json({ success: true, oculto });
+    } catch (e) {
+        console.error('PATCH /api/produtos/:id/visibility:', e.message);
+        res.status(500).json({ error: 'Erro ao alterar visibilidade.' });
+    }
+});
+
+
+// ── PEDIDOS (order tracking) ─────────────────────────────
+app.get('/api/pedidos', requireAuth, async (req, res) => {
+    try {
+        const r = await pool.query(
+            'SELECT * FROM pedidos ORDER BY criado_em DESC');
+        res.json(r.rows);
+    } catch (e) {
+        console.error('GET /api/pedidos:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar pedidos.' });
+    }
+});
+
+app.post('/api/pedidos', requireAuth, writeLimiter, async (req, res) => {
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status } = req.body;
+    if (!produto_nome || String(produto_nome).trim().length === 0)
+        return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
+    try {
+        const r = await pool.query(
+            `INSERT INTO pedidos (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [String(produto_nome).trim().slice(0, 200),
+             parseFloat(valor) || null,
+             String(tamanho || '').trim().slice(0, 20),
+             String(cliente_nome || '').trim().slice(0, 100),
+             String(cliente_whatsapp || '').trim().slice(0, 30),
+             String(notas || '').trim().slice(0, 1000),
+             ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo']);
+        res.status(201).json(r.rows[0]);
+    } catch (e) {
+        console.error('POST /api/pedidos:', e.message);
+        res.status(500).json({ error: 'Erro ao criar pedido.' });
+    }
+});
+
+app.put('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status } = req.body;
+    if (!produto_nome || String(produto_nome).trim().length === 0)
+        return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
+    try {
+        const r = await pool.query(
+            `UPDATE pedidos SET produto_nome=$1, valor=$2, tamanho=$3,
+              cliente_nome=$4, cliente_whatsapp=$5, notas=$6, status=$7
+             WHERE id=$8 RETURNING *`,
+            [String(produto_nome).trim().slice(0, 200),
+             parseFloat(valor) || null,
+             String(tamanho || '').trim().slice(0, 20),
+             String(cliente_nome || '').trim().slice(0, 100),
+             String(cliente_whatsapp || '').trim().slice(0, 30),
+             String(notas || '').trim().slice(0, 1000),
+             ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo',
+             id]);
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        res.json(r.rows[0]);
+    } catch (e) {
+        console.error('PUT /api/pedidos/:id:', e.message);
+        res.status(500).json({ error: 'Erro ao atualizar pedido.' });
+    }
+});
+
+app.delete('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        const r = await pool.query('DELETE FROM pedidos WHERE id = $1', [id]);
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('DELETE /api/pedidos/:id:', e.message);
+        res.status(500).json({ error: 'Erro ao remover pedido.' });
+    }
+});
+
 app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     try {
-        // [FIX-7] DELETE + RETURNING em uma única query atômica.
-        // Elimina a race condition do SELECT → DELETE anterior.
-        const r = await pool.query(
-            'DELETE FROM produtos WHERE id = $1 RETURNING cloudinary_id, imagem_url',
-            [id]
-        );
+        const r = await pool.query('SELECT cloudinary_id, imagem_url FROM produtos WHERE id = $1', [id]);
         if (r.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         const row = r.rows[0];
         if (row.cloudinary_id) {
@@ -477,6 +652,7 @@ app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
             const legacyId = 'tripvisuals/' + row.imagem_url.split('/').pop().split('.')[0];
             await cloudinary.uploader.destroy(legacyId).catch(err => console.error('Cloudinary destroy (legacy):', err.message));
         }
+        await pool.query('DELETE FROM produtos WHERE id = $1', [id]);
         res.json({ success: true });
     } catch (e) {
         console.error('DELETE /api/produtos:', e.message);
@@ -544,6 +720,7 @@ app.get('*', (req, res) => {
 // ── ERROR HANDLER ──────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('Erro não tratado:', err.message);
+    if (Sentry) Sentry.captureException(err);
     if (err.message && (err.message.includes('Tipo de imagem') || err.message.includes('File too large')))
         return res.status(400).json({ error: err.message });
     res.status(500).json({ error: 'Erro interno do servidor.' });

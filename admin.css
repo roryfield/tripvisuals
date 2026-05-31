@@ -1559,8 +1559,9 @@ input[list="coresList"]:focus {
 }
 .view-toggle-btn:hover { color: #ccc; background: rgba(255,255,255,0.03); }
 .view-toggle-btn.active {
-    background: rgba(0,229,255,0.1);
+    background: rgba(0,229,255,0.15);
     color: var(--cyan);
+    box-shadow: inset 0 0 0 1px rgba(0,229,255,0.3);
 }
 .view-toggle-btn svg { width: 16px; height: 16px; }
 
@@ -1582,9 +1583,12 @@ input[list="coresList"]:focus {
 .view-compact .produto-card-body { padding: 10px 14px; }
 .view-compact .produto-fields {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr;
     gap: 8px;
     margin-bottom: 8px;
+}
+.view-compact .produto-fields .field-group:first-child {
+    grid-column: 1 / -1;  /* nome spans full width */
 }
 .view-compact .field-label { font-size: 9px; }
 .view-compact .produto-card input { font-size: 0.78rem; padding: 6px 8px; }
@@ -1615,6 +1619,11 @@ input[list="coresList"]:focus {
         padding: 12px 12px;
         font-size: 0.95rem;
     }
+    /* Search input keeps its icon space (38px left for the search SVG) */
+    .produtos-search {
+        padding: 12px 12px 12px 40px;
+        font-size: 0.95rem;
+    }
     /* Compact-view exception — keep inline edit fields tighter
        (they live inside dense list cards, not full-width forms) */
     .view-compact .produto-card input { padding: 8px 10px; font-size: 0.85rem; }
@@ -1641,4 +1650,470 @@ input[list="coresList"]:focus {
 @media (max-width: 360px) {
     .nav-tab { font-size: 8px; gap: 2px; }
     .nav-icon { width: 18px; height: 18px; }
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   PRODUTOS — VISIBILITY STATE (oculto)
+   ───────────────────────────────────────────────────────── */
+.produto-card { position: relative; }
+.produto-card[data-oculto="true"] {
+    opacity: 0.55;
+    filter: grayscale(0.3);
+    transition: opacity 0.25s, filter 0.25s;
+}
+.produto-card[data-oculto="true"]:hover {
+    opacity: 0.85;
+    filter: grayscale(0);
+}
+.oculto-badge {
+    position: absolute;
+    top: 12px; left: 12px;
+    background: rgba(255, 77, 77, 0.95);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-ocultar-item {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid #2a2a2a;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.btn-ocultar-item:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+.btn-ocultar-item:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+.produto-card[data-oculto="true"] .btn-ocultar-item {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.view-compact .btn-ocultar-item { padding: 6px 10px; font-size: 0.7rem; }
+
+/* ─────────────────────────────────────────────────────────
+   SECURITY CARD + NUKE BUTTON — admin-help
+   ───────────────────────────────────────────────────────── */
+.nav-seguranca { color: var(--danger) !important; opacity: 0.7; }
+.nav-seguranca:hover { opacity: 1 !important; }
+
+.security-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    background: rgba(255, 77, 77, 0.03);
+    border: 1px solid rgba(255, 77, 77, 0.15);
+    border-radius: 8px;
+    padding: 22px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+.security-card-info h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.security-card-info p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    max-width: 480px;
+}
+.security-note {
+    font-size: 0.75rem !important;
+    color: #555 !important;
+    margin-top: 6px !important;
+    font-style: italic;
+}
+
+/* ── THE NUKE BUTTON ────────────────────────────────────── */
+.btn-nuke {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: transparent;
+    border: 1.5px solid #2a1515;
+    color: #664444;
+    padding: 13px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: border-color 0.25s, color 0.25s, box-shadow 0.25s,
+                background 0.25s, transform 0.15s;
+    flex-shrink: 0;
+}
+.btn-nuke:hover:not(:disabled):not(.armed):not(.firing):not(.success) {
+    border-color: var(--danger);
+    color: var(--danger);
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.18);
+    transform: translateY(-1px);
+}
+.nuke-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: transform 0.25s;
+}
+.btn-nuke:hover .nuke-icon { transform: rotate(-8deg); }
+
+/* ARMED — amber pulse, ticking countdown */
+.btn-nuke.armed {
+    border-color: #ff8c00;
+    color: #ff8c00;
+    background: rgba(255, 140, 0, 0.06);
+    animation: nuke-arm-pulse 0.8s ease-in-out infinite alternate;
+}
+.btn-nuke.armed .nuke-icon { color: #ff8c00; }
+@keyframes nuke-arm-pulse {
+    from { box-shadow: 0 0 12px rgba(255, 140, 0, 0.25); }
+    to   { box-shadow: 0 0 28px rgba(255, 140, 0, 0.55); }
+}
+
+/* FIRING */
+.btn-nuke.firing {
+    border-color: var(--danger);
+    color: var(--danger);
+    cursor: wait;
+    opacity: 0.75;
+}
+
+/* SUCCESS */
+.btn-nuke.success {
+    border-color: #25d366;
+    color: #25d366;
+    background: rgba(37, 211, 102, 0.06);
+    box-shadow: 0 0 20px rgba(37, 211, 102, 0.2);
+    cursor: default;
+}
+
+.btn-nuke:disabled:not(.firing):not(.success) { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+    .security-card { flex-direction: column; gap: 16px; }
+    .btn-nuke       { width: 100%; justify-content: center; min-height: 44px; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   PEDIDOS — Order tracking page
+   ───────────────────────────────────────────────────────── */
+.pedidos-controls {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.pedidos-filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+.status-filter-chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.status-filter-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+.status-filter-chip.active {
+    background: rgba(0,229,255,0.1);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.pedidos-list { display: flex; flex-direction: column; gap: 10px; }
+
+.pedido-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+.pedido-card:hover { border-color: rgba(0,229,255,0.25); }
+.pedido-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 18px 12px;
+}
+.pedido-card-left { flex: 1; min-width: 0; }
+.pedido-produto { font-weight: 600; font-size: 0.9rem; color: #fff; margin-bottom: 3px; }
+.pedido-cliente { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; }
+.pedido-notas   { font-size: 0.75rem; color: #555; font-style: italic; }
+.pedido-card-right { text-align: right; flex-shrink: 0; }
+.pedido-valor { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 1px; }
+.pedido-data  { font-size: 0.72rem; color: #555; margin-bottom: 6px; }
+.pedido-card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+}
+.pedido-btn-edit, .pedido-btn-avançar, .pedido-btn-del {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.73rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.pedido-btn-edit:hover    { border-color: var(--cyan); color: var(--cyan); }
+.pedido-btn-avançar:hover { border-color: #25d366; color: #25d366; }
+.pedido-btn-del:hover     { border-color: var(--danger); color: var(--danger); }
+
+/* STATUS CHIPS */
+.status-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+.status-novo       { background: rgba(160,160,160,0.12); color: #aaa;    border: 1px solid #333; }
+.status-confirmado { background: rgba(59,130,246,0.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.status-producao   { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+.status-enviado    { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+.status-entregue   { background: rgba(37,211,102,0.12);  color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+
+/* PEDIDO FORM MODAL */
+.pedido-form-modal {
+    position: fixed; inset: 0; z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+}
+.pedido-form-modal.open { display: flex; animation: modal-fade-in 0.25s ease both; }
+.pedido-form-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(3,3,3,0.85);
+    backdrop-filter: blur(4px);
+}
+.pedido-form-card {
+    position: relative; z-index: 1;
+    background: #0a0a0a;
+    border: 1px solid #1f1f1f;
+    border-radius: 10px;
+    max-width: 600px; width: 100%;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 28px;
+    animation: modal-card-rise 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+.pedido-form-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem; letter-spacing: 3px;
+    color: var(--cyan); margin: 0 0 20px;
+}
+.pedido-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.pedido-form-actions {
+    display: flex; gap: 10px; justify-content: flex-end;
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px solid #1a1a1a;
+}
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 20px; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #555; color: #ccc; }
+
+@media (max-width: 600px) {
+    .pedido-form-grid { grid-template-columns: 1fr; }
+    .pedido-form-modal { padding: 0; }
+    .pedido-form-card  { max-width: 100%; max-height: 100vh; border-radius: 0; }
+    .pedidos-controls  { flex-direction: column; }
+}
+
+/* ── Pedidos form close button ──────────────────────────── */
+.pedido-form-close {
+    position: absolute; top: 14px; right: 14px;
+    width: 36px; height: 36px;
+    background: rgba(20,20,20,0.85);
+    border: 1px solid #2a2a2a;
+    color: #ccc; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+.pedido-form-close:hover {
+    background: var(--danger); color: #fff;
+    border-color: var(--danger); transform: scale(1.05);
+}
+.pedido-form-close svg { width: 16px; height: 16px; }
+@media (max-width: 600px) { .pedido-form-close { width: 44px; height: 44px; top: 10px; right: 10px; } }
+
+/* ── Upload table: column widths for 7 columns ─────────── */
+.fila-lista { table-layout: fixed; width: 100%; }
+.fila-lista .vz-w-70 { width: 70px; }
+.fila-lista th, .fila-lista td { padding: 8px 6px; overflow: hidden; text-overflow: ellipsis; }
+
+
+/* ─────────────────────────────────────────────────────────
+   HELP PAGE — layout + contact card
+   ───────────────────────────────────────────────────────── */
+.help-layout { display: flex; gap: 28px; align-items: flex-start; }
+
+.help-sidebar {
+    width: 168px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.sidebar-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    opacity: 0.6;
+}
+.help-sidebar a {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+.help-sidebar a:hover, .help-sidebar a.active {
+    background: rgba(0,229,255,0.08);
+    color: var(--cyan);
+}
+.help-sidebar a.active { color: var(--cyan); }
+
+.help-content { flex: 1; min-width: 0; }
+
+.help-price-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 8px;
+    font-size: 0.84rem;
+}
+.help-price-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1a1a1a;
+    color: #ccc;
+}
+.help-price-table td:last-child { text-align: right; color: var(--cyan); font-weight: 600; }
+.help-price-table tr:last-child td { border-bottom: none; }
+.help-note { font-size: 0.75rem; color: #555; font-style: italic; margin-top: 4px; }
+
+.contact-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: rgba(0,229,255,0.03);
+    border: 1px solid rgba(0,229,255,0.12);
+    border-radius: 8px;
+    padding: 20px 22px;
+    margin: 16px 0 12px;
+    flex-wrap: wrap;
+}
+.contact-name { font-weight: 600; color: #fff; font-size: 0.95rem; margin-bottom: 3px; }
+.contact-sub  { font-size: 0.75rem; color: #666; }
+.contact-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.contact-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    min-height: 44px;
+}
+.contact-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.contact-btn-wa {
+    background: #25d366; color: #000;
+}
+.contact-btn-wa:hover {
+    background: #2eea75;
+    box-shadow: 0 6px 18px rgba(37,211,102,0.3);
+    transform: translateY(-1px);
+}
+.contact-btn-email {
+    background: transparent;
+    border: 1px solid var(--cyan) !important;
+    color: var(--cyan);
+}
+.contact-btn-email:hover {
+    background: rgba(0,229,255,0.1);
+    box-shadow: 0 6px 18px rgba(0,229,255,0.15);
+    transform: translateY(-1px);
+}
+
+.contact-note {
+    font-size: 0.75rem !important;
+    color: #555 !important;
+    font-style: italic;
+}
+
+@media (max-width: 640px) {
+    .help-sidebar { display: none; }
+    .help-layout  { flex-direction: column; }
+    .contact-card { flex-direction: column; gap: 14px; }
+    .contact-actions { width: 100%; }
+    .contact-btn { width: 100%; justify-content: center; }
 }

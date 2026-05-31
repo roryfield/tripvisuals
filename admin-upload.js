@@ -4,8 +4,8 @@
 
     const MAX_FILES = 50;
     const MAX_BYTES = 10 * 1024 * 1024;
-    const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const PRECOS    = { 'Camiseta': 99.90, 'Regata': 89.90, 'Moletom': 129.90 };
+    const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp'];
+    const PRECOS    = { 'Camiseta': 99.90, 'Regata': 99.90, 'Babylook': 99.90, 'Moletom': 175.00 };
 
     const esc = s => String(s).replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -18,6 +18,7 @@
     function detectarTipo(filename) {
         const f = filename.toLowerCase();
         if (f.includes('regata') || f.includes('tank'))              return 'Regata';
+        if (f.includes('babylook') || f.includes('baby look'))        return 'Babylook';
         if (f.includes('moletom') || f.includes('moleton') ||
             f.includes('hoodie') || f.includes('blusa'))             return 'Moletom';
         return 'Camiseta';
@@ -34,8 +35,9 @@
             .replace(/\s*\(\d+\)\s*/g, '')                  // WhatsApp suffix: (1)
             // Strip type keywords — type is set separately, no need to duplicate in name
             // e.g. "regata-nirvana" → "nirvana" so final is "REGATA NIRVANA PRETA" not "REGATA REGATA NIRVANA PRETA"
-            .replace(/\b(camiseta|regata|moletom|moleton|hoodie|blusa|tank)\b/gi, '')
+            .replace(/\b(camiseta|regata|babylook|moletom|moleton|hoodie|blusa|tank)\b/gi, '')
             .replace(/[-_]/g, ' ')                          // separators → spaces
+            .replace(/\s+(\d+)\s*$/g, '')                   // strip trailing number(s): "alice in chains 30" → "alice in chains"
             .replace(/\s+/g, ' ')
             .trim();
         if (/^\d+$/.test(s)) return '';                     // pure camera counter → empty
@@ -50,6 +52,7 @@
         var lista      = document.getElementById('lista');
         var btnLancar  = document.getElementById('btnLancar');
         var batchTipo  = document.getElementById('batchTipo');
+        var batchGenero = document.getElementById('batchGenero');
         var batchCor   = document.getElementById('batchCor');
         var batchPreco = document.getElementById('batchPreco');
         var batchCol   = document.getElementById('batchColecao');
@@ -267,18 +270,19 @@
             tr.innerHTML =
                 '<td><img src="' + URL.createObjectURL(file) + '" alt="Pré-visualização"></td>' +
                 '<td><select id="t-' + i + '" aria-label="Tipo">' +
-                    '<option value="Camiseta"' + (tipoAuto === 'Camiseta' ? ' selected' : '') + '>Camiseta</option>' +
-                    '<option value="Regata"'   + (tipoAuto === 'Regata'   ? ' selected' : '') + '>Regata</option>' +
-                    '<option value="Moletom"'  + (tipoAuto === 'Moletom'  ? ' selected' : '') + '>Moletom</option>' +
+                    '<option value="Camiseta" ' + (tipoAuto === 'Camiseta'  ? 'selected' : '') + '>Camiseta</option>' +
+                    '<option value="Regata"   ' + (tipoAuto === 'Regata'    ? 'selected' : '') + '>Regata</option>' +
+                    '<option value="Babylook" ' + (tipoAuto === 'Babylook'  ? 'selected' : '') + '>Babylook</option>' +
+                    '<option value="Moletom"  ' + (tipoAuto === 'Moletom'   ? 'selected' : '') + '>Moletom</option>' +
                 '</select></td>' +
                 '<td><input type="text" id="e-' + i + '" value="' + esc(nomeAuto) + '" ' +
                     'aria-label="Nome" ' +
                     (isBlank ? 'placeholder="aguardando coleção..." class="vz-input-warn"' : '') +
                 '></td>' +
-                '<td><select id="c-' + i + '" aria-label="Cor">' +
-                    '<option value="Preta"'  + (batchCor === 'Preta'  ? ' selected' : '') + '>Preta</option>' +
-                    '<option value="Branca"' + (batchCor === 'Branca' ? ' selected' : '') + '>Branca</option>' +
-                '</select></td>' +
+                '<td><input type="text" id="c-' + i + '" list="coresList" value="' + esc(batchCor) + '" ' +
+                    'aria-label="Cor" placeholder="Preta" maxlength="50" class="vz-input-cor"></td>' +
+                '<td><input type="text" id="g-' + i + '" list="generosList" value="' + esc(batchGenero ? batchGenero.value : '') + '" ' +
+                    'aria-label="Gênero" placeholder="Rock, Metal..." maxlength="50" class="vz-input-cor"></td>' +
                 '<td><input type="number" id="p-' + i + '" value="' + precoAuto + '" ' +
                     'step="0.01" min="0" max="999999" class="vz-input-price" aria-label="Preço"></td>' +
                 '<td class="status-cell" id="status-' + i + '">—</td>';
@@ -373,9 +377,12 @@
             }
 
             var fd = new FormData();
-            fd.append('imagem', filaFiles[i]);
-            fd.append('nome',   nomeFinal);
-            fd.append('preco',  preco);
+            fd.append('imagem',  filaFiles[i]);
+            fd.append('nome',    nomeFinal);
+            fd.append('preco',   preco);
+            fd.append('cor',     cor);
+            fd.append('tipo',    document.getElementById('t-' + i)?.value || batchTipo?.value || 'Camiseta');
+            fd.append('genero',  (document.getElementById('g-' + i)?.value || batchGenero?.value || '').trim());
 
             try {
                 var res = await fetch('/api/produtos', {

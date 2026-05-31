@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Visuals | Pedidos</title>
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="/admin-auth-init.js"></script>
+</head>
+<body>
+
+    <main class="main">
+
+        <header class="page-header">
+            <div>
+                <p class="page-eyebrow">Catálogo</p>
+                <h2 class="page-title">PEDIDOS</h2>
+            </div>
+            <div class="vz-flex-actions">
+                <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
+                <div class="produto-count" id="pedidosCount">—</div>
+                <div class="produto-count-label">abertos</div>
+            </div>
+        </header>
+
+        <!-- Filter + actions bar -->
+        <div class="pedidos-controls">
+            <div class="pedidos-filter-chips" role="group" aria-label="Filtrar por status">
+                <button class="status-filter-chip active" data-status="" type="button">Todos</button>
+                <button class="status-filter-chip" data-status="novo"       type="button">Novo</button>
+                <button class="status-filter-chip" data-status="confirmado" type="button">Confirmado</button>
+                <button class="status-filter-chip" data-status="producao"   type="button">Em Produção</button>
+                <button class="status-filter-chip" data-status="enviado"    type="button">Enviado</button>
+                <button class="status-filter-chip" data-status="entregue"   type="button">Entregue</button>
+            </div>
+            <button type="button" class="btn-launch" id="btnNovoPedido">+ Novo Pedido</button>
+        </div>
+
+        <!-- Order list -->
+        <div id="pedidosList" class="pedidos-list">
+            <div class="vz-empty-state">Carregando pedidos...</div>
+        </div>
+
+    </main>
+
+    <!-- NEW PEDIDO FORM MODAL -->
+    <div class="pedido-form-modal" id="pedidoFormModal" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-hidden="true">
+        <div class="pedido-form-backdrop" id="formBackdrop"></div>
+        <div class="pedido-form-card" role="document">
+            <button type="button" class="pedido-form-close" id="btnFecharForm" aria-label="Fechar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <h3 id="formTitle" class="pedido-form-title">Novo pedido</h3>
+            <form id="pedidoForm" novalidate>
+                <div class="pedido-form-grid">
+                    <div class="field-group">
+                        <label class="field-label" for="fProduto">Produto *</label>
+                        <input type="text" id="fProduto" placeholder="CAMISETA NIRVANA PRETA" required maxlength="200">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fTamanho">Tamanho</label>
+                        <select id="fTamanho">
+                            <option value="">—</option>
+                            <option value="P">P</option>
+                            <option value="M">M</option>
+                            <option value="G">G</option>
+                            <option value="GG">GG</option>
+                            <option value="XG">XG</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fCliente">Cliente</label>
+                        <input type="text" id="fCliente" placeholder="Nome do cliente" maxlength="100">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fWhatsapp">WhatsApp</label>
+                        <input type="tel" id="fWhatsapp" placeholder="+55 11 9 9999-9999" maxlength="30">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fValor">Valor (R$)</label>
+                        <input type="number" id="fValor" step="0.01" min="0" max="9999">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fStatus">Status</label>
+                        <select id="fStatus">
+                            <option value="novo">Novo</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="producao">Em Produção</option>
+                            <option value="enviado">Enviado</option>
+                            <option value="entregue">Entregue</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="fNotas">Observações</label>
+                    <textarea id="fNotas" rows="2" placeholder="CEP, referência, etc..." maxlength="1000"></textarea>
+                </div>
+                <div class="pedido-form-actions">
+                    <button type="button" class="btn-secondary" id="btnCancelarForm">Cancelar</button>
+                    <button type="submit" class="btn-launch">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <nav class="admin-nav" aria-label="Navegação admin">
+    <a href="/admin-hub.html" class="nav-tab" id="tab-hub">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        Hub
+    </a>
+    <a href="/admin.html" class="nav-tab" id="tab-upload">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <polyline points="16 16 12 12 8 16"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+        Upload
+    </a>
+    <a href="/admin-produtos.html" class="nav-tab" id="tab-produtos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Produtos
+    </a>
+    <a href="/admin-layout.html" class="nav-tab" id="tab-layout">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+        </svg>
+        Layout
+    </a>
+    <a href="/admin-landing.html" class="nav-tab" id="tab-landing">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="14" rx="2"/>
+            <line x1="2" y1="9" x2="22" y2="9"/>
+            <line x1="8" y1="22" x2="16" y2="22"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+        </svg>
+        Landing Page
+    </a>
+    <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
+            <line x1="1" y1="6" x2="1" y2="22"/>
+        </svg>
+        Catálogo
+    </a>
+    <a href="/admin-pedidos.html" class="nav-tab active" id="tab-pedidos" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Pedidos
+    </a>
+</nav>
+
+    <script src="/admin-pedidos.js"></script>
+    <script src="/admin-shared.js"></script>
+</body>
+</html>

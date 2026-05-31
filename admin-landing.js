@@ -22,6 +22,7 @@
     async function saveConfig(chave, valor) {
         const res = await fetch('/api/config', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chave, valor })
         });
@@ -187,7 +188,7 @@
         btnUploadLogo.innerText = 'Enviando…';
         try {
             const fd = new FormData(); fd.append('imagem', pendingLogo);
-            const res = await fetch('/api/landing/logo', { method: 'POST', body: fd });
+            const res = await fetch('/api/landing/logo', { method: 'POST', credentials: 'include', body: fd });
             if (res.status === 401) { window.location.replace('/login.html'); return; }
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erro');
@@ -522,7 +523,7 @@
         btnUploadBg.innerText = 'Enviando…';
         try {
             const fd = new FormData(); fd.append('imagem', pendingBg);
-            const res = await fetch('/api/landing/bg', { method: 'POST', body: fd });
+            const res = await fetch('/api/landing/bg', { method: 'POST', credentials: 'include', body: fd });
             if (res.status === 401) { window.location.replace('/login.html'); return; }
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erro');
@@ -646,7 +647,7 @@
     // ═════════════════════════ INIT ══════════════════════════════
     (async () => {
         try {
-            const cfg = await (await fetch('/api/config')).json();
+            const cfg = await (await fetch('/api/config', { credentials: 'include' })).json();
 
             // Theme — migrate legacy 'cosmico' silently
             currentTheme = cfg.landing_theme || 'classico';
@@ -746,7 +747,7 @@
         btnUpAboutBg.disabled = true; btnUpAboutBg.innerText = 'Enviando…';
         try {
             const fd = new FormData(); fd.append('imagem', pendingAboutBg);
-            const res = await fetch('/api/landing/bg', { method: 'POST', body: fd });
+            const res = await fetch('/api/landing/bg', { method: 'POST', credentials: 'include', body: fd });
             if (res.status === 401) { window.location.replace('/login.html'); return; }
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erro');
