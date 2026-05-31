@@ -25,6 +25,7 @@
     <div class="catalog-intro-inner">
         <p class="catalog-intro-eyebrow">Bem-vindo ao acervo</p>
         <h1 class="catalog-intro-brand">TRIP VISUALS</h1>
+        <div class="catalog-intro-sep" aria-hidden="true"></div>
         <p class="catalog-intro-tag">Curadoria de estampas exclusivas</p>
 
         <div class="catalog-intro-pillars">
@@ -144,6 +145,9 @@
 <div class="search-results" id="searchResults" role="region" aria-live="polite"></div>
 
 <!-- CATALOG -->
+<!-- FILTER BAR — rendered by JS after products load -->
+<div id="filterBar" class="filter-bar" aria-label="Filtros do catálogo"></div>
+
 <div class="vitrine-wrap">
     <main id="vitrine" class="grid-3" aria-label="Catálogo de produtos"></main>
 </div>
@@ -210,8 +214,10 @@
             <p class="product-modal-eyebrow">Trip Visuals · Estampa Exclusiva</p>
             <h2 class="product-modal-title" id="modalTitle">—</h2>
             <div class="product-modal-meta">
-                <span class="product-modal-cor" id="modalCor"></span>
-                <span class="product-modal-price" id="modalPrice">—</span>
+                <span class="product-modal-tipo"   id="modalTipo"></span>
+                <span class="product-modal-genero" id="modalGenero"></span>
+                <span class="product-modal-cor"    id="modalCor"></span>
+                <span class="product-modal-price"  id="modalPrice">—</span>
             </div>
             <p class="product-modal-desc">
                 Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.
@@ -262,6 +268,7 @@
     </div>
 </div>
 
+<footer class="cust-footer" role="contentinfo"><p class="cust-footer-text">© 2026 Trip Visuals Wear · <a href="/privacidade.html" class="cust-footer-link">Política de Privacidade</a> · Sistema por <strong>VOIDZONE</strong></p></footer>
 <script src="/catalogo.js"></script>
 
 </body>

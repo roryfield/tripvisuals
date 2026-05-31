@@ -22,7 +22,20 @@ let produtos = [];
 
         function renderProdutos(lista) {
             const area = document.getElementById('listaArea');
-            document.getElementById('totalCount').innerText = lista.length;
+            (function(){
+                const arr = lista;
+                const ocultos = arr.filter(p => p.oculto).length;
+                const ativos  = arr.length - ocultos;
+                const numEl   = document.getElementById('totalCount');
+                const labEl   = document.getElementById('totalLabel');
+                if (ocultos > 0) {
+                    numEl.innerText = ativos;
+                    if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
+                } else {
+                    numEl.innerText = arr.length;
+                    if (labEl) labEl.innerText = 'produtos no acervo';
+                }
+            })();
 
             if (lista.length === 0) {
                 area.innerHTML = `
@@ -35,14 +48,29 @@ let produtos = [];
             }
 
             // Build cards via DOM creation (safer than innerHTML with interpolation)
-            area.innerHTML = '<div class="produtos-grid" id="grid"></div>';
+            const filtered = currentFilter
+                ? lista.filter(p => {
+                    const q = currentFilter.toLowerCase();
+                    return (p.nome || '').toLowerCase().includes(q) ||
+                           (p.cor  || '').toLowerCase().includes(q);
+                })
+                : lista;
+
+            if (filtered.length === 0) {
+                area.innerHTML = '<div class="vz-empty-state">Nenhum produto encontrado para "' + escapeAttr(currentFilter) + '".</div>';
+                return;
+            }
+
+            area.innerHTML = '<div class="produtos-grid view-' + currentView + '" id="grid"></div>';
             const grid = document.getElementById('grid');
 
-            lista.forEach(p => {
+            filtered.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'produto-card';
                 card.id = `card-${p.id}`;
+                card.dataset.oculto = p.oculto ? 'true' : 'false';
                 card.innerHTML = `
+                    ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
                     <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
                     <div class="produto-card-body">
                         <div class="produto-fields">
@@ -54,10 +82,28 @@ let produtos = [];
                                 <label class="field-label" for="preco-${p.id}">Preço (R$)</label>
                                 <input type="number" id="preco-${p.id}" value="${Number(p.preco).toFixed(2)}" step="0.01" min="0" max="999999">
                             </div>
+                            <div class="field-group">
+                                <label class="field-label" for="cor-${p.id}">Cor</label>
+                                <input type="text" id="cor-${p.id}" list="coresList" value="${escapeAttr(p.cor || '')}" maxlength="50" placeholder="ex: Preta">
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label" for="tipo-${p.id}">Tipo</label>
+                                <select id="tipo-${p.id}" aria-label="Tipo">
+                                    <option value="Camiseta"  ${p.tipo === 'Camiseta'  ? 'selected' : ''}>Camiseta</option>
+                                    <option value="Regata"    ${p.tipo === 'Regata'    ? 'selected' : ''}>Regata</option>
+                                    <option value="Babylook"  ${p.tipo === 'Babylook'  ? 'selected' : ''}>Babylook</option>
+                                    <option value="Moletom"   ${p.tipo === 'Moletom'   ? 'selected' : ''}>Moletom</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label" for="genero-${p.id}">Gênero</label>
+                                <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
+                            </div>
                         </div>
                         <p class="card-status" id="st-${p.id}" role="status" aria-live="polite"></p>
                         <div class="produto-actions">
                             <button class="btn-salvar-item" id="btn-${p.id}" data-id="${p.id}" data-action="salvar">Salvar</button>
+                            <button class="btn-ocultar-item" data-id="${p.id}" data-oculto="${p.oculto ? 'true' : 'false'}" data-action="visibility">${p.oculto ? 'Mostrar' : 'Ocultar'}</button>
                             <button class="btn-remover-item" data-id="${p.id}" data-nome="${escapeAttr(p.nome)}" data-action="remover">Remover</button>
                         </div>
                     </div>
@@ -82,14 +128,37 @@ let produtos = [];
                 if (!btn) return;
                 const id     = parseInt(btn.dataset.id, 10);
                 const action = btn.dataset.action;
-                if (action === 'salvar')  salvar(id);
-                if (action === 'remover') remover(id, btn.dataset.nome);
+                if (action === 'salvar')     salvar(id);
+                if (action === 'remover')    remover(id, btn.dataset.nome);
+                if (action === 'visibility') toggleVisibility(id, btn);
             });
+        }
+
+        async function toggleVisibility(id, btn) {
+            const novoEstado = btn.dataset.oculto !== 'true';
+            const labelOriginal = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                const res = await fetch('/api/produtos/' + id + '/visibility', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ oculto: novoEstado })
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast(novoEstado ? 'Produto oculto do catálogo.' : 'Produto visível no catálogo.');
+                carregar();
+            } catch (_) {
+                btn.disabled = false;
+                btn.textContent = labelOriginal;
+                mostrarToast('Erro ao alterar visibilidade.', true);
+            }
         }
 
         async function carregar() {
             try {
-                const res = await fetch('/api/produtos');
+                const res = await fetch('/api/produtos', { credentials: 'include' });
                 if (!res.ok) throw new Error();
                 produtos = await res.json();
                 renderProdutos(produtos);
@@ -105,6 +174,7 @@ let produtos = [];
         async function salvar(id) {
             const nome  = document.getElementById(`nome-${id}`).value.trim();
             const preco = parseFloat(document.getElementById(`preco-${id}`).value);
+            const cor   = document.getElementById(`cor-${id}`)?.value.trim() || '';
             const st    = document.getElementById(`st-${id}`);
             const btn   = document.getElementById(`btn-${id}`);
 
@@ -122,8 +192,15 @@ let produtos = [];
             try {
                 const res = await fetch(`/api/produtos/${id}`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: nome.toUpperCase(), preco })
+                    body: JSON.stringify({
+                        nome: nome.toUpperCase(),
+                        preco,
+                        cor,
+                        tipo: document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
+                        genero: (document.getElementById(`genero-${id}`)?.value || '').trim()
+                    })
                 });
                 if (res.ok) {
                     st.innerText = '✅ Salvo!';
@@ -147,7 +224,7 @@ let produtos = [];
             if (!confirm(`Remover o produto "${nome}" permanentemente?\n\nEsta ação não pode ser desfeita.`)) return;
 
             try {
-                const res = await fetch(`/api/produtos/${id}`, { method: 'DELETE' });
+                const res = await fetch(`/api/produtos/${id}`, { method: 'DELETE', credentials: 'include' });
                 if (res.ok) {
                     const card = document.getElementById(`card-${id}`);
                     card.style.transition = 'opacity 0.3s, transform 0.3s';
@@ -156,7 +233,20 @@ let produtos = [];
                     setTimeout(() => {
                         card.remove();
                         produtos = produtos.filter(p => p.id !== id);
-                        document.getElementById('totalCount').innerText = produtos.length;
+                        (function(){
+                const arr = produtos;
+                const ocultos = arr.filter(p => p.oculto).length;
+                const ativos  = arr.length - ocultos;
+                const numEl   = document.getElementById('totalCount');
+                const labEl   = document.getElementById('totalLabel');
+                if (ocultos > 0) {
+                    numEl.innerText = ativos;
+                    if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
+                } else {
+                    numEl.innerText = arr.length;
+                    if (labEl) labEl.innerText = 'produtos no acervo';
+                }
+            })();
                     }, 300);
                     mostrarToast(`✓ "${nome}" removido`);
                 } else if (res.status === 401) {
@@ -170,4 +260,32 @@ let produtos = [];
         }
 
         carregar();
+
+        // View toggle
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                try { localStorage.setItem('vz-produtos-view', currentView); } catch (_) {}
+                renderProdutos(produtos);
+            });
+            if (btn.dataset.view === currentView) {
+                document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+        });
+
+        // Search filter (debounced)
+        const searchInput = document.getElementById('produtosSearch');
+        if (searchInput) {
+            let searchTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    currentFilter = searchInput.value.trim();
+                    renderProdutos(produtos);
+                }, 180);
+            });
+        }
 })();

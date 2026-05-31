@@ -11,6 +11,23 @@
 </head>
 <body>
 
+<datalist id="generosList">
+    <option value="Rock">
+    <option value="Metal">
+    <option value="Grunge">
+    <option value="Alternativo">
+    <option value="Punk">
+    <option value="Pop Rock">
+    <option value="Progressivo">
+    <option value="Black Metal">
+    <option value="Death Metal">
+    <option value="Hardcore">
+    <option value="Indie">
+    <option value="Doom">
+    <option value="Thrash">
+    <option value="Stoner">
+</datalist>
+
 <datalist id="coresList">
     <option value="Preta">
     <option value="Off-White">
@@ -78,6 +95,7 @@
                 <select id="batchTipo" class="batch-select">
                     <option value="Camiseta">Camiseta</option>
                     <option value="Regata">Regata</option>
+                    <option value="Babylook">Babylook</option>
                     <option value="Moletom">Moletom</option>
                 </select>
             </div>
@@ -85,6 +103,11 @@
                 <label class="batch-label" for="batchCor">Cor padrão</label>
                 <input id="batchCor" class="batch-input" type="text" list="coresList"
                        value="Preta" maxlength="50" placeholder="Preta, Off-White, ou outra...">
+            </div>
+            <div class="batch-field">
+                <label class="batch-label" for="batchGenero">Gênero padrão</label>
+                <input id="batchGenero" class="batch-input" type="text" list="generosList"
+                       value="" maxlength="50" placeholder="Rock, Metal, Grunge...">
             </div>
             <div class="batch-field">
                 <label class="batch-label" for="batchPreco">Preço padrão (R$)</label>
@@ -122,6 +145,7 @@
                         <th>Tipo</th>
                         <th>Estampa / Nome</th>
                         <th>Cor</th>
+                        <th>Gênero</th>
                         <th>Preço (R$)</th>
                         <th class="status-cell">Status</th>
                     </tr>
@@ -172,6 +196,13 @@
             <path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/>
             <line x1="1" y1="6" x2="1" y2="22"/>
         </svg>Catálogo
+    </a>
+    <a href="/admin-pedidos.html" class="nav-tab" id="tab-pedidos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Pedidos
     </a>
 </nav>
 

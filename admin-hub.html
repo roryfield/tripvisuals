@@ -51,6 +51,12 @@
             </div>
         </div>
         <div class="stat-card">
+            <div class="stat-label">Pedidos em Aberto</div>
+            <div class="stat-value" id="statPedidos">
+                <span class="stat-loading">—</span>
+            </div>
+        </div>
+        <div class="stat-card">
             <div class="stat-label">Layout Padrão</div>
             <div class="stat-value small" id="statLayout">
                 <span class="stat-loading">Carregando...</span>
@@ -70,6 +76,12 @@
             <span class="card-icon" aria-hidden="true">📥</span>
             <h3>Upload de Produtos</h3>
             <p>Adicione novos produtos com nomenclatura automática e precificação dinâmica por tipo.</p>
+            <span class="arrow" aria-hidden="true">→</span>
+        </a>
+        <a href="/admin-pedidos.html" class="action-card">
+            <span class="card-icon" aria-hidden="true">📋</span>
+            <h3>Pedidos</h3>
+            <p>Acompanhe e atualize o status de cada venda, desde o recebimento até a entrega.</p>
             <span class="arrow" aria-hidden="true">→</span>
         </a>
         <a href="/admin-produtos.html" class="action-card">
@@ -153,6 +165,13 @@
             <line x1="1" y1="6" x2="1" y2="22"/>
         </svg>
         Catálogo
+    </a>
+    <a href="/admin-pedidos.html" class="nav-tab" id="tab-pedidos">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Pedidos
     </a>
 </nav>
 

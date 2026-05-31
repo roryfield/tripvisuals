@@ -804,16 +804,10 @@
     pointer-events: none;
     transition: opacity 0.5s ease;
 }
-.catalog-intro.active {
-    opacity: 1;
-    pointer-events: all;
-}
-.catalog-intro.leaving {
-    opacity: 0;
-    transition: opacity 0.6s ease;
-}
+.catalog-intro.active  { opacity: 1; pointer-events: all; }
+.catalog-intro.leaving { opacity: 0; transition: opacity 0.65s ease; }
 
-/* animated grid background — same DNA as login */
+/* ── Background layers ──────────────────────────────────── */
 .catalog-intro-grid {
     position: absolute; inset: 0;
     background-image:
@@ -825,8 +819,8 @@
 }
 .catalog-intro-glow {
     position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 50%, rgba(157,0,255,0.12) 0%, transparent 65%);
-    animation: intro-pulse 4s ease-in-out infinite alternate;
+    background: radial-gradient(ellipse at 50% 50%, rgba(157,0,255,0.14) 0%, transparent 65%);
+    animation: intro-pulse 3.5s ease-in-out infinite alternate;
     pointer-events: none;
 }
 @keyframes intro-grid-drift {
@@ -834,70 +828,99 @@
     to   { background-position: 48px 48px; }
 }
 @keyframes intro-pulse {
-    from { opacity: 0.5; }
+    from { opacity: 0.45; }
     to   { opacity: 1; }
 }
 
+/* ── Inner container ────────────────────────────────────── */
 .catalog-intro-inner {
-    position: relative;
-    z-index: 1;
-    padding: 20px;
-    max-width: 560px;
-    width: 100%;
+    position: relative; z-index: 1;
+    padding: 20px; max-width: 560px; width: 100%;
 }
 
+/* ── Eyebrow — beat 1 (t=0.1s) ─────────────────────────── */
 .catalog-intro-eyebrow {
     font-size: 0.62rem;
     color: var(--purple);
     letter-spacing: 4px;
     text-transform: uppercase;
     font-weight: 600;
-    margin-bottom: 12px;
-    animation: intro-fade 0.5s 0.1s both;
+    margin-bottom: 14px;
+    animation: intro-fade 0.45s 0.1s both;
 }
 
+/* ── Brand — beat 2 (t=0.2s) ───────────────────────────── */
 .catalog-intro-brand {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-size: clamp(2.8rem, 9vw, 4.4rem);
     color: var(--cyan);
     letter-spacing: 8px;
-    margin: 0 0 8px;
-    animation: intro-flicker 0.5s 0.25s both;
-    text-shadow: 0 0 24px rgba(0,229,255,0.45);
+    margin: 0 0 18px;
+    animation: intro-flicker 0.6s 0.2s both;
+    text-shadow: 0 0 28px rgba(0,229,255,0.45);
 }
 @keyframes intro-flicker {
-    0%   { opacity: 0; text-shadow: none; letter-spacing: 14px; }
-    40%  { opacity: 1; text-shadow: 0 0 32px var(--cyan); }
-    55%  { opacity: 0.55; }
-    100% { opacity: 1; text-shadow: 0 0 24px rgba(0,229,255,0.45); letter-spacing: 8px; }
+    0%   { opacity: 0; text-shadow: none; letter-spacing: 16px; filter: blur(2px); }
+    35%  { opacity: 1; text-shadow: 0 0 40px var(--cyan); filter: blur(0); }
+    52%  { opacity: 0.5; }
+    72%  { opacity: 1; text-shadow: 0 0 20px rgba(0,229,255,0.5); }
+    88%  { opacity: 0.85; }
+    100% { opacity: 1; text-shadow: 0 0 24px rgba(0,229,255,0.4); letter-spacing: 8px; }
 }
 
+/* ── Separator line — beat 3 (t=0.7s, draws across) ─────── */
+.catalog-intro-sep {
+    width: 80px;
+    height: 1px;
+    margin: 0 auto 20px;
+    background: linear-gradient(to right,
+        transparent 0%, var(--cyan) 40%, var(--purple) 60%, transparent 100%);
+    transform: scaleX(0);
+    transform-origin: center;
+    animation: intro-sep-draw 0.5s 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+}
+@keyframes intro-sep-draw {
+    0%   { transform: scaleX(0); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: scaleX(1); opacity: 1; }
+}
+
+/* ── Tagline — beat 4 (t=1.0s) ─────────────────────────── */
 .catalog-intro-tag {
-    font-size: 0.85rem;
-    color: #aaa;
-    letter-spacing: 1.5px;
-    margin: 0 0 28px;
-    animation: intro-fade 0.5s 0.6s both;
+    font-size: 0.88rem;
+    color: #999;
+    letter-spacing: 2px;
+    margin: 0 0 30px;
+    animation: intro-fade 0.5s 1.0s both;
 }
 
+/* ── Pillars — staggered beats 5–7 (t=1.2s, 1.4s, 1.6s) ── */
 .catalog-intro-pillars {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 16px;
-    margin: 0 auto 26px;
-    animation: intro-fade 0.5s 0.8s both;
+    margin: 0 auto 28px;
     flex-wrap: wrap;
 }
+/* Each child animates individually */
+.catalog-intro-pillars > :nth-child(1) { animation: intro-pillar 0.45s 1.2s both; }
+.catalog-intro-pillars > :nth-child(2) { animation: intro-pillar 0.3s  1.38s both; }
+.catalog-intro-pillars > :nth-child(3) { animation: intro-pillar 0.45s 1.42s both; }
+.catalog-intro-pillars > :nth-child(4) { animation: intro-pillar 0.3s  1.62s both; }
+.catalog-intro-pillars > :nth-child(5) { animation: intro-pillar 0.45s 1.65s both; }
+@keyframes intro-pillar {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 .catalog-pillar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
 }
 .catalog-pillar-num {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: #fff;
     letter-spacing: 2px;
     line-height: 1;
@@ -909,51 +932,50 @@
     text-transform: uppercase;
 }
 .catalog-pillar-sep {
-    width: 1px;
-    height: 28px;
-    background: #2a2a2a;
+    width: 1px; height: 28px;
+    background: linear-gradient(to bottom, transparent, #2a2a2a, transparent);
 }
 
+/* ── Loader — beat 8 (t=1.9s) ───────────────────────────── */
 .catalog-intro-loader {
     display: flex;
     justify-content: center;
-    margin-bottom: 18px;
-    animation: intro-fade 0.5s 1s both;
+    margin-bottom: 20px;
+    animation: intro-fade 0.5s 1.9s both;
 }
 .catalog-intro-spinner {
-    width: 32px; height: 32px;
-    border: 2px solid transparent;
+    width: 28px; height: 28px;
+    border: 1.5px solid transparent;
     border-top-color: var(--cyan);
     border-bottom-color: var(--purple);
     border-radius: 50%;
-    animation: intro-spin 1.2s ease-in-out infinite;
+    animation: intro-spin 1.4s ease-in-out infinite;
 }
 @keyframes intro-spin {
     0%   { transform: rotate(0deg);   box-shadow: 0 0 0 rgba(0,229,255,0); }
-    50%  { transform: rotate(180deg); box-shadow: 0 0 16px rgba(0,229,255,0.3); }
+    50%  { transform: rotate(180deg); box-shadow: 0 0 14px rgba(0,229,255,0.3); }
     100% { transform: rotate(360deg); box-shadow: 0 0 0 rgba(0,229,255,0); }
 }
 
+/* ── Hint — beat 9 (t=2.1s) ─────────────────────────────── */
 .catalog-intro-hint {
-    font-size: 0.65rem;
-    color: #555;
-    letter-spacing: 3px;
+    font-size: 0.6rem;
+    color: #444;
+    letter-spacing: 3.5px;
     text-transform: uppercase;
-    margin-bottom: 18px;
-    animation: intro-fade 0.5s 1.2s both;
+    margin-bottom: 20px;
+    animation: intro-fade 0.5s 2.1s both;
 }
 
+/* ── Credit — beat 10 (t=2.3s) ─────────────────────────── */
 .catalog-intro-credit {
-    font-size: 0.55rem;
-    color: #2a2a2a;
-    letter-spacing: 2px;
+    font-size: 0.52rem;
+    color: #1e1e1e;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    animation: intro-fade 0.5s 1.4s both;
+    animation: intro-fade 0.5s 2.3s both;
 }
-.catalog-intro-credit strong {
-    color: #444;
-    font-weight: 600;
-}
+.catalog-intro-credit strong { color: #333; font-weight: 600; }
 
 @keyframes intro-fade {
     from { opacity: 0; transform: translateY(8px); }
@@ -971,7 +993,8 @@
     .catalog-intro-spinner, .catalog-intro-brand,
     .catalog-intro-eyebrow, .catalog-intro-tag,
     .catalog-intro-pillars, .catalog-intro-loader,
-    .catalog-intro-hint, .catalog-intro-credit { animation: none; }
+    .catalog-intro-hint, .catalog-intro-credit,
+    .catalog-intro-sep, .catalog-intro-pillars > * { animation: none; }
 }
 
 
@@ -1217,3 +1240,122 @@
     /* Hide the ZIP teaser badge to free up space */
     .zip-soon-badge { font-size: 0.45rem; padding: 1px 3px; top: -4px; right: -3px; }
 }
+
+/* ─────────────────────────────────────────────────────────
+   CATALOG FILTER BAR
+   ───────────────────────────────────────────────────────── */
+.filter-bar {
+    padding: 0 20px 0;
+    position: sticky;
+    top: 64px;
+    z-index: 90;
+    background: var(--bg);
+    padding-bottom: 2px;
+}
+.filter-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.filter-group {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+.filter-chip {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.filter-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+.filter-chip.active {
+    background: rgba(0,229,255,0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+.filter-clear {
+    background: transparent;
+    border: none;
+    color: #555;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    cursor: pointer;
+    padding: 5px 8px;
+    transition: color 0.2s;
+}
+.filter-clear:hover { color: var(--danger); }
+.filter-count {
+    font-size: 0.7rem;
+    color: #555;
+    margin-left: auto;
+    white-space: nowrap;
+}
+.state-clear-filters {
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--cyan);
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.state-clear-filters:hover { border-color: var(--cyan); background: rgba(0,229,255,0.08); }
+
+/* Genero badge — same style as cor-badge but distinct */
+.genero-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--purple);
+    border: 1px solid rgba(157,0,255,0.3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .filter-bar { padding: 0 14px; top: 56px; }
+    .filter-count { display: none; }
+}
+
+/* ── Modal tipo + genero badges ──────────────────────────── */
+.product-modal-tipo,
+.product-modal-genero {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+.product-modal-tipo   { color: #ccc;          border: 1px solid #333; }
+.product-modal-genero { color: var(--purple);  border: 1px solid rgba(157,0,255,0.35); }
+.product-modal-tipo:empty,
+.product-modal-genero:empty { display: none; }
+
+/* ── Catalog footer ─────────────────────────────────────── */
+.cust-footer {
+    text-align: center;
+    padding: 28px 20px;
+    margin-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.cust-footer-text { font-size: 0.65rem; color: #444; letter-spacing: 0.5px; }
+.cust-footer-link { color: #666; text-decoration: none; transition: color 0.2s; }
+.cust-footer-link:hover { color: var(--cyan); }

@@ -18,7 +18,7 @@
 
     async function loadStats() {
         try {
-            const res = await fetch('/api/config');
+            const res = await fetch('/api/config', { credentials: 'include' });
             if (!res.ok) throw new Error('config');
             const configs = await res.json();
 
@@ -35,14 +35,29 @@
         }
 
         try {
-            const res  = await fetch('/api/produtos');
+            const res  = await fetch('/api/produtos', { credentials: 'include' });
             if (!res.ok) throw new Error('produtos');
             const data = await res.json();
             document.getElementById('statProdutos').innerText = data.length;
         } catch (e) {
             document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
         }
+
+        try {
+            const resPed = await fetch('/api/pedidos', { credentials: 'include' });
+            if (resPed.ok) {
+                const ped    = await resPed.json();
+                const abertos = ped.filter(p => p.status !== 'entregue').length;
+                const el      = document.getElementById('statPedidos');
+                if (el) el.innerText = abertos;
+            }
+        } catch (_) {
+            const el = document.getElementById('statPedidos');
+            if (el) el.innerHTML = '<span class="stat-error">?</span>';
+        }
+
     }
+
 
     function marcarTemaBtn(tema) {
         document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
@@ -57,6 +72,7 @@
             await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ chave: 'tema_admin', valor: tema })
             });
         } catch (e) { /* visual change applied; persistence retried on next load */ }
