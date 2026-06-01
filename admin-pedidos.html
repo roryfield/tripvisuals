@@ -44,6 +44,7 @@
                 <button class="status-filter-chip" data-status="entregue"   type="button">Entregue</button>
             </div>
             <button type="button" class="btn-launch" id="btnNovoPedido">+ Novo Pedido</button>
+            <button type="button" class="btn-secondary" id="btnExportCsv">Exportar CSV</button>
         </div>
 
         <!-- Order list -->
@@ -91,6 +92,12 @@
                     <div class="field-group">
                         <label class="field-label" for="fValor">Valor (R$)</label>
                         <input type="number" id="fValor" step="0.01" min="0" max="9999">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="fCep">CEP do cliente</label>
+                        <input type="text" id="fCep" placeholder="01001-000" maxlength="9" inputmode="numeric">
+                        <p class="cep-info" id="cepInfo"></p>
+                        <p class="help-note melhor-envio-note">Cálculo automático de frete via Melhor Envio disponível em breve.</p>
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="fStatus">Status</label>

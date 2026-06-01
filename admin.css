@@ -1211,166 +1211,7 @@ body {
         }
 
 
-/* ═══ admin-help.html → extracted styles ═══ */
-html[data-init] body { visibility: visible !important; }
-
-.main { padding: 40px 32px 80px; max-width: 1100px; margin: 0 auto; }
-
-        .help-layout {
-            display: grid;
-            grid-template-columns: 220px 1fr;
-            gap: 32px;
-            align-items: start;
-        }
-        .help-sidenav {
-            position: sticky;
-            top: 20px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 12px;
-        }
-        .help-sidenav h4 {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            margin: 4px 10px 10px;
-        }
-        .help-sidenav a {
-            display: block;
-            padding: 8px 12px;
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.85rem;
-            border-radius: 6px;
-            transition: background 0.15s ease, color 0.15s ease;
-            border-left: 2px solid transparent;
-        }
-        .help-sidenav a:hover { background: var(--panel-2); color: var(--text); }
-        .help-sidenav a.current {
-            color: var(--cyan);
-            background: rgba(0,229,255,0.06);
-            border-left-color: var(--cyan);
-        }
-
-        .help-section {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px 32px;
-            margin-bottom: 18px;
-            scroll-margin-top: 20px;
-        }
-        .help-section h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.6rem;
-            letter-spacing: 2px;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-        .help-section .sub {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--cyan);
-            margin-bottom: 16px;
-        }
-        .help-section p {
-            color: var(--text-dim);
-            line-height: 1.65;
-            font-size: 0.95rem;
-            margin-bottom: 12px;
-        }
-        .help-section h3 {
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text);
-            margin: 20px 0 8px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .help-section ul, .help-section ol {
-            color: var(--text-dim);
-            padding-left: 22px;
-            line-height: 1.7;
-            font-size: 0.92rem;
-            margin-bottom: 12px;
-        }
-        .help-section li { margin-bottom: 4px; }
-        .help-section strong { color: var(--text); }
-        .help-section code {
-            background: var(--panel-2);
-            border: 1px solid var(--border);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-family: ui-monospace, monospace;
-            font-size: 0.85em;
-            color: var(--cyan);
-        }
-        .help-section a {
-            color: var(--cyan);
-            text-decoration: none;
-            border-bottom: 1px dashed var(--cyan);
-        }
-        .help-section a:hover { border-bottom-style: solid; }
-
-        .callout {
-            border-left: 3px solid var(--cyan);
-            background: rgba(0,229,255,0.05);
-            padding: 12px 16px;
-            border-radius: 0 6px 6px 0;
-            margin: 16px 0;
-            font-size: 0.9rem;
-            color: var(--text-dim);
-        }
-        .callout.warn {
-            border-left-color: #ffb800;
-            background: rgba(255,184,0,0.05);
-        }
-        .callout strong { color: var(--text); }
-
-        kbd {
-            background: var(--panel-2);
-            border: 1px solid var(--border-strong);
-            border-bottom-width: 2px;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-family: ui-monospace, monospace;
-            font-size: 0.82em;
-            color: var(--text);
-        }
-
-        .help-hero {
-            background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(157,0,255,0.06));
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            margin-bottom: 22px;
-        }
-        .help-hero p { font-size: 1rem; max-width: 680px; }
-
-        @media (max-width: 800px) {
-            .main { padding: 24px 16px 80px; }
-            .help-layout { grid-template-columns: 1fr; gap: 16px; }
-            .help-sidenav { position: static; padding: 12px; }
-            .help-sidenav h4 { display: none; }
-            .help-sidenav .nav-inner {
-                display: flex; gap: 6px;
-                overflow-x: auto;
-                scrollbar-width: thin;
-            }
-            .help-sidenav a {
-                white-space: nowrap;
-                padding: 8px 14px;
-                border-left: none;
-                border-bottom: 2px solid transparent;
-            }
-            .help-sidenav a.current {
-                border-left: none;
-                border-bottom-color: var(--cyan);
-            }
-            .help-section { padding: 22px 20px; }
-        }
+/* Admin help page styles → see lines below */
 
 /* ── CSP-safe utility classes (replaces inline style= in JS) ── */
 .vz-input-warn       { border-color: rgba(255,190,0,0.5) !important; }
@@ -1571,9 +1412,11 @@ input[list="coresList"]:focus {
     gap: 8px;
 }
 .view-compact .produto-card {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: 72px 1fr;
+    align-items: start;
+    gap: 0;
+    min-height: 80px;
 }
 .view-compact .produto-card img {
     height: 100%;
@@ -1619,9 +1462,9 @@ input[list="coresList"]:focus {
         padding: 12px 12px;
         font-size: 0.95rem;
     }
-    /* Search input keeps its icon space (38px left for the search SVG) */
-    .produtos-search {
-        padding: 12px 12px 12px 40px;
+    /* Specificity fix: input.produtos-search = 0-1-1, beats input[type="text"] = 0-1-1 (same, but later wins) */
+    input.produtos-search {
+        padding: 12px 12px 12px 40px !important;
         font-size: 0.95rem;
     }
     /* Compact-view exception — keep inline edit fields tighter
@@ -2002,7 +1845,12 @@ input[list="coresList"]:focus {
 /* ─────────────────────────────────────────────────────────
    HELP PAGE — layout + contact card
    ───────────────────────────────────────────────────────── */
-.help-layout { display: flex; gap: 28px; align-items: flex-start; }
+.help-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    min-height: 0;
+}
 
 .help-sidebar {
     width: 168px;
@@ -2110,10 +1958,232 @@ input[list="coresList"]:focus {
     font-style: italic;
 }
 
+@media (max-width: 900px) {
+    /* On tablets and phones, hide sidebar and go single-column */
+    .help-sidebar { display: none !important; }
+    .help-layout  { flex-direction: column; gap: 0; }
+}
 @media (max-width: 640px) {
-    .help-sidebar { display: none; }
-    .help-layout  { flex-direction: column; }
     .contact-card { flex-direction: column; gap: 14px; }
     .contact-actions { width: 100%; }
     .contact-btn { width: 100%; justify-content: center; }
 }
+
+/* ── Destaque button ────────────────────────────────────── */
+.btn-destaque-item {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-destaque-item:hover { border-color: #f59e0b; color: #f59e0b; }
+.btn-destaque-item[data-destaque="true"] {
+    background: rgba(245,158,11,0.1);
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+/* ── Duplicate button ───────────────────────────────────── */
+.btn-duplicar-item {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.btn-duplicar-item:hover { border-color: var(--purple); color: var(--purple); }
+
+/* ── Description textarea in card ───────────────────────── */
+.field-full { grid-column: 1 / -1; }
+.field-stats { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+.stat-cliques { font-size: 0.7rem; color: #555; letter-spacing: 0.5px; }
+
+/* ── CEP info ───────────────────────────────────────────── */
+.cep-info { font-size: 0.75rem; color: var(--cyan); margin-top: 4px; min-height: 18px; }
+
+/* ── QR code card ───────────────────────────────────────── */
+.qr-card { text-align: center; }
+.qr-img { width: 160px; height: 160px; margin: 12px auto 8px; border-radius: 8px; }
+.qr-download {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: var(--cyan);
+    text-decoration: none;
+    margin-top: 4px;
+    transition: opacity 0.2s;
+}
+.qr-download:hover { opacity: 0.7; }
+
+
+/* ─────────────────────────────────────────────────────────
+   BULK SELECT — admin-produtos
+   ───────────────────────────────────────────────────────── */
+.bulk-check-wrap {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    background: rgba(5,5,5,0.7);
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.bulk-check-wrap:hover { border-color: var(--cyan); }
+.bulk-check {
+    width: 16px; height: 16px;
+    accent-color: var(--cyan);
+    cursor: pointer;
+}
+
+.bulk-bar {
+    position: fixed;
+    bottom: 80px; left: 50%; transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(10,10,10,0.95);
+    border: 1px solid var(--cyan);
+    border-radius: 8px;
+    padding: 12px 20px;
+    z-index: 800;
+    box-shadow: 0 8px 32px rgba(0,229,255,0.15);
+    animation: bulk-bar-in 0.25s ease both;
+}
+@keyframes bulk-bar-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.bulk-count {
+    font-size: 0.8rem;
+    color: var(--cyan);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.bulk-btn {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--text-muted);
+    padding: 7px 14px;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.bulk-btn-hide:hover  { border-color: var(--danger); color: var(--danger); }
+.bulk-btn-show:hover  { border-color: var(--cyan); color: var(--cyan); }
+.bulk-btn-cancel:hover { border-color: #666; color: #ccc; }
+
+@media (max-width: 600px) {
+    .bulk-bar { left: 10px; right: 10px; transform: none; flex-wrap: wrap; justify-content: center; bottom: 76px; }
+    .bulk-btn { padding: 9px 12px; min-height: 44px; }
+}
+
+.melhor-envio-note { margin-top: 4px !important; }
+
+/* ─────────────────────────────────────────────────────────
+   HELP SECTIONS — content styling (sidebar is above)
+   ───────────────────────────────────────────────────────── */
+.help-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 30px;
+    margin-bottom: 16px;
+    scroll-margin-top: 24px;
+}
+.help-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: var(--text-primary, #fff);
+    margin-bottom: 4px;
+}
+.help-section .sub {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    margin-bottom: 18px;
+}
+.help-section h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #ddd;
+    margin: 22px 0 8px;
+}
+.help-section p, .help-section li {
+    font-size: 0.88rem;
+    color: var(--text-muted, #aaa);
+    line-height: 1.7;
+}
+.help-section ul, .help-section ol {
+    padding-left: 20px;
+    margin-bottom: 12px;
+}
+.help-section li { margin-bottom: 5px; }
+.help-section strong { color: #ddd; font-weight: 600; }
+.help-section code {
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.82em;
+    color: var(--cyan);
+}
+.callout {
+    border-left: 3px solid var(--cyan);
+    background: rgba(0,229,255,0.05);
+    padding: 11px 15px;
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    font-size: 0.88rem;
+    color: var(--text-muted, #aaa);
+    line-height: 1.6;
+}
+.callout.warn { border-left-color: #ffb800; background: rgba(255,184,0,0.05); }
+.callout strong { color: #ddd; }
+kbd {
+    background: var(--panel-2, #111);
+    border: 1px solid #333;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.82em;
+    color: #ccc;
+}
+.help-price-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 6px;
+    font-size: 0.85rem;
+}
+.help-price-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1a1a1a;
+    color: #ccc;
+}
+.help-price-table td:last-child { text-align: right; color: var(--cyan); font-weight: 600; }
+.help-price-table tr:last-child td { border-bottom: none; }
