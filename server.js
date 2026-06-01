@@ -90,6 +90,9 @@ async function initDB() {
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS oculto BOOLEAN NOT NULL DEFAULT false`);
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'Camiseta'`);
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS genero TEXT NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS destaque BOOLEAN NOT NULL DEFAULT false`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS descricao TEXT NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS cliques INTEGER NOT NULL DEFAULT 0`);
     // One-time: set tipo from existing product names (idempotent — won't re-set if already correct)
     await pool.query(`
         UPDATE produtos SET tipo =
@@ -101,6 +104,27 @@ async function initDB() {
             END
         WHERE tipo = 'Camiseta'
     `);
+    // Product gallery — additional photos
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS produto_fotos (
+            id SERIAL PRIMARY KEY,
+            produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
+            url TEXT NOT NULL,
+            cloudinary_id TEXT NOT NULL DEFAULT '',
+            posicao INTEGER NOT NULL DEFAULT 0
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_fotos_produto ON produto_fotos (produto_id)`);
+
+    // Full-text search
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS busca_tsv tsvector`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_busca_gin ON produtos USING gin(busca_tsv)`);
+    await pool.query(`
+        UPDATE produtos SET busca_tsv =
+            to_tsvector('portuguese', COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,''))
+        WHERE busca_tsv IS NULL
+    `);
+
     // Order tracking table
     await pool.query(`
         CREATE TABLE IF NOT EXISTS pedidos (
@@ -426,8 +450,8 @@ app.get('/api/produtos', async (req, res) => {
             } catch (_) { /* fail closed: treat as public */ }
         }
         const sql = isAdmin
-            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero FROM produtos ORDER BY id DESC'
-            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero FROM produtos WHERE oculto = false ORDER BY id DESC';
+            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
+            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
         const r = await pool.query(sql);
         res.json(r.rows);
     } catch (e) {
@@ -502,7 +526,9 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
     const { nome, preco } = req.body;
     const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50) : '';
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)  : 'Camiseta';
-    const genero = typeof req.body.genero === 'string' ? req.body.genero.trim().slice(0, 50) : '';
+    const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50)  : '';
+    const destaque = req.body.destaque === true || req.body.destaque === 'true';
+    const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
         let imagem_url = '', cloudinary_id = '';
         if (req.file) {
@@ -517,8 +543,8 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
             cloudinary_id = result.public_id;
         }
         const r = await pool.query(
-            'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero]);
+            'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao]);
         res.json({ success: true, id: r.rows[0].id });
     } catch (e) {
         console.error('POST /api/produtos:', e.message);
@@ -534,16 +560,161 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const { nome, preco } = req.body;
     const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50)  : '';
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)   : '';
-    const genero = typeof req.body.genero === 'string' ? req.body.genero.trim().slice(0, 50) : '';
+    const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50) : '';
+    const destaque = req.body.destaque === true || req.body.destaque === 'true';
+    const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
         const r = await pool.query(
-            'UPDATE produtos SET nome = $1, preco = $2, cor = $3, tipo = $4, genero = $5 WHERE id = $6',
-            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, id]);
+            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, destaque=$6, descricao=$7 WHERE id=$8',
+            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, destaque, descricao, id]);
+        // Update full-text search vector
+        await pool.query("UPDATE produtos SET busca_tsv = to_tsvector('portuguese', COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,'')) WHERE id = $1", [id]);
         if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         res.json({ success: true });
     } catch (e) {
         console.error('PUT /api/produtos:', e.message);
         res.status(500).json({ error: 'Erro ao atualizar produto.' });
+    }
+});
+
+
+// ── CLICK COUNTER (public, rate-limited) ─────────────────────
+const clickLimiter = rateLimit({ windowMs: 60000, max: 30, message: { error: 'Rate limit.' } });
+app.post('/api/produtos/:id/click', clickLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        await pool.query('UPDATE produtos SET cliques = cliques + 1 WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (_) { res.status(500).json({ error: 'Erro.' }); }
+});
+
+// ── DUPLICATE PRODUCT ────────────────────────────────────────
+app.post('/api/produtos/:id/duplicate', requireAuth, writeLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        const orig = await pool.query('SELECT * FROM produtos WHERE id = $1', [id]);
+        if (orig.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
+        const p = orig.rows[0];
+        const r = await pool.query(
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8) RETURNING id`,
+            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.descricao]);
+        res.status(201).json({ id: r.rows[0].id });
+    } catch (e) {
+        console.error('POST duplicate:', e.message);
+        res.status(500).json({ error: 'Erro ao duplicar.' });
+    }
+});
+
+// ── BULK VISIBILITY ──────────────────────────────────────────
+app.patch('/api/produtos/bulk-visibility', requireAuth, writeLimiter, async (req, res) => {
+    const { ids, oculto } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'IDs obrigatórios.' });
+    if (typeof oculto !== 'boolean') return res.status(400).json({ error: 'oculto deve ser booleano.' });
+    const safeIds = ids.filter(id => Number.isInteger(id) && id > 0);
+    if (safeIds.length === 0) return res.status(400).json({ error: 'Nenhum ID válido.' });
+    try {
+        await pool.query(
+            'UPDATE produtos SET oculto = $1 WHERE id = ANY($2::int[])',
+            [oculto, safeIds]);
+        res.json({ success: true, affected: safeIds.length });
+    } catch (e) {
+        console.error('PATCH bulk-visibility:', e.message);
+        res.status(500).json({ error: 'Erro ao alterar visibilidade em lote.' });
+    }
+});
+
+// ── FULL-TEXT SEARCH ─────────────────────────────────────────
+app.get('/api/produtos/search', async (req, res) => {
+    const q = String(req.query.q || '').trim();
+    if (!q || q.length < 2) return res.json([]);
+    try {
+        const r = await pool.query(
+            `SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao
+             FROM produtos WHERE oculto = false AND busca_tsv @@ plainto_tsquery('portuguese', $1)
+             ORDER BY ts_rank(busca_tsv, plainto_tsquery('portuguese', $1)) DESC LIMIT 50`,
+            [q]);
+        res.json(r.rows);
+    } catch (e) {
+        console.error('GET /api/produtos/search:', e.message);
+        res.status(500).json({ error: 'Erro na busca.' });
+    }
+});
+
+// ── PRODUCT GALLERY — additional photos ──────────────────────
+app.get('/api/produtos/:id/fotos', async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.json([]);
+    try {
+        const r = await pool.query(
+            'SELECT id, url, posicao FROM produto_fotos WHERE produto_id = $1 ORDER BY posicao', [id]);
+        res.json(r.rows);
+    } catch (_) { res.json([]); }
+});
+
+app.post('/api/produtos/:id/fotos', requireAuth, upload.single('imagem'), async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória.' });
+    const detected = detectImageType(req.file.buffer);
+    if (!detected) return res.status(400).json({ error: 'Arquivo não é uma imagem válida.' });
+    try {
+        const result = await uploadToCloudinary(req.file.buffer, Date.now() + '_extra_' + id);
+        const url = cloudTransform(result.url, TRANSFORM_PRODUCT);
+        const posCount = await pool.query('SELECT COUNT(*) FROM produto_fotos WHERE produto_id = $1', [id]);
+        const pos = parseInt(posCount.rows[0].count, 10);
+        const r = await pool.query(
+            'INSERT INTO produto_fotos (produto_id, url, cloudinary_id, posicao) VALUES ($1, $2, $3, $4) RETURNING id, url, posicao',
+            [id, url, result.public_id, pos]);
+        res.status(201).json(r.rows[0]);
+    } catch (e) {
+        console.error('POST fotos:', e.message);
+        res.status(500).json({ error: 'Erro ao adicionar foto.' });
+    }
+});
+
+app.delete('/api/produtos/:id/fotos/:fotoId', requireAuth, async (req, res) => {
+    const pid = parseInt(req.params.id, 10);
+    const fid = parseInt(req.params.fotoId, 10);
+    if (!Number.isInteger(pid) || !Number.isInteger(fid)) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        const r = await pool.query('DELETE FROM produto_fotos WHERE id = $1 AND produto_id = $2 RETURNING cloudinary_id', [fid, pid]);
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Foto não encontrada.' });
+        if (r.rows[0].cloudinary_id) {
+            cloudinary.uploader.destroy(r.rows[0].cloudinary_id).catch(() => {});
+        }
+        res.json({ success: true });
+    } catch (e) {
+        console.error('DELETE fotos:', e.message);
+        res.status(500).json({ error: 'Erro ao remover foto.' });
+    }
+});
+
+// ── PEDIDOS CSV EXPORT ───────────────────────────────────────
+app.get('/api/pedidos/export', requireAuth, async (req, res) => {
+    try {
+        const r = await pool.query('SELECT * FROM pedidos ORDER BY criado_em DESC');
+        const rows = r.rows;
+        if (rows.length === 0) return res.status(200).send('Nenhum pedido.');
+        const header = 'ID,Produto,Valor,Tamanho,Cliente,WhatsApp,Notas,Status,Data\n';
+        const csv = header + rows.map(p =>
+            [p.id, '"'+String(p.produto_nome||'').replace(/"/g,'""')+'"',
+             p.valor || '', p.tamanho || '',
+             '"'+String(p.cliente_nome||'').replace(/"/g,'""')+'"',
+             p.cliente_whatsapp || '',
+             '"'+String(p.notas||'').replace(/"/g,'""')+'"',
+             p.status,
+             new Date(p.criado_em).toISOString().slice(0,10)
+            ].join(',')
+        ).join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="pedidos-tripvisuals.csv"');
+        res.send(csv);
+    } catch (e) {
+        console.error('GET /api/pedidos/export:', e.message);
+        res.status(500).json({ error: 'Erro ao exportar.' });
     }
 });
 

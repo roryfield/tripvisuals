@@ -3,6 +3,9 @@
     'use strict';
 
 let produtos = [];
+let bulkSelection = new Set();
+let currentView = (function(){try{return localStorage.getItem('vz-produtos-view')||'grid';}catch(_){return'grid';}}());
+let currentFilter = '';
 
         // XSS-safe helpers
         const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
@@ -69,6 +72,7 @@ let produtos = [];
                 card.className = 'produto-card';
                 card.id = `card-${p.id}`;
                 card.dataset.oculto = p.oculto ? 'true' : 'false';
+                card.dataset.prodId = p.id;
                 card.innerHTML = `
                     ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
                     <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
@@ -99,10 +103,19 @@ let produtos = [];
                                 <label class="field-label" for="genero-${p.id}">Gênero</label>
                                 <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
                             </div>
+                            <div class="field-group field-full">
+                                <label class="field-label" for="desc-${p.id}">Descrição (opcional)</label>
+                                <textarea id="desc-${p.id}" maxlength="500" rows="2" placeholder="Blurb personalizado no catálogo...">${escapeAttr(p.descricao || '')}</textarea>
+                            </div>
+                            <div class="field-group field-stats">
+                                <span class="stat-cliques">${p.cliques || 0} cliques</span>
+                            </div>
                         </div>
                         <p class="card-status" id="st-${p.id}" role="status" aria-live="polite"></p>
                         <div class="produto-actions">
                             <button class="btn-salvar-item" id="btn-${p.id}" data-id="${p.id}" data-action="salvar">Salvar</button>
+                            <button class="btn-destaque-item" data-id="${p.id}" data-destaque="${p.destaque ? 'true' : 'false'}" data-action="destaque">${p.destaque ? '★ Destacado' : '☆ Destacar'}</button>
+                            <button class="btn-duplicar-item" data-id="${p.id}" data-action="duplicar">Duplicar</button>
                             <button class="btn-ocultar-item" data-id="${p.id}" data-oculto="${p.oculto ? 'true' : 'false'}" data-action="visibility">${p.oculto ? 'Mostrar' : 'Ocultar'}</button>
                             <button class="btn-remover-item" data-id="${p.id}" data-nome="${escapeAttr(p.nome)}" data-action="remover">Remover</button>
                         </div>
@@ -122,7 +135,7 @@ let produtos = [];
                 };
             });
 
-            // Event delegation (safer than inline onclick with template strings)
+            // Event delegation — all button actions
             grid.addEventListener('click', (e) => {
                 const btn = e.target.closest('button[data-action]');
                 if (!btn) return;
@@ -131,7 +144,46 @@ let produtos = [];
                 if (action === 'salvar')     salvar(id);
                 if (action === 'remover')    remover(id, btn.dataset.nome);
                 if (action === 'visibility') toggleVisibility(id, btn);
+                if (action === 'destaque')   toggleDestaque(id, btn);
+                if (action === 'duplicar')   duplicarProduto(id);
             });
+
+            // Bulk checkboxes — separate listener for change events
+            grid.addEventListener('change', function(e) {
+                if (!e.target.classList.contains('bulk-check')) return;
+                const id = parseInt(e.target.dataset.id, 10);
+                if (e.target.checked) bulkSelection.add(id);
+                else bulkSelection.delete(id);
+                renderBulkBar();
+            });
+        }
+
+        async function toggleDestaque(id, btn) {
+            const novoEstado = btn.dataset.destaque !== 'true';
+            btn.disabled = true;
+            try {
+                const p = produtos.find(x => x.id === id);
+                if (!p) return;
+                const res = await fetch('/api/produtos/' + id, {
+                    method: 'PUT', credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...p, destaque: novoEstado })
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast(novoEstado ? 'Produto em destaque!' : 'Destaque removido.');
+                carregar();
+            } catch (_) { btn.disabled = false; mostrarToast('Erro.', true); }
+        }
+
+        async function duplicarProduto(id) {
+            try {
+                const res = await fetch('/api/produtos/' + id + '/duplicate', {
+                    method: 'POST', credentials: 'include'
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast('Produto duplicado!');
+                carregar();
+            } catch (_) { mostrarToast('Erro ao duplicar.', true); }
         }
 
         async function toggleVisibility(id, btn) {
@@ -153,6 +205,54 @@ let produtos = [];
                 btn.disabled = false;
                 btn.textContent = labelOriginal;
                 mostrarToast('Erro ao alterar visibilidade.', true);
+            }
+        }
+
+        function renderBulkBar() {
+            let bar = document.getElementById('bulkBar');
+            if (bulkSelection.size === 0) {
+                if (bar) bar.remove();
+                return;
+            }
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'bulkBar';
+                bar.className = 'bulk-bar';
+                document.body.appendChild(bar);
+            }
+            bar.innerHTML =
+                '<span class="bulk-count">' + bulkSelection.size + ' selecionado' + (bulkSelection.size > 1 ? 's' : '') + '</span>' +
+                '<button type="button" class="bulk-btn bulk-btn-hide">Ocultar</button>' +
+                '<button type="button" class="bulk-btn bulk-btn-show">Mostrar</button>' +
+                '<button type="button" class="bulk-btn bulk-btn-cancel">Cancelar</button>';
+            bar.querySelector('.bulk-btn-hide').addEventListener('click', () => bulkAction(true));
+            bar.querySelector('.bulk-btn-show').addEventListener('click', () => bulkAction(false));
+            bar.querySelector('.bulk-btn-cancel').addEventListener('click', () => {
+                bulkSelection.clear();
+                renderBulkBar();
+                carregar();
+            });
+        }
+
+        async function bulkAction(oculto) {
+            const ids = [...bulkSelection];
+            if (ids.length === 0) return;
+            try {
+                const res = await fetch('/api/produtos/bulk-visibility', {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids, oculto })
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast(oculto
+                    ? ids.length + ' produto(s) ocultado(s).'
+                    : ids.length + ' produto(s) visível(is).');
+                bulkSelection.clear();
+                renderBulkBar();
+                carregar();
+            } catch (_) {
+                mostrarToast('Erro na operação em lote.', true);
             }
         }
 
@@ -198,8 +298,10 @@ let produtos = [];
                         nome: nome.toUpperCase(),
                         preco,
                         cor,
-                        tipo: document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
-                        genero: (document.getElementById(`genero-${id}`)?.value || '').trim()
+                        tipo:      document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
+                        genero:    (document.getElementById(`genero-${id}`)?.value || '').trim(),
+                        descricao: (document.getElementById(`desc-${id}`)?.value || '').trim(),
+                        destaque:  document.querySelector(`[data-id="${id}"][data-action="destaque"]`)?.dataset.destaque === 'true'
                     })
                 });
                 if (res.ok) {

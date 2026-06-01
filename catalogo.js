@@ -79,7 +79,10 @@
         if (!q) { fecharResultados(); return; }
 
         var found = todosProdutos.filter(function (p) {
-            return p.nome.toLowerCase().includes(q);
+            return p.nome.toLowerCase().includes(q)
+                || (p.tipo   || '').toLowerCase().includes(q)
+                || (p.genero || '').toLowerCase().includes(q)
+                || (p.descricao || '').toLowerCase().includes(q);
         });
         box.classList.add('visible');
 
@@ -194,6 +197,7 @@
                 '<div class="buy-pill">Ver detalhes</div>' +
                 '</div>' +
                 '<div class="card-info">' +
+                (p.destaque ? '<span class="destaque-badge">Novidade</span>' : '') +
                 '<h3>' + esc(p.nome) + '</h3>' +
                 '<div class="card-meta">' +
                 (p.genero ? '<span class="genero-badge">' + esc(p.genero) + '</span>' : '') +
@@ -285,6 +289,10 @@
     var modalProduto = null;
 
     function abrirModal(p) {
+        // Async click counter — fire-and-forget
+        if (p.id) {
+            fetch('/api/produtos/' + p.id + '/click', { method: 'POST' }).catch(function(){});
+        }
         modalProduto = p;
         var modal      = document.getElementById('productModal');
         var card       = modal && modal.querySelector('.product-modal-card');
@@ -304,8 +312,29 @@
         titleEl.textContent = p.nome;
         corEl.textContent    = p.cor    || '';
         priceEl.textContent  = 'R$ ' + Number(p.preco).toFixed(2);
+        // Custom description if available
+        var descEl = modal.querySelector('.product-modal-desc');
+        if (descEl) descEl.textContent = p.descricao || 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.';
         if (tipoEl)   tipoEl.textContent   = p.tipo   || '';
         if (generoEl) generoEl.textContent = p.genero || '';
+
+        // Load extra photos for gallery
+        var gallery = document.getElementById('modalGallery');
+        if (gallery && p.id) {
+            gallery.innerHTML = '';
+            fetch('/api/produtos/' + p.id + '/fotos').then(function(r){ return r.json(); }).then(function(fotos){
+                if (fotos.length > 0) {
+                    gallery.innerHTML = fotos.map(function(f){
+                        return '<img src="' + esc(f.url) + '" alt="" class="gallery-thumb" loading="lazy">';
+                    }).join('');
+                    gallery.querySelectorAll('.gallery-thumb').forEach(function(thumb){
+                        thumb.addEventListener('click', function(){
+                            img.src = thumb.src;
+                        });
+                    });
+                }
+            }).catch(function(){});
+        }
 
         modal.classList.add('open');
         modal.setAttribute('aria-hidden', 'false');

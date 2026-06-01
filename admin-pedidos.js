@@ -214,6 +214,23 @@
         if (btnNovo) btnNovo.addEventListener('click', () => abrirForm(null));
 
         // Form submit
+        // CEP lookup via ViaCEP
+        const fCep = document.getElementById('fCep');
+        const cepInfo = document.getElementById('cepInfo');
+        if (fCep) {
+            fCep.addEventListener('input', async function () {
+                const cep = fCep.value.replace(/\D/g, '');
+                if (cep.length === 8 && cepInfo) {
+                    try {
+                        const r = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+                        const d = await r.json();
+                        if (d.erro) { cepInfo.textContent = 'CEP não encontrado'; return; }
+                        cepInfo.textContent = d.localidade + ' / ' + d.uf + ' — ' + (d.bairro || '');
+                    } catch (_) { cepInfo.textContent = ''; }
+                } else if (cepInfo) { cepInfo.textContent = ''; }
+            });
+        }
+
         const form = document.getElementById('pedidoForm');
         if (form) form.addEventListener('submit', salvarForm);
 
@@ -250,6 +267,24 @@
         if (typeof wireLogout === 'function') wireLogout();
 
         carregar();
+
+        // CSV export
+        const btnExport = document.getElementById('btnExportCsv');
+        if (btnExport) {
+            btnExport.addEventListener('click', async function () {
+                try {
+                    const res = await fetch('/api/pedidos/export', { credentials: 'include' });
+                    if (!res.ok) throw new Error();
+                    const blob = await res.blob();
+                    const url  = URL.createObjectURL(blob);
+                    const a    = document.createElement('a');
+                    a.href = url; a.download = 'pedidos-tripvisuals.csv';
+                    document.body.appendChild(a); a.click(); a.remove();
+                    URL.revokeObjectURL(url);
+                    mostrarToast('CSV exportado!');
+                } catch (_) { mostrarToast('Erro ao exportar.', true); }
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
