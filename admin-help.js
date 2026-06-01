@@ -2,7 +2,7 @@
 (function () {
     'use strict';
 
-const links    = document.querySelectorAll('.help-sidenav a');
+const links    = document.querySelectorAll('.help-sidebar a');
     const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
 
     function activeSection() {
@@ -11,15 +11,29 @@ const links    = document.querySelectorAll('.help-sidenav a');
         for (const sec of sections) {
             if (sec && sec.offsetTop <= y) current = sec;
         }
-        return current ? current.id : sections[0].id;
+        if (!current && !sections[0]) return null;
+    return current ? current.id : (sections[0] ? sections[0].id : null);
     }
     let lastId = null;
     function syncNav() {
         const id = activeSection();
-        if (id === lastId) return;
+        if (!id || id === lastId) return;
         lastId = id;
         links.forEach(a => a.classList.toggle('current', a.getAttribute('href') === '#' + id));
     }
+    // Safety net: hide sidebar on narrow screens even if CSS is cached from old version
+    function applySidebarVisibility() {
+        var sidebar = document.querySelector('.help-sidebar');
+        if (!sidebar) return;
+        if (window.innerWidth <= 900) {
+            sidebar.style.display = 'none';
+        } else {
+            sidebar.style.display = '';  // let CSS take over on wide screens
+        }
+    }
+    applySidebarVisibility();
+    window.addEventListener('resize', applySidebarVisibility, { passive: true });
+
     window.addEventListener('scroll', syncNav, { passive: true });
     syncNav();
 

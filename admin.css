@@ -1855,11 +1855,11 @@ input[list="coresList"]:focus {
 .help-sidebar {
     width: 168px;
     flex-shrink: 0;
-    position: sticky;
-    top: 20px;
+    /* position:sticky removed — caused overlay bug on mobile when display:none was cached */
     display: flex;
     flex-direction: column;
     gap: 3px;
+    align-self: flex-start;   /* don't stretch the full column height */
 }
 .sidebar-label {
     font-size: 9px;
