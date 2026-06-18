@@ -907,6 +907,8 @@ html[data-init] body { visibility: visible !important; }
             padding-top: 8px;
         }
         .stat-error { color: var(--danger) !important; font-size: 0.8rem !important; font-family: 'DM Sans', sans-serif !important; }
+        .stat-pagamentos-on  { color: var(--success) !important; font-size: 0.95rem !important; font-family: 'DM Sans', sans-serif !important; }
+        .stat-pagamentos-off { color: var(--text-muted) !important; font-size: 0.95rem !important; font-family: 'DM Sans', sans-serif !important; }
         .stat-loading { font-size: 0.85rem; color: var(--text-muted); }
 
         /* Action cards */
@@ -1586,7 +1588,7 @@ input[list="coresList"]:focus {
 }
 .security-note {
     font-size: 0.75rem !important;
-    color: #555 !important;
+    color: var(--text-muted) !important;
     margin-top: 6px !important;
     font-style: italic;
 }
@@ -1719,10 +1721,10 @@ input[list="coresList"]:focus {
 .pedido-card-left { flex: 1; min-width: 0; }
 .pedido-produto { font-weight: 600; font-size: 0.9rem; color: #fff; margin-bottom: 3px; }
 .pedido-cliente { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; }
-.pedido-notas   { font-size: 0.75rem; color: #555; font-style: italic; }
+.pedido-notas   { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
 .pedido-card-right { text-align: right; flex-shrink: 0; }
 .pedido-valor { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 1px; }
-.pedido-data  { font-size: 0.72rem; color: #555; margin-bottom: 6px; }
+.pedido-data  { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
 .pedido-card-actions {
     display: flex;
     gap: 8px;
@@ -1762,6 +1764,17 @@ input[list="coresList"]:focus {
 .status-producao   { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
 .status-enviado    { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
 .status-entregue   { background: rgba(37,211,102,0.12);  color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+
+/* [VZ] Payment badge — only rendered for pedidos created via PIX automation.
+   Pre-existing/manual (WhatsApp) pedidos have payment_status='manual' and
+   show neither badge, so their cards look exactly as they did before. */
+.payment-badge {
+    display: inline-block; margin-top: 4px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+}
+.payment-pago     { background: rgba(37,211,102,0.12); color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+.payment-pendente { background: rgba(255,184,0,0.12);  color: #ffb800; border: 1px solid rgba(255,184,0,0.3); }
 
 /* PEDIDO FORM MODAL */
 .pedido-form-modal {
@@ -1899,7 +1912,7 @@ input[list="coresList"]:focus {
 }
 .help-price-table td:last-child { text-align: right; color: var(--cyan); font-weight: 600; }
 .help-price-table tr:last-child td { border-bottom: none; }
-.help-note { font-size: 0.75rem; color: #555; font-style: italic; margin-top: 4px; }
+.help-note { font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-top: 4px; }
 
 .contact-card {
     display: flex;
@@ -1954,7 +1967,7 @@ input[list="coresList"]:focus {
 
 .contact-note {
     font-size: 0.75rem !important;
-    color: #555 !important;
+    color: var(--text-muted) !important;
     font-style: italic;
 }
 
@@ -2008,7 +2021,7 @@ input[list="coresList"]:focus {
 /* ── Description textarea in card ───────────────────────── */
 .field-full { grid-column: 1 / -1; }
 .field-stats { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
-.stat-cliques { font-size: 0.7rem; color: #555; letter-spacing: 0.5px; }
+.stat-cliques { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.5px; }
 
 /* ── CEP info ───────────────────────────────────────────── */
 .cep-info { font-size: 0.75rem; color: var(--cyan); margin-top: 4px; min-height: 18px; }

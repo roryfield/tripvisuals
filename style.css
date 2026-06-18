@@ -52,7 +52,7 @@ body {
     max-width: 400px;
 }
 
-.footer-credits { margin-top: 50px; color: #555; font-size: 0.8rem; }
+.footer-credits { margin-top: 50px; color: #777; font-size: 0.8rem; }
 
 /* ========================================================
    ESTÉTICA DOS BOTÕES (Seu Padrão Ghost Button com Máscara)
@@ -239,3 +239,5 @@ body {
 .footer-credits:hover strong {
     color: #888;
 }
+.footer-credits-link { color: #888; opacity: 1; text-decoration: underline; }
+.footer-credits-link:hover { color: var(--neon-cyan); }

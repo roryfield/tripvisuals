@@ -85,6 +85,8 @@
                         (p.valor ? '<p class="pedido-valor">R$ ' + Number(p.valor).toFixed(2) + '</p>' : '') +
                         '<p class="pedido-data">' + data + '</p>' +
                         '<span class="status-chip status-' + p.status + '">' + STATUS_LABELS[p.status] + '</span>' +
+                        (p.payment_status === 'pago'     ? '<span class="payment-badge payment-pago">✓ PIX pago</span>' : '') +
+                        (p.payment_status === 'pendente' ? '<span class="payment-badge payment-pendente">PIX pendente</span>' : '') +
                     '</div>' +
                 '</div>' +
                 '<div class="pedido-card-actions">' +

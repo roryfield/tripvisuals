@@ -13,6 +13,7 @@ const multer      = require('multer');
 const rateLimit  = require('express-rate-limit');
 const { Pool }   = require('pg');
 const cloudinary = require('cloudinary').v2;
+const asaas      = require('./asaas');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -140,6 +141,32 @@ async function initDB() {
         )
     `);
 
+    // [VZ] Payment automation columns — additive, all nullable/defaulted so
+    // existing manual (WhatsApp) pedidos are unaffected. Populated only when
+    // checkout_automatico_enabled is 'true' and a customer pays via PIX.
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'manual'`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS asaas_customer_id TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS asaas_payment_id TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pix_qr_code TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pix_copia_cola TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pix_expira_em TIMESTAMPTZ`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_asaas_payment ON pedidos (asaas_payment_id) WHERE asaas_payment_id != ''`);
+
+    // [VZ] Webhook log — every Asaas notification is recorded here BEFORE
+    // processing, so a payment confirmation is never silently lost even if
+    // our processing logic has a bug. Append-only, never deleted automatically.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS webhook_log (
+            id SERIAL PRIMARY KEY,
+            provider TEXT NOT NULL DEFAULT 'asaas',
+            event_type TEXT NOT NULL DEFAULT 'desconhecido',
+            payload JSONB NOT NULL,
+            processado BOOLEAN NOT NULL DEFAULT false,
+            erro TEXT DEFAULT '',
+            criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+
     await pool.query(`
         CREATE TABLE IF NOT EXISTS configuracoes (
             chave TEXT PRIMARY KEY,
@@ -184,7 +211,8 @@ async function initDB() {
             ('howto_step_1',          ''),
             ('howto_step_2',          ''),
             ('howto_step_3',          ''),
-            ('howto_step_4',          '')
+            ('howto_step_4',          ''),
+            ('checkout_automatico_enabled', 'false')
         ON CONFLICT (chave) DO NOTHING
     `);
 
@@ -249,6 +277,13 @@ const BLOCKED_PATHS = [
 ];
 app.use((req, res, next) => {
     if (BLOCKED_PATHS.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+        return res.status(403).json({ error: 'Forbidden.' });
+    }
+    // [VZ] .md files are developer/owner documentation (README, deploy notes,
+    // activation checklists) that live in the repo root alongside server.js
+    // for convenience — they were never meant to be publicly fetchable, and
+    // some (like ATIVACAO_PAGAMENTOS.md) describe internal infrastructure.
+    if (req.path.toLowerCase().endsWith('.md')) {
         return res.status(403).json({ error: 'Forbidden.' });
     }
     next();
@@ -418,6 +453,25 @@ const uploadLimiter = rateLimit({
 const writeLimiter = rateLimit({
     windowMs: 60 * 1000, max: 120,
     message: { error: 'Muitas alterações. Espere um momento.' },
+    standardHeaders: true, legacyHeaders: false
+});
+// [VZ] Checkout — tighter limit since each call can create a real Asaas charge.
+const checkoutLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 10,
+    message: { error: 'Muitas tentativas de pagamento. Espere um momento.' },
+    standardHeaders: true, legacyHeaders: false
+});
+// Webhooks arrive in bursts from Asaas — generous limit, identity is verified by token instead.
+const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 200,
+    standardHeaders: true, legacyHeaders: false
+});
+// CSV export pulls every pedido (full customer PII) in one go — not a write,
+// so it doesn't belong under writeLimiter, but it's expensive and sensitive
+// enough to bound regardless of how generous GET routes are elsewhere.
+const exportLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 10,
+    message: { error: 'Muitas exportações. Espere um momento.' },
     standardHeaders: true, legacyHeaders: false
 });
 
@@ -654,7 +708,7 @@ app.get('/api/produtos/:id/fotos', async (req, res) => {
     } catch (_) { res.json([]); }
 });
 
-app.post('/api/produtos/:id/fotos', requireAuth, upload.single('imagem'), async (req, res) => {
+app.post('/api/produtos/:id/fotos', requireAuth, uploadLimiter, upload.single('imagem'), async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória.' });
@@ -675,7 +729,7 @@ app.post('/api/produtos/:id/fotos', requireAuth, upload.single('imagem'), async 
     }
 });
 
-app.delete('/api/produtos/:id/fotos/:fotoId', requireAuth, async (req, res) => {
+app.delete('/api/produtos/:id/fotos/:fotoId', requireAuth, writeLimiter, async (req, res) => {
     const pid = parseInt(req.params.id, 10);
     const fid = parseInt(req.params.fotoId, 10);
     if (!Number.isInteger(pid) || !Number.isInteger(fid)) return res.status(400).json({ error: 'ID inválido.' });
@@ -693,7 +747,7 @@ app.delete('/api/produtos/:id/fotos/:fotoId', requireAuth, async (req, res) => {
 });
 
 // ── PEDIDOS CSV EXPORT ───────────────────────────────────────
-app.get('/api/pedidos/export', requireAuth, async (req, res) => {
+app.get('/api/pedidos/export', requireAuth, exportLimiter, async (req, res) => {
     try {
         const r = await pool.query('SELECT * FROM pedidos ORDER BY criado_em DESC');
         const rows = r.rows;
@@ -718,7 +772,7 @@ app.get('/api/pedidos/export', requireAuth, async (req, res) => {
     }
 });
 
-app.patch('/api/produtos/:id/visibility', requireAuth, async (req, res) => {
+app.patch('/api/produtos/:id/visibility', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     const { oculto } = req.body;
@@ -810,6 +864,177 @@ app.delete('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
     }
 });
 
+// ════════════════════════════════════════════════════════════
+// [VZ] CHECKOUT AUTOMÁTICO (PIX via Asaas)
+//
+// Gated behind 'checkout_automatico_enabled' in configuracoes,
+// which defaults to 'false'. Until the owner's CNPJ is approved
+// and ASAAS_API_KEY is set in Railway, /api/checkout/pix returns
+// 503 and the catalog falls back to the existing WhatsApp flow —
+// nothing about the current customer experience changes until
+// this is deliberately turned on. See ATIVACAO_PAGAMENTOS.md.
+// ════════════════════════════════════════════════════════════
+
+async function checkoutHabilitado() {
+    const r = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'checkout_automatico_enabled'");
+    return r.rows[0] && r.rows[0].valor === 'true';
+}
+
+// Public — lets the catalog know whether to offer "Pagar com PIX"
+// or fall back to the WhatsApp-only flow.
+app.get('/api/checkout/status', async (req, res) => {
+    try {
+        const enabled = await checkoutHabilitado() && asaas.isConfigured();
+        res.json({ enabled });
+    } catch (e) {
+        res.json({ enabled: false });
+    }
+});
+
+app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
+    try {
+        if (!(await checkoutHabilitado()) || !asaas.isConfigured()) {
+            return res.status(503).json({
+                error: 'Pagamento automático ainda não disponível. Finalize pelo WhatsApp.'
+            });
+        }
+    } catch (e) {
+        return res.status(503).json({ error: 'Pagamento automático indisponível.' });
+    }
+
+    const { produto_id, cliente_nome, cliente_whatsapp, tamanho, cpfCnpj } = req.body || {};
+    if (typeof cliente_whatsapp !== 'string' || cliente_whatsapp.trim().length < 8)
+        return res.status(400).json({ error: 'WhatsApp do cliente é obrigatório.' });
+    const TAMANHOS_VALIDOS = ['P', 'M', 'G', 'GG', 'XG'];
+    if (!TAMANHOS_VALIDOS.includes(tamanho))
+        return res.status(400).json({ error: 'Selecione um tamanho válido.' });
+    const cpfDigits = String(cpfCnpj || '').replace(/\D/g, '');
+    if (cpfDigits.length !== 11 && cpfDigits.length !== 14)
+        return res.status(400).json({ error: 'CPF/CNPJ inválido.' });
+
+    // [VZ SECURITY] The price is NEVER taken from the request body — a client
+    // could otherwise edit it in devtools and pay R$0.01 for a real product.
+    // produto_id is mandatory and the price is looked up server-side, from
+    // the same source of truth the public catalog itself reads from.
+    const pid = parseInt(produto_id, 10);
+    if (!Number.isInteger(pid) || pid < 1)
+        return res.status(400).json({ error: 'Produto inválido.' });
+
+    let produtoNome, valorNum;
+    try {
+        const pr = await pool.query('SELECT nome, preco FROM produtos WHERE id = $1 AND oculto = false', [pid]);
+        if (!pr.rows.length) return res.status(404).json({ error: 'Produto não encontrado ou indisponível.' });
+        produtoNome = pr.rows[0].nome;
+        valorNum    = Number(pr.rows[0].preco);
+    } catch (e) {
+        console.error('POST /api/checkout/pix produto lookup:', e.message);
+        return res.status(500).json({ error: 'Erro ao verificar produto.' });
+    }
+    if (!Number.isFinite(valorNum) || valorNum <= 0) {
+        return res.status(409).json({ error: 'Preço do produto inválido. Contate a loja.' });
+    }
+
+    try {
+        const customerId = await asaas.criarOuBuscarCliente({
+            nome: cliente_nome, whatsapp: cliente_whatsapp.trim(), cpfCnpj: cpfDigits
+        });
+        const cobranca = await asaas.criarCobrancaPix({
+            customerId, valor: valorNum, descricao: produtoNome
+        });
+
+        const r = await pool.query(
+            `INSERT INTO pedidos
+                (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, status,
+                 payment_status, asaas_customer_id, asaas_payment_id,
+                 pix_qr_code, pix_copia_cola, pix_expira_em)
+             VALUES ($1,$2,$3,$4,$5,'novo','pendente',$6,$7,$8,$9,$10)
+             RETURNING id`,
+            [produtoNome, valorNum, String(tamanho || '').slice(0, 20),
+             String(cliente_nome || '').slice(0, 100), cliente_whatsapp.trim(),
+             customerId, cobranca.asaas_payment_id,
+             cobranca.pix_qr_code, cobranca.pix_copia_cola, cobranca.pix_expira_em]);
+
+        res.status(201).json({
+            pedido_id: r.rows[0].id,
+            pix_qr_code: cobranca.pix_qr_code,
+            pix_copia_cola: cobranca.pix_copia_cola,
+            pix_expira_em: cobranca.pix_expira_em
+        });
+    } catch (e) {
+        console.error('POST /api/checkout/pix:', e.message);
+        res.status(502).json({ error: 'Não foi possível gerar a cobrança PIX agora. Tente pelo WhatsApp.' });
+    }
+});
+
+// Lightweight public polling endpoint — the catalog page checks this every
+// few seconds while showing a QR code, to know when payment lands. Returns
+// only the minimum needed, never the customer's WhatsApp/name/notes.
+app.get('/api/pedidos/:id/status', clickLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        const r = await pool.query('SELECT status, payment_status FROM pedidos WHERE id = $1', [id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        res.json(r.rows[0]);
+    } catch (e) {
+        res.status(500).json({ error: 'Erro.' });
+    }
+});
+
+// Asaas webhook receiver. Every notification is logged BEFORE any processing
+// is attempted, so a bug in our logic can never silently lose a payment event
+// — worst case, it sits in webhook_log unprocessed and can be replayed by hand.
+app.post('/api/webhook/asaas', webhookLimiter, async (req, res) => {
+    const incomingToken = req.headers['asaas-access-token'];
+    const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
+
+    let logId = null;
+    try {
+        const logged = await pool.query(
+            `INSERT INTO webhook_log (provider, event_type, payload) VALUES ('asaas', $1, $2) RETURNING id`,
+            [req.body && req.body.event || 'desconhecido', JSON.stringify(req.body || {})]);
+        logId = logged.rows[0].id;
+    } catch (e) {
+        console.error('Webhook log insert failed:', e.message);
+        // Even if logging fails, we still return 200 below if the token is
+        // valid — Asaas pauses the whole queue after repeated non-2xx
+        // responses, and a logging hiccup must not cascade into that.
+    }
+
+    // Verify authenticity. If no token is configured yet (CNPJ/Asaas not
+    // activated), reject everything — there is nothing legitimate to receive.
+    if (!expectedToken || !incomingToken || incomingToken !== expectedToken) {
+        console.warn('Webhook Asaas rejeitado: token ausente ou inválido.');
+        return res.status(401).json({ error: 'Token inválido.' });
+    }
+
+    try {
+        const event = req.body && req.body.event;
+        const payment = req.body && req.body.payment;
+        if (asaas.EVENTOS_PAGAMENTO_CONFIRMADO.includes(event) && payment && payment.id) {
+            const r = await pool.query(
+                `UPDATE pedidos
+                    SET payment_status = 'pago', status = 'confirmado'
+                  WHERE asaas_payment_id = $1 AND payment_status != 'pago'
+                  RETURNING id`,
+                [payment.id]);
+            if (r.rowCount === 0) {
+                console.log(`Webhook ${event} para pagamento ${payment.id} — pedido não encontrado ou já processado.`);
+            }
+        }
+        if (logId) await pool.query('UPDATE webhook_log SET processado = true WHERE id = $1', [logId]);
+        res.status(200).json({ received: true });
+    } catch (e) {
+        console.error('Webhook Asaas processing error:', e.message);
+        if (logId) await pool.query('UPDATE webhook_log SET erro = $1 WHERE id = $2', [e.message.slice(0,500), logId]).catch(() => {});
+        // Still 200 — Asaas treats anything else as a delivery failure and
+        // will retry/pause the queue. The event is safely on disk in
+        // webhook_log either way; an unprocessed row is recoverable, a
+        // paused webhook queue from a transient DB hiccup is not.
+        res.status(200).json({ received: true, processed: false });
+    }
+});
+
 app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
@@ -831,10 +1056,23 @@ app.delete('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     }
 });
 
+// [VZ SECURITY] Allowlist of every config key the app actually reads.
+// Without this, a stolen session token could write arbitrary keys into
+// configuracoes — harmless on its own (nothing reads an unknown key) but
+// unnecessary surface area, and it makes the table impossible to audit.
+const CONFIG_KEYS_PERMITIDAS = new Set([
+    'layout_padrao', 'tema_admin', 'landing_theme',
+    'landing_logo_url', 'landing_bg_color', 'landing_bg_image_url', 'landing_bg_position',
+    'landing_title', 'landing_tagline', 'landing_instagram', 'landing_whatsapp',
+    'about_visible', 'about_title', 'about_text', 'about_bg_color', 'about_bg_image_url',
+    'howto_visible', 'howto_step_1', 'howto_step_2', 'howto_step_3', 'howto_step_4',
+    'checkout_automatico_enabled'
+]);
+
 app.post('/api/config', requireAuth, writeLimiter, async (req, res) => {
     const { chave, valor } = req.body || {};
-    if (typeof chave !== 'string' || chave.length < 1 || chave.length > 60)
-        return res.status(400).json({ error: 'Chave inválida.' });
+    if (typeof chave !== 'string' || !CONFIG_KEYS_PERMITIDAS.has(chave))
+        return res.status(400).json({ error: 'Chave de configuração não reconhecida.' });
     if (typeof valor !== 'string' || valor.length > 2000)
         return res.status(400).json({ error: 'Valor inválido.' });
     try {
