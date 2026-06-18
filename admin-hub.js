@@ -56,6 +56,22 @@
             if (el) el.innerHTML = '<span class="stat-error">?</span>';
         }
 
+        try {
+            const resChk = await fetch('/api/checkout/status', { credentials: 'include' });
+            const chk    = resChk.ok ? await resChk.json() : { enabled: false };
+            const el     = document.getElementById('statPagamentos');
+            if (el) {
+                el.innerHTML = chk.enabled
+                    ? '<span class="stat-pagamentos-on">🟢 Ativo</span>'
+                    : '<span class="stat-pagamentos-off">⚪ Inativo</span>';
+            }
+            const card = document.getElementById('statPagamentosCard');
+            if (card && !chk.enabled) card.title = 'Aguardando CNPJ + chave Asaas. Veja ATIVACAO_PAGAMENTOS.md.';
+        } catch (_) {
+            const el = document.getElementById('statPagamentos');
+            if (el) el.innerHTML = '<span class="stat-error">?</span>';
+        }
+
     }
 
 

@@ -28,6 +28,13 @@
     var searchAberta  = false;
     var NUMERO_LOJA   = '5511940537169';
 
+    // [VZ] Checkout automático — false até /api/checkout/status confirmar
+    // que o CNPJ/Asaas estão configurados. Enquanto isso, o botão de PIX
+    // fica oculto e o fluxo é 100% WhatsApp, como hoje.
+    var checkoutAutomaticoHabilitado = false;
+    var pixPollTimer = null;
+    var pixPedidoId  = null;
+
     // ── LAYOUT ───────────────────────────────────────────────────
     function setLayout(layout) {
         document.getElementById('vitrine').className = layout;
@@ -122,12 +129,13 @@
     });
 
     // ── PURCHASE ─────────────────────────────────────────────────
-    function comprarItem(nome, preco) {
+    function comprarItem(nome, preco, tamanho) {
         var texto = 'Olá, equipe Trip Visuals! 🛸\n\n' +
             'Vim pelo catálogo e tenho interesse neste item:\n\n' +
             '*Item:* ' + nome + '\n' +
+            '*Tamanho:* ' + tamanho + '\n' +
             '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n\n' +
-            'Poderia me ajudar com tamanhos disponíveis, opções de modelo e cálculo do frete para o meu CEP?';
+            'Poderia me confirmar a disponibilidade nesse tamanho e calcular o frete para o meu CEP?';
         window.open(
             'https://wa.me/' + NUMERO_LOJA + '?text=' + encodeURIComponent(texto),
             '_blank', 'noopener'
@@ -305,6 +313,10 @@
         if (!modal) return;
         // Always reset to detail view on open
         if (card) card.setAttribute('data-state', 'detail');
+        var tamanhoEl = document.getElementById('modalTamanho');
+        var sizeErrorEl = document.getElementById('modalSizeError');
+        if (tamanhoEl) tamanhoEl.value = '';
+        if (sizeErrorEl) sizeErrorEl.textContent = '';
 
         img.src    = p.imagem_url || '';
         img.alt    = p.nome;
@@ -317,6 +329,10 @@
         if (descEl) descEl.textContent = p.descricao || 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.';
         if (tipoEl)   tipoEl.textContent   = p.tipo   || '';
         if (generoEl) generoEl.textContent = p.genero || '';
+
+        // [VZ] Only offer PIX when the backend confirms it's actually live
+        var buyPixBtn = document.getElementById('modalBuyPix');
+        if (buyPixBtn) buyPixBtn.hidden = !checkoutAutomaticoHabilitado;
 
         // Load extra photos for gallery
         var gallery = document.getElementById('modalGallery');
@@ -352,6 +368,7 @@
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
         modalProduto = null;
+        pararPollingPix();
     }
 
     function initFaqModal() {
@@ -392,7 +409,16 @@
         if (backdrop) backdrop.addEventListener('click', fecharModal);
         if (buyBtn)   buyBtn.addEventListener('click', function () {
             if (!modalProduto) return;
-            comprarItem(modalProduto.nome, modalProduto.preco);
+            var tamanhoEl = document.getElementById('modalTamanho');
+            var sizeErrorEl = document.getElementById('modalSizeError');
+            var tamanho = tamanhoEl ? tamanhoEl.value : '';
+            if (!tamanho) {
+                if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
+                if (tamanhoEl) tamanhoEl.focus();
+                return;
+            }
+            if (sizeErrorEl) sizeErrorEl.textContent = '';
+            comprarItem(modalProduto.nome, modalProduto.preco, tamanho);
             // Flip the modal into success state
             var card = modal.querySelector('.product-modal-card');
             if (card) {
@@ -411,9 +437,14 @@
             // Focus trap — only cycles through VISIBLE focusables so the
             // hidden buy button (in success state) is never landed on.
             if (e.key === 'Tab') {
-                var continueBtn = document.getElementById('modalContinue');
-                var focusables  = [closeBtn, buyBtn, continueBtn].filter(function (el) {
-                    return el && el.offsetParent !== null;  // null when display:none
+                // [VZ] Generic query instead of a hand-listed array — this way
+                // the trap stays correct automatically across detail/success/pix
+                // states (each shows a different set of buttons/inputs) without
+                // needing to be updated every time a state gains a new control.
+                var focusables = Array.prototype.slice.call(
+                    modal.querySelectorAll('button, input, a[href]')
+                ).filter(function (el) {
+                    return el.offsetParent !== null && !el.disabled;
                 });
                 if (focusables.length === 0) return;
                 var first = focusables[0], last = focusables[focusables.length - 1];
@@ -426,10 +457,186 @@
         });
     }
 
+    // [VZ] CHECKOUT AUTOMÁTICO (PIX) ───────────────────────────────
+    // Entirely optional layer on top of the existing WhatsApp flow.
+    // If /api/checkout/status ever reports enabled:false (the default,
+    // until CNPJ + Asaas are configured), none of this is reachable —
+    // the PIX button stays hidden and behavior is identical to today.
+    function verificarCheckoutStatus() {
+        fetch('/api/checkout/status')
+            .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
+            .then(function (d) { checkoutAutomaticoHabilitado = !!d.enabled; })
+            .catch(function () { checkoutAutomaticoHabilitado = false; });
+    }
+
+    function pararPollingPix() {
+        if (pixPollTimer) { clearInterval(pixPollTimer); pixPollTimer = null; }
+        pixPedidoId = null;
+    }
+
+    function iniciarPollingPix(pedidoId) {
+        pararPollingPix();
+        pixPedidoId = pedidoId;
+        pixPollTimer = setInterval(function () {
+            fetch('/api/pedidos/' + pedidoId + '/status')
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.payment_status === 'pago') {
+                        pararPollingPix();
+                        var waiting = document.getElementById('pixWaiting');
+                        if (waiting) waiting.innerHTML = '✅ Pagamento confirmado! Seu pedido já está na fila de produção.';
+                    }
+                })
+                .catch(function () { /* silent — next tick retries */ });
+        }, 4000);
+    }
+
+    function initPixCheckout() {
+        verificarCheckoutStatus();
+
+        var modal        = document.getElementById('productModal');
+        var buyPixBtn     = document.getElementById('modalBuyPix');
+        var pixForm       = document.getElementById('pixForm');
+        var pixFormBack   = document.getElementById('pixFormBack');
+        var pixFormError  = document.getElementById('pixFormError');
+        var pixFormSubmit = document.getElementById('pixFormSubmit');
+        var pixQrWrap     = document.getElementById('pixQrWrap');
+        var pixQrImg      = document.getElementById('pixQrImg');
+        var pixCopyBtn    = document.getElementById('pixCopyBtn');
+        var pixCheckoutError = document.getElementById('pixCheckoutError');
+        var pixCpfInput   = document.getElementById('pixCpf');
+        if (!modal) return;
+
+        // Light mask as the customer types — 000.000.000-00
+        if (pixCpfInput) pixCpfInput.addEventListener('input', function () {
+            var d = this.value.replace(/\D/g, '').slice(0, 11);
+            var out = d;
+            if (d.length > 9) out = d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+            else if (d.length > 6) out = d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
+            else if (d.length > 3) out = d.slice(0,3)+'.'+d.slice(3);
+            this.value = out;
+        });
+
+        function cpfValido(cpf) {
+            cpf = String(cpf).replace(/\D/g, '');
+            if (cpf.length !== 11) return false;
+            if (/^(\d)\1{10}$/.test(cpf)) return false; // all-same-digit is never a real CPF
+            function calcDigit(base, weights) {
+                var sum = 0;
+                for (var i = 0; i < weights.length; i++) sum += parseInt(base[i], 10) * weights[i];
+                var rest = sum % 11;
+                return rest < 2 ? 0 : 11 - rest;
+            }
+            var d1 = calcDigit(cpf, [10,9,8,7,6,5,4,3,2]);
+            var d2 = calcDigit(cpf, [11,10,9,8,7,6,5,4,3,2]);
+            return d1 === parseInt(cpf[9], 10) && d2 === parseInt(cpf[10], 10);
+        }
+
+        function entrarEstadoPix() {
+            var card = modal.querySelector('.product-modal-card');
+            if (card) card.setAttribute('data-state', 'pix');
+            if (pixForm) { pixForm.reset(); pixForm.hidden = false; }
+            if (pixQrWrap) pixQrWrap.hidden = true;
+            if (pixFormError) pixFormError.textContent = '';
+        }
+
+        if (buyPixBtn) buyPixBtn.addEventListener('click', function () {
+            if (!modalProduto) return;
+            var tamanhoEl = document.getElementById('modalTamanho');
+            var sizeErrorEl = document.getElementById('modalSizeError');
+            if (!tamanhoEl || !tamanhoEl.value) {
+                if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
+                if (tamanhoEl) tamanhoEl.focus();
+                return;
+            }
+            if (sizeErrorEl) sizeErrorEl.textContent = '';
+            entrarEstadoPix();
+        });
+
+        if (pixFormBack) pixFormBack.addEventListener('click', function () {
+            var card = modal.querySelector('.product-modal-card');
+            if (card) card.setAttribute('data-state', 'detail');
+            pararPollingPix();
+        });
+
+        if (pixForm) pixForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!modalProduto) return;
+            var tamanho  = (document.getElementById('modalTamanho') || {}).value || '';
+            var nome     = (document.getElementById('pixNome') || {}).value || '';
+            var whatsapp = (document.getElementById('pixWhatsapp') || {}).value || '';
+            var cpf      = (pixCpfInput || {}).value || '';
+            nome = nome.trim(); whatsapp = whatsapp.replace(/\D/g, ''); cpf = cpf.replace(/\D/g, '');
+
+            if (!tamanho) { pixFormError.textContent = 'Tamanho não selecionado — volte e selecione antes de continuar.'; return; }
+            if (nome.length < 2) { pixFormError.textContent = 'Digite seu nome.'; return; }
+            if (whatsapp.length < 10) { pixFormError.textContent = 'Digite um WhatsApp válido com DDD.'; return; }
+            if (!cpfValido(cpf)) { pixFormError.textContent = 'CPF inválido. Confira os números digitados.'; return; }
+            pixFormError.textContent = '';
+
+            pixFormSubmit.disabled = true;
+            pixFormSubmit.textContent = 'Gerando cobrança…';
+
+            fetch('/api/checkout/pix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    produto_id: modalProduto.id,
+                    tamanho: tamanho,
+                    cliente_nome: nome,
+                    cliente_whatsapp: whatsapp,
+                    cpfCnpj: cpf
+                })
+            })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+            .then(function (res) {
+                pixFormSubmit.disabled = false;
+                pixFormSubmit.textContent = 'Gerar QR Code PIX';
+                if (!res.ok) { pixFormError.textContent = res.body.error || 'Erro ao gerar PIX.'; return; }
+
+                pixForm.hidden = true;
+                pixQrWrap.hidden = false;
+                if (pixQrImg && res.body.pix_qr_code) pixQrImg.src = 'data:image/png;base64,' + res.body.pix_qr_code;
+                pixQrWrap.dataset.copiaCola = res.body.pix_copia_cola || '';
+                if (pixCheckoutError) pixCheckoutError.textContent = '';
+                if (res.body.pedido_id) iniciarPollingPix(res.body.pedido_id);
+            })
+            .catch(function () {
+                pixFormSubmit.disabled = false;
+                pixFormSubmit.textContent = 'Gerar QR Code PIX';
+                pixFormError.textContent = 'Erro de conexão. Tente novamente.';
+            });
+        });
+
+        if (pixCopyBtn) pixCopyBtn.addEventListener('click', function () {
+            var codigo = (pixQrWrap && pixQrWrap.dataset.copiaCola) || '';
+            if (!codigo) return;
+            var doCopyFallback = function () {
+                var ta = document.createElement('textarea');
+                ta.value = codigo; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); } catch (_) {}
+                document.body.removeChild(ta);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(codigo).catch(doCopyFallback);
+            } else {
+                doCopyFallback();
+            }
+            pixCopyBtn.textContent = 'Copiado!';
+            pixCopyBtn.classList.add('copied');
+            setTimeout(function () {
+                pixCopyBtn.textContent = 'Copiar código PIX';
+                pixCopyBtn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
     // ── INIT ─────────────────────────────────────────────────────
     function initEventListeners() {
         initModal();
         initFaqModal();
+        initPixCheckout();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');
         var layoutBtns   = document.querySelectorAll('.lt-btn');

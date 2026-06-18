@@ -235,3 +235,5 @@
 
 /* VOIDZONE credit */
 .footer strong { color: inherit; letter-spacing: inherit; }
+.footer-credits-link { color: var(--accent-cream); opacity: 1; text-decoration: underline; }
+.footer-credits-link:hover { color: var(--accent-yellow); }
