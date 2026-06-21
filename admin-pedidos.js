@@ -78,7 +78,7 @@
                 '<div class="pedido-card-header">' +
                     '<div class="pedido-card-left">' +
                         '<p class="pedido-produto">' + esc(p.produto_nome) + (p.tamanho ? ' · ' + esc(p.tamanho) : '') + '</p>' +
-                        (p.cliente_nome ? '<p class="pedido-cliente">' + esc(p.cliente_nome) + (p.cliente_whatsapp ? ' · ' + esc(p.cliente_whatsapp) : '') + '</p>' : '') +
+                        (p.cliente_nome ? '<p class="pedido-cliente">' + esc(p.cliente_nome) + (p.cliente_whatsapp ? ' · ' + esc(p.cliente_whatsapp) : '') + (p.cep ? ' · CEP ' + esc(p.cep) : '') + '</p>' : '') +
                         (p.notas ? '<p class="pedido-notas">' + esc(p.notas) + '</p>' : '') +
                     '</div>' +
                     '<div class="pedido-card-right">' +
@@ -112,6 +112,7 @@
                 tamanho:          p.tamanho,
                 cliente_nome:     p.cliente_nome,
                 cliente_whatsapp: p.cliente_whatsapp,
+                cep:              p.cep,
                 notas:            p.notas,
                 status:           novoStatus
             })
@@ -149,6 +150,7 @@
         document.getElementById('fWhatsapp').value  = pedido?.cliente_whatsapp || '';
         document.getElementById('fTamanho').value   = pedido?.tamanho || '';
         document.getElementById('fValor').value     = pedido?.valor || '';
+        document.getElementById('fCep').value       = pedido?.cep || '';
         document.getElementById('fStatus').value    = pedido?.status || 'novo';
         document.getElementById('fNotas').value     = pedido?.notas || '';
         modal.classList.add('open');
@@ -156,6 +158,25 @@
         document.body.style.overflow = 'hidden';
         const fp = document.getElementById('fProduto');
         if (fp) { fp.setAttribute('aria-required', 'true'); fp.focus(); }
+
+        // Se o pedido já tem CEP salvo, busca a cidade/UF pra exibir
+        // (em vez de deixar o campo preenchido sem o contexto visual).
+        const cepInfo = document.getElementById('cepInfo');
+        if (cepInfo) {
+            if (pedido?.cep) consultarCep(pedido.cep, cepInfo);
+            else cepInfo.textContent = '';
+        }
+    }
+
+    async function consultarCep(cepValue, cepInfo) {
+        const cep = String(cepValue).replace(/\D/g, '');
+        if (cep.length !== 8) { cepInfo.textContent = ''; return; }
+        try {
+            const r = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+            const d = await r.json();
+            if (d.erro) { cepInfo.textContent = 'CEP não encontrado'; return; }
+            cepInfo.textContent = d.localidade + ' / ' + d.uf + ' — ' + (d.bairro || '');
+        } catch (_) { cepInfo.textContent = ''; }
     }
 
     function fecharForm() {
@@ -169,12 +190,20 @@
 
     async function salvarForm(e) {
         e.preventDefault();
+        const valorRaw = document.getElementById('fValor').value.trim();
+        const valorNum = valorRaw === '' ? null : parseFloat(valorRaw);
+        if (valorRaw !== '' && (!Number.isFinite(valorNum) || valorNum < 0)) {
+            mostrarToast('Valor inválido. Use um número positivo ou deixe em branco.', true);
+            document.getElementById('fValor').focus();
+            return;
+        }
         const data = {
             produto_nome:       document.getElementById('fProduto').value.trim(),
             cliente_nome:       document.getElementById('fCliente').value.trim(),
             cliente_whatsapp:   document.getElementById('fWhatsapp').value.trim(),
             tamanho:            document.getElementById('fTamanho').value.trim(),
-            valor:              document.getElementById('fValor').value,
+            valor:              valorRaw === '' ? '' : valorNum,
+            cep:                document.getElementById('fCep').value.trim(),
             status:             document.getElementById('fStatus').value,
             notas:              document.getElementById('fNotas').value.trim()
         };
@@ -220,16 +249,13 @@
         const fCep = document.getElementById('fCep');
         const cepInfo = document.getElementById('cepInfo');
         if (fCep) {
-            fCep.addEventListener('input', async function () {
+            fCep.addEventListener('input', function () {
                 const cep = fCep.value.replace(/\D/g, '');
                 if (cep.length === 8 && cepInfo) {
-                    try {
-                        const r = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
-                        const d = await r.json();
-                        if (d.erro) { cepInfo.textContent = 'CEP não encontrado'; return; }
-                        cepInfo.textContent = d.localidade + ' / ' + d.uf + ' — ' + (d.bairro || '');
-                    } catch (_) { cepInfo.textContent = ''; }
-                } else if (cepInfo) { cepInfo.textContent = ''; }
+                    consultarCep(cep, cepInfo);
+                } else if (cepInfo) {
+                    cepInfo.textContent = '';
+                }
             });
         }
 

@@ -167,6 +167,10 @@
     .link-btn.instagram { border-color: var(--bg-magenta); box-shadow: 3px 3px 0 var(--accent-yellow); }
     .link-btn.instagram::before { background: var(--bg-magenta); }
 
+    .link-btn.sobre { border-color: var(--accent-yellow); box-shadow: 3px 3px 0 var(--bg-magenta); }
+    .link-btn.sobre::before { background: var(--accent-yellow); color: var(--bg-deep); }
+    .link-btn.sobre:hover { color: var(--bg-deep); }
+
     .link-btn.whatsapp { border-color: #25d366; box-shadow: 3px 3px 0 var(--accent-yellow); }
     .link-btn.whatsapp::before { background: #25d366; }
 

@@ -16,7 +16,22 @@
         init();
     }
 
-    async function loadStats() {
+    function mostrarToast(msg, erro) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.innerText = msg;
+        t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+        t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+        t.style.color       = erro ? 'var(--danger)'        : 'var(--cyan)';
+        t.classList.add('show');
+        clearTimeout(t._to);
+        t._to = setTimeout(function () { t.classList.remove('show'); }, 2500);
+    }
+
+    // ── Cada stat carrega independentemente e em paralelo ────────
+    // (antes: 4 awaits sequenciais — um lento atrasava todos os outros)
+
+    async function loadConfigStats() {
         try {
             const res = await fetch('/api/config', { credentials: 'include' });
             if (!res.ok) throw new Error('config');
@@ -33,7 +48,9 @@
             document.getElementById('statTema').innerHTML   = '<span class="stat-error">Erro ao carregar</span>';
             marcarTemaBtn(document.body.classList.contains('tema-claro') ? 'claro' : 'escuro');
         }
+    }
 
+    async function loadProdutosStats() {
         try {
             const res  = await fetch('/api/produtos', { credentials: 'include' });
             if (!res.ok) throw new Error('produtos');
@@ -42,11 +59,13 @@
         } catch (e) {
             document.getElementById('statProdutos').innerHTML = '<span class="stat-error">Erro</span>';
         }
+    }
 
+    async function loadPedidosStats() {
         try {
             const resPed = await fetch('/api/pedidos', { credentials: 'include' });
             if (resPed.ok) {
-                const ped    = await resPed.json();
+                const ped     = await resPed.json();
                 const abertos = ped.filter(p => p.status !== 'entregue').length;
                 const el      = document.getElementById('statPedidos');
                 if (el) el.innerText = abertos;
@@ -55,7 +74,9 @@
             const el = document.getElementById('statPedidos');
             if (el) el.innerHTML = '<span class="stat-error">?</span>';
         }
+    }
 
+    async function loadPagamentosStats() {
         try {
             const resChk = await fetch('/api/checkout/status', { credentials: 'include' });
             const chk    = resChk.ok ? await resChk.json() : { enabled: false };
@@ -71,9 +92,18 @@
             const el = document.getElementById('statPagamentos');
             if (el) el.innerHTML = '<span class="stat-error">?</span>';
         }
-
     }
 
+    async function loadStats() {
+        // allSettled: cada stat já tem seu próprio try/catch — uma falha
+        // não deve bloquear nem atrasar as outras três.
+        await Promise.allSettled([
+            loadConfigStats(),
+            loadProdutosStats(),
+            loadPedidosStats(),
+            loadPagamentosStats()
+        ]);
+    }
 
     function marcarTemaBtn(tema) {
         document.getElementById('btnClaro').classList.toggle('active',  tema === 'claro');
@@ -81,16 +111,29 @@
     }
 
     async function setTema(tema) {
+        // Guarda o estado anterior pra reverter visualmente se o save falhar.
+        const temaAnterior = document.body.classList.contains('tema-claro') ? 'claro' : 'escuro';
+        if (temaAnterior === tema) return; // já está nesse tema, nada a fazer
+
         document.body.classList.toggle('tema-claro', tema === 'claro');
         marcarTemaBtn(tema);
         document.getElementById('statTema').innerText = tema === 'claro' ? '☀️ Claro' : '🌑 Escuro';
+
         try {
-            await fetch('/api/config', {
+            const res = await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ chave: 'tema_admin', valor: tema })
             });
-        } catch (e) { /* visual change applied; persistence retried on next load */ }
+            if (res.status === 401) { window.location.replace('/login.html'); return; }
+            if (!res.ok) throw new Error('save failed');
+        } catch (e) {
+            // Rollback visual: reverte pro tema anterior já que o servidor não confirmou.
+            document.body.classList.toggle('tema-claro', temaAnterior === 'claro');
+            marcarTemaBtn(temaAnterior);
+            document.getElementById('statTema').innerText = temaAnterior === 'claro' ? '☀️ Claro' : '🌑 Escuro';
+            mostrarToast('⚠️ Não foi possível salvar o tema. Tente novamente.', true);
+        }
     }
 })();

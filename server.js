@@ -135,11 +135,15 @@ async function initDB() {
             tamanho TEXT DEFAULT '',
             cliente_nome TEXT DEFAULT '',
             cliente_whatsapp TEXT DEFAULT '',
+            cep TEXT DEFAULT '',
             notas TEXT DEFAULT '',
             status TEXT NOT NULL DEFAULT 'novo',
             criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     `);
+    // [VZ] Coluna cep adicionada após o lançamento inicial — ALTER cobre
+    // bancos já existentes em produção (CREATE TABLE só roda na 1ª criação).
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cep TEXT DEFAULT ''`);
 
     // [VZ] Payment automation columns — additive, all nullable/defaulted so
     // existing manual (WhatsApp) pedidos are unaffected. Populated only when
@@ -213,6 +217,21 @@ async function initDB() {
             ('howto_step_3',          ''),
             ('howto_step_4',          ''),
             ('checkout_automatico_enabled', 'false')
+        ON CONFLICT (chave) DO NOTHING
+    `);
+
+    // [VZ] Seeds da página Sobre — conteúdo padrão ao vivo
+    await pool.query(`
+        INSERT INTO configuracoes (chave, valor) VALUES
+            ('sobre_manifesto',    'A roupa como forma de expressão'),
+            ('sobre_historia',     ''),
+            ('sobre_missao',       'Criar peças que contam histórias'),
+            ('sobre_pilar1_titulo','Música'),
+            ('sobre_pilar1_desc',  'Rock, metal e cultura alternativa'),
+            ('sobre_pilar2_titulo','Arte'),
+            ('sobre_pilar2_desc',  'Design exclusivo em cada peça'),
+            ('sobre_pilar3_titulo','Expressão'),
+            ('sobre_pilar3_desc',  'Vista o que você sente')
         ON CONFLICT (chave) DO NOTHING
     `);
 
@@ -309,6 +328,12 @@ app.get('/', async (req, res) => {
         console.error('GET / theme resolver:', e.message);
         res.sendFile(path.join(ROOT_DIR, 'index.html'));
     }
+});
+
+// ── SOBRE PAGE ─────────────────────────────────────────────────
+// Clean URL /sobre → serve sobre.html
+app.get('/sobre', (req, res) => {
+    res.sendFile(path.join(ROOT_DIR, 'sobre.html'));
 });
 
 // ── STATIC FILES ───────────────────────────────────────────────
@@ -803,18 +828,19 @@ app.get('/api/pedidos', requireAuth, async (req, res) => {
 });
 
 app.post('/api/pedidos', requireAuth, writeLimiter, async (req, res) => {
-    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status } = req.body;
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status } = req.body;
     if (!produto_nome || String(produto_nome).trim().length === 0)
         return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
     try {
         const r = await pool.query(
-            `INSERT INTO pedidos (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            `INSERT INTO pedidos (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
             [String(produto_nome).trim().slice(0, 200),
              parseFloat(valor) || null,
              String(tamanho || '').trim().slice(0, 20),
              String(cliente_nome || '').trim().slice(0, 100),
              String(cliente_whatsapp || '').trim().slice(0, 30),
+             String(cep || '').trim().slice(0, 9),
              String(notas || '').trim().slice(0, 1000),
              ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo']);
         res.status(201).json(r.rows[0]);
@@ -827,19 +853,20 @@ app.post('/api/pedidos', requireAuth, writeLimiter, async (req, res) => {
 app.put('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
-    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, notas, status } = req.body;
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status } = req.body;
     if (!produto_nome || String(produto_nome).trim().length === 0)
         return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
     try {
         const r = await pool.query(
             `UPDATE pedidos SET produto_nome=$1, valor=$2, tamanho=$3,
-              cliente_nome=$4, cliente_whatsapp=$5, notas=$6, status=$7
-             WHERE id=$8 RETURNING *`,
+              cliente_nome=$4, cliente_whatsapp=$5, cep=$6, notas=$7, status=$8
+             WHERE id=$9 RETURNING *`,
             [String(produto_nome).trim().slice(0, 200),
              parseFloat(valor) || null,
              String(tamanho || '').trim().slice(0, 20),
              String(cliente_nome || '').trim().slice(0, 100),
              String(cliente_whatsapp || '').trim().slice(0, 30),
+             String(cep || '').trim().slice(0, 9),
              String(notas || '').trim().slice(0, 1000),
              ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo',
              id]);
@@ -1066,6 +1093,11 @@ const CONFIG_KEYS_PERMITIDAS = new Set([
     'landing_title', 'landing_tagline', 'landing_instagram', 'landing_whatsapp',
     'about_visible', 'about_title', 'about_text', 'about_bg_color', 'about_bg_image_url',
     'howto_visible', 'howto_step_1', 'howto_step_2', 'howto_step_3', 'howto_step_4',
+    // Página Sobre (nova — substituiu a seção inline da landing)
+    'sobre_manifesto', 'sobre_historia', 'sobre_missao',
+    'sobre_pilar1_titulo', 'sobre_pilar1_desc',
+    'sobre_pilar2_titulo', 'sobre_pilar2_desc',
+    'sobre_pilar3_titulo', 'sobre_pilar3_desc',
     'checkout_automatico_enabled'
 ]);
 

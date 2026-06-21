@@ -43,6 +43,7 @@
             <a href="#pedidos">Pedidos</a>
             <a href="#layout">Layout</a>
             <a href="#landing">Landing Page</a>
+            <a href="#sobre">Página Sobre</a>
             <a href="#catalogo">Catálogo público</a>
             <a href="#tarefas">Tarefas comuns</a>
             <a href="#problemas">Problemas</a>
@@ -142,11 +143,12 @@
 
                 <h3>Modos de visualização</h3>
                 <p>
-                    Os dois botões no canto direito da barra de busca alternam entre:
+                    Os três botões no canto direito da barra de busca alternam entre:
                 </p>
                 <ul>
                     <li><strong>Grade</strong> — cards maiores com imagem em destaque. Bom para revisar visualmente.</li>
                     <li><strong>Lista compacta</strong> — miniaturas à esquerda com campos à direita. Bom para editar muitos produtos rápido.</li>
+                    <li><strong>Mosaico</strong> — só as imagens, em miniatura, sem formulário. Passe o mouse pra ver o nome do produto. Ideal pra escanear o catálogo inteiro de uma vez (com 100+ produtos, é o modo mais rápido pra encontrar algo visualmente). Pra editar, alterne de volta pra Grade ou Lista.</li>
                 </ul>
                 <p>O modo escolhido é salvo automaticamente no navegador.</p>
 
@@ -278,8 +280,36 @@
 
                 <h3>5 · Conteúdo</h3>
                 <p>
-                    Campos de texto editáveis da landing: título, tagline, links do Instagram e WhatsApp, além das seções "Sobre nós" e "Como funciona". <strong>Salva automaticamente ao sair do campo</strong>. Aparece <em>✓ salvo</em> quando grava.
+                    Campos de texto editáveis da landing: título, tagline, links do Instagram e WhatsApp, além da seção "Como funciona". <strong>Salva automaticamente ao sair do campo</strong>. Aparece <em>✓ salvo</em> quando grava.
                 </p>
+                <p>
+                    A seção "Sobre" virou uma página própria — veja <a href="#sobre">Página Sobre</a> abaixo.
+                </p>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ SOBRE -->
+            <section class="help-section" id="sobre">
+                <h2>PÁGINA SOBRE</h2>
+                <div class="sub">A história e os valores da marca, numa página própria</div>
+                <p>
+                    Acessível em <code>tripvisuals.shop/sobre</code> e pelo botão "Sobre Nós" na landing principal. Tem visual imersivo próprio (hero animado, pilares da marca, história e missão) e é gerenciada separadamente do resto da landing.
+                </p>
+
+                <h3>O que dá pra editar</h3>
+                <ul>
+                    <li><strong>Manifesto</strong> — a frase de destaque na tela de entrada da página.</li>
+                    <li><strong>Pilares da marca</strong> — três cards com título e descrição curta cada (ex: Música, Arte, Expressão).</li>
+                    <li><strong>História</strong> — texto corrido contando a origem da loja.</li>
+                    <li><strong>Missão</strong> — frase de impacto exibida em destaque, estilo citação.</li>
+                </ul>
+
+                <h3>Como editar</h3>
+                <ol>
+                    <li>No Hub, clique no card <strong>Página Sobre</strong>, ou acesse <code>/admin-sobre.html</code> diretamente.</li>
+                    <li>Edite o campo desejado.</li>
+                    <li>Clique fora do campo (ou aperte Enter nos campos de uma linha). <strong>Salva automaticamente</strong> — aparece <em>✓ salvo</em> ao lado do campo.</li>
+                    <li>Clique em <strong>Ver ao vivo</strong> no topo da página pra conferir o resultado.</li>
+                </ol>
             </section>
 
             <!-- ═══════════════════════════════════════════════ CATÁLOGO -->
@@ -353,6 +383,9 @@
 
                 <h3>Atualizar o link do WhatsApp</h3>
                 <p>Landing → Conteúdo → campo "Link do WhatsApp". Cole o link completo no formato <code>https://wa.me/5511999999999</code>.</p>
+
+                <h3>Editar a história ou missão da loja</h3>
+                <p>Hub → Página Sobre (ou <code>/admin-sobre.html</code>). Edite o campo de história ou missão e clique fora — salva sozinho. Veja o resultado em <code>/sobre</code>.</p>
 
                 <h3>Adicionar um produto novo</h3>
                 <p>Upload → configure o lote → arraste as imagens → revise → Lançar.</p>

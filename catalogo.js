@@ -230,11 +230,23 @@
         var bar = document.getElementById('filterBar');
         if (!bar) return;
 
-        // Compute unique tipos and generos in this product set
-        var tipos   = [...new Set(lista.map(p => p.tipo   || '').filter(Boolean))].sort();
-        var generos = [...new Set(lista.map(p => p.genero || '').filter(Boolean))].sort();
-
         var f = activeFilters;
+
+        // [VZ] Filtro progressivo (faceted filtering): as opções de "tipo"
+        // refletem os produtos já filtrados por gênero (ignorando o filtro
+        // de tipo em si), e vice-versa. Isso evita o cliente cair numa
+        // combinação que sempre dá zero resultados sem entender o motivo —
+        // problema real quando os dois filtros eram calculados sobre a
+        // lista inteira, sem considerar o que já estava selecionado.
+        var lojaFiltradaPorGenero = lista.filter(function (p) {
+            return !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
+        });
+        var lojaFiltradaPorTipo = lista.filter(function (p) {
+            return !f.tipo || (p.tipo || '').toLowerCase() === f.tipo.toLowerCase();
+        });
+
+        var tipos   = [...new Set(lojaFiltradaPorGenero.map(p => p.tipo   || '').filter(Boolean))].sort();
+        var generos = [...new Set(lojaFiltradaPorTipo.map(p => p.genero || '').filter(Boolean))].sort();
 
         var tipoHtml = '';
         if (tipos.length > 0) {
@@ -243,6 +255,12 @@
             tipos.forEach(function (t) {
                 tipoHtml += '<button class="filter-chip' + (f.tipo === t ? ' active' : '') + '" data-filter="tipo" data-value="' + esc(t) + '">' + esc(t) + '</button>';
             });
+            // Se o tipo ativo não existe mais nessa combinação, ele some da lista
+            // mas continua selecionado — adiciona como chip extra pra não travar
+            // o usuário sem saída visível (clique em "Todos" pra resetar).
+            if (f.tipo && tipos.indexOf(f.tipo) === -1) {
+                tipoHtml += '<button class="filter-chip active" data-filter="tipo" data-value="' + esc(f.tipo) + '">' + esc(f.tipo) + ' (0)</button>';
+            }
             tipoHtml += '</div>';
         }
 
@@ -253,6 +271,9 @@
             generos.forEach(function (g) {
                 generoHtml += '<button class="filter-chip' + (f.genero === g ? ' active' : '') + '" data-filter="genero" data-value="' + esc(g) + '">' + esc(g) + '</button>';
             });
+            if (f.genero && generos.indexOf(f.genero) === -1) {
+                generoHtml += '<button class="filter-chip active" data-filter="genero" data-value="' + esc(f.genero) + '">' + esc(f.genero) + ' (0)</button>';
+            }
             generoHtml += '</div>';
         }
 

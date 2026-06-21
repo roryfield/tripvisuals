@@ -480,3 +480,47 @@ html[data-init] body { visibility: visible !important; }
 
 /* section-hint base margin (was inline style) */
 .section-hint { margin-top: 3px; letter-spacing: 0.5px; }
+
+/* ── admin-sobre.html: grid 3 colunas e card de pilar ─── */
+.vz-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 4px;
+}
+.pilar-admin-card {
+    background: var(--panel-2, rgba(255,255,255,0.03));
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 10px;
+    padding: 20px 18px;
+}
+.pilar-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--cyan, #00e5ff);
+    opacity: 0.35;
+    margin-bottom: 14px;
+    user-select: none;
+}
+.vz-mb-8  { margin-bottom: 8px; }
+.field-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted, #666);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+.vz-cta-section { border-top: 1px solid var(--border, rgba(255,255,255,0.06)); }
+.cta-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+    margin-bottom: 16px;
+}
+.btn-launch-lg {
+    display: inline-block;
+    padding: 12px 28px;
+    font-size: 0.9rem;
+}
+@media (max-width: 700px) {
+    .vz-grid-3 { grid-template-columns: 1fr; }
+}

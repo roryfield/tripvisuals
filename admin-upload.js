@@ -12,6 +12,10 @@
 
     let filaFiles     = [];  // validated File objects
     let blankRows     = [];  // indices that had no usable filename
+    let previewUrls   = [];  // [VZ] object URLs criadas via createObjectURL — precisam
+                              // ser revogadas explicitamente ou vazam memória do
+                              // navegador entre lotes (relevante: lotes de até 50
+                              // arquivos, re-selecionados várias vezes na mesma sessão).
 
     // ── FILENAME PROCESSING ──────────────────────────────────────
 
@@ -251,6 +255,12 @@
         filaFiles = validos;
         blankRows = [];
 
+        // Libera as URLs de blob do lote anterior antes de criar as novas —
+        // sem isso, re-selecionar arquivos várias vezes na mesma sessão
+        // acumula URLs nunca liberadas (vazamento de memória).
+        previewUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+        previewUrls = [];
+
         var batchPanel = document.getElementById('batchPanel');
         if (batchPanel) batchPanel.removeAttribute('hidden');
 
@@ -266,9 +276,11 @@
             if (isBlank) blankRows.push(i);
 
             var precoAuto = PRECOS[tipoAuto].toFixed(2);
+            var previewUrl = URL.createObjectURL(file);
+            previewUrls.push(previewUrl);
             var tr = document.createElement('tr');
             tr.innerHTML =
-                '<td><img src="' + URL.createObjectURL(file) + '" alt="Pré-visualização"></td>' +
+                '<td><img src="' + previewUrl + '" alt="Pré-visualização"></td>' +
                 '<td><select id="t-' + i + '" aria-label="Tipo">' +
                     '<option value="Camiseta" ' + (tipoAuto === 'Camiseta'  ? 'selected' : '') + '>Camiseta</option>' +
                     '<option value="Regata"   ' + (tipoAuto === 'Regata'    ? 'selected' : '') + '>Regata</option>' +

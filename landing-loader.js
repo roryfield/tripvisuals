@@ -44,21 +44,6 @@
                 if (hasBgClass) body.classList.add('has-bg-image');
             }
 
-            // ABOUT section
-            var aboutSec = document.getElementById('landingAboutSection');
-            if (aboutSec && cfg.about_visible !== '0') {
-                if (cfg.about_title) set('aboutTitle', 'textContent', cfg.about_title);
-                if (cfg.about_text)  set('aboutText',  'textContent', cfg.about_text);
-                if (cfg.about_bg_color && /^#[0-9a-fA-F]{6}$/.test(cfg.about_bg_color))
-                    aboutSec.style.backgroundColor = cfg.about_bg_color;
-                if (cfg.about_bg_image_url) {
-                    aboutSec.style.backgroundImage    = 'url(' + cfg.about_bg_image_url + ')';
-                    aboutSec.style.backgroundSize     = 'cover';
-                    aboutSec.style.backgroundPosition = 'center';
-                }
-                if (cfg.about_title || cfg.about_text) aboutSec.removeAttribute('hidden');
-            }
-
             // COMO FUNCIONA section
             var howtoSec = document.getElementById('landingHowtoSection');
             if (howtoSec && cfg.howto_visible !== '0') {
