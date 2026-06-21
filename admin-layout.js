@@ -28,12 +28,18 @@
     }
 
     async function definirLayout(layout) {
+        // Guarda o estado anterior pra reverter visualmente se o save falhar.
+        const anterior = Array.from(document.querySelectorAll('.opt'))
+            .find(o => o.classList.contains('active'));
+        const layoutAnterior = anterior ? anterior.id.replace('opt-', '') : null;
+
         document.querySelectorAll('.opt').forEach(function (o) {
             const active = o.id === 'opt-' + layout;
             o.classList.toggle('active', active);
             o.setAttribute('aria-checked', active ? 'true' : 'false');
         });
 
+        let mensagemErro = null;
         try {
             const res = await fetch('/api/config', {
                 method: 'POST',
@@ -45,11 +51,24 @@
                 mostrarToast('✓ Layout "' + (labels[layout] || layout) + '" aplicado para todos!');
             } else if (res.status === 401) {
                 window.location.replace('/login.html');
+                return;
             } else {
-                mostrarToast('⚠️ Erro ao salvar. Tente novamente.', true);
+                mensagemErro = '⚠️ Erro ao salvar. Tente novamente.';
             }
         } catch (e) {
-            mostrarToast('⚠️ Sem conexão com o servidor.', true);
+            mensagemErro = '⚠️ Sem conexão com o servidor.';
+        }
+
+        if (mensagemErro) {
+            // Rollback visual: reverte pro layout anterior já que o servidor não confirmou.
+            if (layoutAnterior) {
+                document.querySelectorAll('.opt').forEach(function (o) {
+                    const active = o.id === 'opt-' + layoutAnterior;
+                    o.classList.toggle('active', active);
+                    o.setAttribute('aria-checked', active ? 'true' : 'false');
+                });
+            }
+            mostrarToast(mensagemErro, true);
         }
     }
 

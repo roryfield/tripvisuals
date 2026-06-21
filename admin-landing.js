@@ -673,10 +673,7 @@
             fillIfPresent('cf-instagram',   'landing_instagram');
             fillIfPresent('cf-whatsapp',    'landing_whatsapp');
             // About
-            fillIfPresent('cf-about-title', 'about_title');
-            fillIfPresent('cf-about-text',  'about_text');
-            const aboutToggle = $('aboutVisible');
-            if (aboutToggle) aboutToggle.checked = cfg.about_visible !== '0';
+            // (about_* fields removed — gerenciados em admin-sobre.html)
             // Howto
             fillIfPresent('cf-howto-1', 'howto_step_1');
             fillIfPresent('cf-howto-2', 'howto_step_2');
@@ -712,139 +709,15 @@
         }
     })();
 
-    // ═════════════════════════ ABOUT & HOWTO WIRING ══════════════
-    // Visibility toggles
-    ['aboutVisible', 'howtoVisible'].forEach(id => {
-        const el = $(id);
-        if (!el) return;
-        const key = id === 'aboutVisible' ? 'about_visible' : 'howto_visible';
-        el.addEventListener('change', () => {
-            saveConfig(key, el.checked ? '1' : '0').catch(e => {
+    // ═════════════════════════ HOWTO VISIBILITY ══════════════════
+    const howtoToggle = $('howtoVisible');
+    if (howtoToggle) {
+        howtoToggle.addEventListener('change', () => {
+            saveConfig('howto_visible', howtoToggle.checked ? '1' : '0').catch(e => {
                 if (e.message === 'auth') return;
                 showToast('Erro ao salvar visibilidade', true);
             });
         });
-    });
-
-    // About color picker (re-uses same makePicker() factory as main bg picker)
-    initAboutColorPicker();
-
-    // About bg image upload
-    const aboutBgFile    = $('aboutBgFile');
-    const btnUpAboutBg   = $('btnUploadAboutBg');
-    const btnClrAboutBg  = $('btnClearAboutBg');
-    const aboutBgStatus  = $('aboutBgStatus');
-    let pendingAboutBg   = null;
-
-    if (aboutBgFile) aboutBgFile.addEventListener('change', e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        pendingAboutBg = f;
-        if (btnUpAboutBg) btnUpAboutBg.disabled = false;
-    });
-    if (btnUpAboutBg) btnUpAboutBg.addEventListener('click', async () => {
-        if (!pendingAboutBg) return;
-        btnUpAboutBg.disabled = true; btnUpAboutBg.innerText = 'Enviando…';
-        try {
-            const fd = new FormData(); fd.append('imagem', pendingAboutBg);
-            const res = await fetch('/api/landing/bg', { method: 'POST', credentials: 'include', body: fd });
-            if (res.status === 401) { window.location.replace('/login.html'); return; }
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro');
-            await saveConfig('about_bg_image_url', data.url);
-            if (aboutBgStatus) { aboutBgStatus.innerText = '✓ Imagem da seção Sobre ativa.'; aboutBgStatus.className = 'save-status success'; }
-            showToast('✓ Fundo do Sobre enviado');
-            pendingAboutBg = null; aboutBgFile.value = '';
-        } catch (e) {
-            if (aboutBgStatus) { aboutBgStatus.innerText = '❌ ' + e.message; aboutBgStatus.className = 'save-status error'; }
-            showToast('Erro ao enviar fundo', true);
-        } finally { btnUpAboutBg.innerText = 'Enviar'; btnUpAboutBg.disabled = !pendingAboutBg; }
-    });
-    if (btnClrAboutBg) btnClrAboutBg.addEventListener('click', async () => {
-        await saveConfig('about_bg_image_url', '').catch(() => {});
-        if (aboutBgStatus) { aboutBgStatus.innerText = '✓ Imagem removida.'; aboutBgStatus.className = 'save-status success'; }
-        showToast('✓ Removido');
-    });
-
-    function initAboutColorPicker() {
-        // Thin wrapper: re-uses the hsvToRgb / cpSetFromHex infrastructure
-        // but with its own DOM elements
-        const acp = {
-            h: 0, s: 0, v: 5,
-            saveTimer: null,
-            trigger: $('aboutCpTrigger'),
-            panel:   $('aboutCpPanel'),
-            swatch:  $('aboutCpSwatch'),
-            hexLab:  $('aboutCpHexLabel'),
-            area:    $('aboutCpArea'),
-            cursor:  $('aboutCpAreaCursor'),
-            hue:     $('aboutCpHue'),
-            thumb:   $('aboutCpHueThumb'),
-            hexIn:   $('aboutCpHexInput'),
-            eyed:    $('aboutCpEyedropper'),
-            stEl:    $('st-about-bg-color'),
-            clearBtn:$('btnClearAboutColor')
-        };
-        if (!acp.trigger) return;
-
-        function acpRender() {
-            const [hr,hg,hb] = hsvToRgb(acp.h, 100, 100);
-            acp.area.style.setProperty('--hue', `rgb(${hr},${hg},${hb})`);
-            acp.cursor.style.left = acp.s + '%';
-            acp.cursor.style.top  = (100 - acp.v) + '%';
-            acp.thumb.style.left  = (acp.h / 360 * 100) + '%';
-            const [r,g,b] = hsvToRgb(acp.h, acp.s, acp.v);
-            const hex = rgbToHex(r,g,b);
-            acp.swatch.style.background = hex;
-            acp.hexLab.textContent = hex;
-            if (document.activeElement !== acp.hexIn) acp.hexIn.value = hex;
-            acp.cursor.style.background = hex;
-        }
-        function acpSave() {
-            clearTimeout(acp.saveTimer);
-            if (acp.stEl) { acp.stEl.textContent = 'salvando…'; acp.stEl.className = 'field-status show saving'; }
-            acp.saveTimer = setTimeout(async () => {
-                try {
-                    const [r,g,b] = hsvToRgb(acp.h, acp.s, acp.v);
-                    await saveConfig('about_bg_color', rgbToHex(r,g,b));
-                    if (acp.stEl) { acp.stEl.textContent = '✓ salvo'; acp.stEl.className = 'field-status show success'; setTimeout(() => acp.stEl.classList.remove('show'), 1500); }
-                } catch(e) { if (e.message !== 'auth' && acp.stEl) { acp.stEl.textContent = '✗ erro'; acp.stEl.className = 'field-status show error'; } }
-            }, 400);
-        }
-        function acpOpen()  { acp.panel.hidden = false; acp.trigger.setAttribute('aria-expanded','true'); }
-        function acpClose() { acp.panel.hidden = true;  acp.trigger.setAttribute('aria-expanded','false'); }
-
-        acp.trigger.addEventListener('click', e => { e.stopPropagation(); acp.panel.hidden ? acpOpen() : acpClose(); });
-        document.addEventListener('click', e => {
-            const picker = $('vzAboutColorPicker');
-            if (!picker || !picker.contains(e.target)) acpClose();
-        });
-
-        function areaUp(cx,cy) {
-            const rc = acp.area.getBoundingClientRect();
-            acp.s = Math.max(0,Math.min(100,(cx-rc.left)/rc.width*100));
-            acp.v = Math.max(0,Math.min(100,(1-(cy-rc.top)/rc.height)*100));
-            acpRender(); acpSave();
-        }
-        acp.area.addEventListener('pointerdown', e => { e.preventDefault(); areaUp(e.clientX,e.clientY); const m=ev=>areaUp(ev.clientX,ev.clientY); const u=()=>{window.removeEventListener('pointermove',m);window.removeEventListener('pointerup',u)}; window.addEventListener('pointermove',m); window.addEventListener('pointerup',u); });
-        function hueUp(cx) {
-            const rc = acp.hue.getBoundingClientRect();
-            acp.h = Math.max(0,Math.min(360,(cx-rc.left)/rc.width*360));
-            acpRender(); acpSave();
-        }
-        acp.hue.addEventListener('pointerdown', e => { e.preventDefault(); hueUp(e.clientX); const m=ev=>hueUp(ev.clientX); const u=()=>{window.removeEventListener('pointermove',m);window.removeEventListener('pointerup',u)}; window.addEventListener('pointermove',m); window.addEventListener('pointerup',u); });
-        acp.hexIn.addEventListener('input', e => {
-            let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#'+v;
-            if (/^#[0-9a-fA-F]{6}$/.test(v)) { const rgb=hexToRgb(v); if(rgb){const [h,s,vv]=rgbToHsv(...rgb);acp.h=h;acp.s=s;acp.v=vv;acpRender();acpSave();} }
-        });
-        if (window.EyeDropper) {
-            acp.eyed.addEventListener('click', async () => { try { const ed=new window.EyeDropper(); const r=await ed.open(); if(r&&r.sRGBHex){const rgb=hexToRgb(r.sRGBHex);if(rgb){const [h,s,v]=rgbToHsv(...rgb);acp.h=h;acp.s=s;acp.v=v;acpRender();acpSave();}}} catch(_){} });
-        } else { acp.eyed.style.display = 'none'; }
-        if (acp.clearBtn) acp.clearBtn.addEventListener('click', async () => {
-            await saveConfig('about_bg_color','').catch(()=>{});
-            showToast('✓ Cor limpa');
-        });
-        acpRender();
     }
 
 })();

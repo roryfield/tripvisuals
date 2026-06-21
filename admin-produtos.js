@@ -64,7 +64,9 @@ let currentFilter = '';
                 return;
             }
 
-            area.innerHTML = '<div class="produtos-grid view-' + currentView + '" id="grid"></div>';
+            const isGallery = currentView === 'gallery';
+            area.innerHTML = '<div class="produtos-grid view-' + currentView + '" id="grid"></div>' +
+                (isGallery ? '<p class="gallery-hint">Mosaico visual · alterne para Grade ou Lista para editar</p>' : '');
             const grid = document.getElementById('grid');
 
             filtered.forEach(p => {
@@ -73,6 +75,7 @@ let currentFilter = '';
                 card.id = `card-${p.id}`;
                 card.dataset.oculto = p.oculto ? 'true' : 'false';
                 card.dataset.prodId = p.id;
+                card.dataset.nome = p.nome; // used by gallery mode CSS ::after
                 card.innerHTML = `
                     ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
                     <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">

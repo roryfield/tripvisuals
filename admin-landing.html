@@ -199,82 +199,16 @@
             </div>
         </section>
 
-        <!-- ═══════════════════════ SOBRE ═══════════════════════ -->
-        <section class="section" aria-labelledby="sec-sobre">
+        <!-- ═══════════════════════ PÁGINA SOBRE ═══════════════════════ -->
+        <section class="section" aria-labelledby="sec-sobre-link">
             <div class="section-header">
-                <h3 class="section-title" id="sec-sobre">SOBRE</h3>
-                <span class="section-hint">Seção de apresentação da loja</span>
+                <h3 class="section-title" id="sec-sobre-link">PÁGINA SOBRE</h3>
+                <span class="section-hint">Agora é uma página dedicada com design imersivo</span>
             </div>
-
-            <div class="content-grid vz-mb-18">
-                <div class="field full vz-toggle-row">
-                    <span class="vz-toggle-label">Exibir a seção "Sobre" na landing</span>
-                    <label class="vz-toggle" aria-label="Visibilidade da seção Sobre">
-                        <input type="checkbox" id="aboutVisible" checked>
-                        <span class="vz-toggle-track"></span>
-                    </label>
-                </div>
-
-                <div class="field full">
-                    <label for="cf-about-title">Título da seção <span class="field-status" id="st-cf-about-title"></span></label>
-                    <input type="text" id="cf-about-title" data-key="about_title" maxlength="80" placeholder="Sobre a Loja">
-                </div>
-                <div class="field full">
-                    <label for="cf-about-text">Bio / descrição da loja <span class="field-status" id="st-cf-about-text"></span></label>
-                    <textarea id="cf-about-text" data-key="about_text" rows="5" maxlength="2000"
-                              placeholder="Conta a história da loja, a dona, a proposta..."></textarea>
-                </div>
-            </div>
-
-            <div class="vz-grid-2">
-                <div>
-                    <div class="field vz-mb-12">
-                        <label>Cor de fundo da seção "Sobre" <span class="field-status" id="st-about-bg-color"></span></label>
-                    </div>
-                    <div class="vz-cp" id="vzAboutColorPicker">
-                        <button class="vz-cp-trigger" id="aboutCpTrigger" type="button" aria-haspopup="dialog" aria-expanded="false">
-                            <span class="vz-cp-swatch" id="aboutCpSwatch"></span>
-                            <span class="vz-cp-hex-label" id="aboutCpHexLabel">#000000</span>
-                            <svg class="vz-cp-chevron" viewBox="0 0 12 12" aria-hidden="true">
-                                <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </button>
-                        <button class="vz-btn-ghost vz-ml-10" id="btnClearAboutColor" type="button">Limpar</button>
-                        <div class="vz-cp-panel" id="aboutCpPanel" role="dialog" aria-label="Cor da seção Sobre" hidden>
-                            <div class="vz-cp-area" id="aboutCpArea" tabindex="0" role="slider" aria-label="Saturação e luminosidade" aria-valuemin="0" aria-valuemax="100">
-                                <div class="vz-cp-area-cursor" id="aboutCpAreaCursor"></div>
-                            </div>
-                            <div class="vz-cp-hue" id="aboutCpHue" tabindex="0" role="slider" aria-label="Matiz" aria-valuemin="0" aria-valuemax="360">
-                                <div class="vz-cp-hue-thumb" id="aboutCpHueThumb"></div>
-                            </div>
-                            <div class="vz-cp-footer">
-                                <button class="vz-cp-eyedropper" id="aboutCpEyedropper" type="button" aria-label="Selecionar cor da tela">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M11 5L6 10l-3 3v3h3l3-3 5-5"/>
-                                        <path d="M14 8l4-4 2 2-4 4"/>
-                                    </svg>
-                                </button>
-                                <div class="vz-cp-hex-input">
-                                    <span class="vz-cp-hex-prefix">Hex</span>
-                                    <input type="text" id="aboutCpHexInput" maxlength="7" value="#000000" spellcheck="false" autocomplete="off">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="field vz-mb-12">
-                        <label>Imagem de fundo da seção "Sobre"</label>
-                    </div>
-                    <div class="vz-flex-gap-8">
-                        <label class="vz-btn-secondary vz-clickable" for="aboutBgFile">📁 Escolher</label>
-                        <input type="file" id="aboutBgFile" accept="image/*" hidden>
-                        <button class="btn-launch" id="btnUploadAboutBg" type="button" disabled>Enviar</button>
-                        <button class="vz-btn-ghost" id="btnClearAboutBg" type="button">Remover</button>
-                    </div>
-                    <p class="save-status" id="aboutBgStatus" role="status" aria-live="polite"></p>
-                </div>
+            <p class="field-hint" style="margin-bottom:16px;">A história, os pilares e a missão da Trip Visuals ganharam uma página própria em <strong>/sobre</strong> com animações e layout de marca. Gerencie o conteúdo no painel dedicado.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <a href="/admin-sobre.html" class="btn-launch">Gerenciar Página Sobre →</a>
+                <a href="/sobre.html" target="_blank" rel="noopener" class="vz-btn-ghost" style="font-size:0.8rem;">Ver ao vivo ↗</a>
             </div>
         </section>
 
