@@ -53,11 +53,11 @@ function criarAdapter({ pool, uploadToCloudinary, cloudTransform, TRANSFORM_PROD
         const nome = nomeAPartirDoSlug(band);
 
         const r = await pool.query(
-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, oculto, descricao, busca_tsv)
-             VALUES ($1, 0, $2, $3, '', $4, $5, true, '',
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, oculto, descricao, busca_tsv)
+             VALUES ($1, 0, $2, $3, '', $4, $5, $6, true, '',
                      to_tsvector('portuguese', $1 || ' ' || $4 || ' ' || $5))
              RETURNING id`,
-            [nome, imagem_url, cloudinary_id, tipoPadrao, generoPadrao]
+            [nome, imagem_url, cloudinary_id, tipoPadrao, generoPadrao, band]
         );
         const produtoId = r.rows[0].id;
 

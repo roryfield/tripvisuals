@@ -122,6 +122,20 @@
             </div>
         </div>
 
+        <!-- FILTROS (Fase 3) -->
+        <div class="produtos-filtros">
+            <select id="filtroTipo" aria-label="Filtrar por tipo">
+                <option value="">Todos os tipos</option>
+                <option value="Camiseta">Camiseta</option>
+                <option value="Regata">Regata</option>
+                <option value="Babylook">Babylook</option>
+                <option value="Moletom">Moletom</option>
+            </select>
+            <input type="text" id="filtroBanda" class="produtos-filtro-texto" placeholder="Filtrar por banda..." autocomplete="off">
+            <input type="text" id="filtroGenero" class="produtos-filtro-texto" placeholder="Filtrar por gênero..." autocomplete="off">
+            <button type="button" id="btnLimparFiltros" class="btn-limpar-filtros">Limpar filtros</button>
+        </div>
+
         <div id="listaArea">
             <div class="state-msg">
                 <span class="icon" aria-hidden="true">⏳</span>
