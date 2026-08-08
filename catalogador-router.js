@@ -21,6 +21,7 @@ const router = express.Router();
 // que o server.js já mantém. Ver chamada de setPool logo após o require, no
 // server.js.
 let _pool = null;
+let _adapter = null;
 
 // ── Diretórios (ephemeral no Railway — persist within a deploy session) ────────
 const ROOT        = __dirname;
@@ -379,6 +380,54 @@ router.patch('/result/:file', (req, res) => {
     res.json({ updated: true, band: slug, file });
 });
 
+// POST /api/catalogador/itens/:file/aplicar
+// Cria o produto (rascunho, oculto, preço 0) a partir do resultado do
+// scanner. A escrita em si vive em tripvisuals-adapter.js — este router
+// não sabe o nome de nenhuma tabela.
+router.post('/itens/:file/aplicar', async (req, res) => {
+    if (!_adapter) return res.status(503).json({ error: 'Integração com o catálogo não configurada.' });
+
+    const file     = decodeURIComponent(req.params.file);
+    const progress = loadProgress();
+    const entry    = progress.processed[file];
+    if (!entry) return res.status(404).json({ error: 'Resultado não encontrado.' });
+    if (entry.aplicado) {
+        return res.status(409).json({ error: 'Este item já foi aplicado ao catálogo.', produtoId: entry.produtoId });
+    }
+
+    try {
+        const resultado = await _adapter.aplicarItem({
+            absPath:      path.join(STAGING, file),
+            band:         entry.band,
+            outputFile:   entry.outputFile,
+            tipoPadrao:   typeof req.body?.tipo   === 'string' ? req.body.tipo   : 'Camiseta',
+            generoPadrao: typeof req.body?.genero === 'string' ? req.body.genero : '',
+        });
+        entry.aplicado  = true;
+        entry.produtoId = resultado.produtoId;
+        saveProgress(progress);
+        res.json({ aplicado: true, ...resultado });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || 'Erro ao aplicar item ao catálogo.' });
+    }
+});
+
+// POST /api/catalogador/itens/:file/descartar
+// Remove o item do lote sem criar produto nenhum.
+router.post('/itens/:file/descartar', async (req, res) => {
+    if (!_adapter) return res.status(503).json({ error: 'Integração com o catálogo não configurada.' });
+
+    const file     = decodeURIComponent(req.params.file);
+    const progress = loadProgress();
+    const entry    = progress.processed[file];
+    if (!entry) return res.status(404).json({ error: 'Resultado não encontrado.' });
+
+    await _adapter.descartarItem({ absPath: path.join(STAGING, file) });
+    delete progress.processed[file];
+    saveProgress(progress);
+    res.json({ descartado: true, file });
+});
+
 // DELETE /api/catalogador/progress
 router.delete('/progress', (_, res) => {
     if (state.running) return res.status(409).json({ error: 'Pare o processamento antes de resetar.' });
@@ -446,5 +495,6 @@ router.use((err, req, res, next) => {
 });
 
 router.setPool = function (p) { _pool = p; };
+router.setAdapter = function (a) { _adapter = a; };
 
 module.exports = router;
