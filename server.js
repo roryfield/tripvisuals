@@ -14,7 +14,7 @@ const rateLimit  = require('express-rate-limit');
 const { Pool }   = require('pg');
 const cloudinary = require('cloudinary').v2;
 const asaas      = require('./asaas');
-const { registrarEvento } = require('./eventos');
+const { registrarEvento, listarEventos } = require('./eventos');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -914,6 +914,34 @@ app.patch('/api/produtos/:id/visibility', requireAuth, writeLimiter, async (req,
 
 
 // ── PEDIDOS (order tracking) ─────────────────────────────
+// ── EVENTOS / AUDITORIA (Fase 4) ──────────────────────────────
+app.get('/api/eventos', requireAuth, async (req, res) => {
+    try {
+        const limite = parseInt(req.query.limite, 10) || 15;
+        const modulo = typeof req.query.modulo === 'string' && req.query.modulo ? req.query.modulo : null;
+        const rows = await listarEventos(pool, { limite, modulo });
+        res.json(rows);
+    } catch (e) {
+        console.error('GET /api/eventos:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar eventos.' });
+    }
+});
+
+// Exportação sob demanda: roda a query na hora, não existe tabela de
+// snapshot pra manter. Reaproveita o mesmo limitador do export de pedidos.
+app.get('/api/eventos/export', requireAuth, exportLimiter, async (req, res) => {
+    try {
+        const rows = await listarEventos(pool, { limite: 500 });
+        const nomeArquivo = 'auditoria-tripvisuals-' + new Date().toISOString().slice(0, 10) + '.json';
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+        res.send(JSON.stringify(rows, null, 2));
+    } catch (e) {
+        console.error('GET /api/eventos/export:', e.message);
+        res.status(500).json({ error: 'Erro ao exportar auditoria.' });
+    }
+});
+
 app.get('/api/pedidos', requireAuth, async (req, res) => {
     try {
         const r = await pool.query(

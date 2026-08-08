@@ -61,6 +61,14 @@
         }
     }
 
+    const ESTAGIOS = [
+        { chave: 'novo',       label: 'Novo'         },
+        { chave: 'confirmado', label: 'Confirmado'   },
+        { chave: 'producao',   label: 'Em produção'  },
+        { chave: 'enviado',    label: 'Enviado'      },
+        { chave: 'entregue',   label: 'Entregue'     },
+    ];
+
     async function loadPedidosStats() {
         try {
             const resPed = await fetch('/api/pedidos', { credentials: 'include' });
@@ -69,11 +77,35 @@
                 const abertos = ped.filter(p => p.status !== 'entregue').length;
                 const el      = document.getElementById('statPedidos');
                 if (el) el.innerText = abertos;
+                renderProducaoRow(ped);
+            } else {
+                renderProducaoRow(null);
             }
         } catch (_) {
             const el = document.getElementById('statPedidos');
             if (el) el.innerHTML = '<span class="stat-error">?</span>';
+            renderProducaoRow(null);
         }
+    }
+
+    function renderProducaoRow(pedidos) {
+        const row = document.getElementById('producaoRow');
+        if (!row) return;
+        if (!pedidos) {
+            row.innerHTML = '<span class="stat-error">Erro ao carregar produção</span>';
+            return;
+        }
+        if (pedidos.length === 0) {
+            row.innerHTML = '<span class="producao-vazio">Nenhum pedido ainda.</span>';
+            return;
+        }
+        row.innerHTML = ESTAGIOS.map(function (e) {
+            const n = pedidos.filter(function (p) { return p.status === e.chave; }).length;
+            return '<div class="producao-stage producao-stage-' + e.chave + '">' +
+                       '<span class="producao-n">' + n + '</span>' +
+                       '<span class="producao-label">' + e.label + '</span>' +
+                   '</div>';
+        }).join('');
     }
 
     async function loadPagamentosStats() {
@@ -94,6 +126,46 @@
         }
     }
 
+    const SEVERIDADE_ICON = { sucesso: '✅', erro: '⚠️', info: 'ℹ️' };
+
+    function formatarQuando(iso) {
+        try {
+            const d = new Date(iso);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        } catch (_) { return iso; }
+    }
+
+    async function loadAtividadeRecente() {
+        const el = document.getElementById('atividadeLista');
+        if (!el) return;
+        try {
+            const res = await fetch('/api/eventos?limite=12', { credentials: 'include' });
+            if (!res.ok) throw new Error('eventos');
+            const eventos = await res.json();
+            if (eventos.length === 0) {
+                el.innerHTML = '<span class="atividade-vazia">Nenhuma atividade registrada ainda.</span>';
+                return;
+            }
+            el.innerHTML = eventos.map(function (ev) {
+                const icone = SEVERIDADE_ICON[ev.severidade] || 'ℹ️';
+                return '<div class="atividade-item atividade-' + ev.severidade + '">' +
+                           '<span class="atividade-icone" aria-hidden="true">' + icone + '</span>' +
+                           '<span class="atividade-texto">' + escapeHTMLLocal(ev.resumo) + '</span>' +
+                           '<span class="atividade-quando">' + formatarQuando(ev.criado_em) + '</span>' +
+                       '</div>';
+            }).join('');
+        } catch (_) {
+            el.innerHTML = '<span class="atividade-vazia">Erro ao carregar atividade recente.</span>';
+        }
+    }
+
+    // Escape local — admin-hub não tinha esse helper antes (Fase 4).
+    function escapeHTMLLocal(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
     async function loadStats() {
         // allSettled: cada stat já tem seu próprio try/catch — uma falha
         // não deve bloquear nem atrasar as outras três.
@@ -101,7 +173,8 @@
             loadConfigStats(),
             loadProdutosStats(),
             loadPedidosStats(),
-            loadPagamentosStats()
+            loadPagamentosStats(),
+            loadAtividadeRecente()
         ]);
     }
 
