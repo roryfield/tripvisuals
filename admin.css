@@ -2581,3 +2581,105 @@ kbd {
     .bulk-bar { bottom: 8px; padding: 8px 10px; gap: 6px; }
     .bulk-campo-valor { width: 100px; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 4 — Dashboard: produção por estágio + atividade recente
+   admin-hub.html / admin-hub.js
+═══════════════════════════════════════════════════════ */
+
+.painel-titulo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    margin: 0 0 14px;
+}
+
+/* ── Produção por estágio ─────────────────────────────── */
+.producao-panel { margin-bottom: 36px; }
+.producao-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+.producao-stage {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    text-align: center;
+}
+.producao-n {
+    display: block;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.producao-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+.producao-stage-enviado  .producao-n { color: var(--cyan); }
+.producao-stage-entregue .producao-n { color: var(--success); }
+.producao-vazio { font-size: 0.85rem; color: var(--text-muted); }
+
+/* ── Atividade recente ────────────────────────────────── */
+.atividade-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 36px;
+}
+.atividade-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+.atividade-header .painel-titulo { margin-bottom: 0; }
+.btn-exportar-auditoria {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--cyan);
+    border: 1px solid rgba(0,229,255,0.35);
+    border-radius: 6px;
+    padding: 6px 12px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+.btn-exportar-auditoria:hover { background: rgba(0,229,255,0.08); }
+.atividade-lista { display: flex; flex-direction: column; }
+.atividade-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+}
+.atividade-item:last-child { border-bottom: none; }
+.atividade-icone { flex-shrink: 0; }
+.atividade-texto { color: var(--text); flex: 1; }
+.atividade-erro   .atividade-texto { color: var(--danger); }
+.atividade-sucesso .atividade-texto { color: var(--text); }
+.atividade-quando {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.atividade-vazia { font-size: 0.85rem; color: var(--text-muted); }
+
+@media (max-width: 600px) {
+    .atividade-item { flex-wrap: wrap; }
+    .atividade-quando { width: 100%; padding-left: 26px; }
+}
