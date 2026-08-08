@@ -14,6 +14,7 @@ const rateLimit  = require('express-rate-limit');
 const { Pool }   = require('pg');
 const cloudinary = require('cloudinary').v2;
 const asaas      = require('./asaas');
+const { registrarEvento } = require('./eventos');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -94,6 +95,12 @@ async function initDB() {
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS destaque BOOLEAN NOT NULL DEFAULT false`);
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS descricao TEXT NOT NULL DEFAULT ''`);
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS cliques INTEGER NOT NULL DEFAULT 0`);
+    // [VZ] Fase 3 — filtro por banda e por período de importação. Aditivo:
+    // produtos existentes ganham banda vazia (editável depois) e criado_em
+    // igual a NOW() no momento do ALTER, não retroativo.
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS banda TEXT NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_produtos_banda ON produtos (banda)`);
     // One-time: set tipo from existing product names (idempotent — won't re-set if already correct)
     await pool.query(`
         UPDATE produtos SET tipo =
@@ -545,7 +552,7 @@ const { criarAdapter }  = require('./tripvisuals-adapter');
 catalogadorRouter.setPool(pool); // reaproveita o pool já existente, não abre outro
 catalogadorRouter.setAdapter(criarAdapter({
     pool, uploadToCloudinary, cloudTransform, TRANSFORM_PRODUCT, detectImageType,
-    registrarEvento: require('./eventos').registrarEvento,
+    registrarEvento,
 }));
 app.use('/api/catalogador', requireAuth, catalogadorLimiter, catalogadorRouter);
 
@@ -568,7 +575,7 @@ app.get('/api/produtos', async (req, res) => {
             } catch (_) { /* fail closed: treat as public */ }
         }
         const sql = isAdmin
-            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
+            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
             : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
         const r = await pool.query(sql);
         res.json(r.rows);
@@ -645,6 +652,7 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
     const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50) : '';
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)  : 'Camiseta';
     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50)  : '';
+    const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)   : '';
     const destaque = req.body.destaque === true || req.body.destaque === 'true';
     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
@@ -661,8 +669,11 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
             cloudinary_id = result.public_id;
         }
         const r = await pool.query(
-            'INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao]);
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao, busca_tsv)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                     to_tsvector('portuguese', $1 || ' ' || $5 || ' ' || $6 || ' ' || $7))
+             RETURNING id`,
+            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao]);
         res.json({ success: true, id: r.rows[0].id });
     } catch (e) {
         console.error('POST /api/produtos:', e.message);
@@ -679,12 +690,13 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const cor    = typeof req.body.cor    === 'string' ? req.body.cor.trim().slice(0, 50)  : '';
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)   : '';
     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50) : '';
+    const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)  : '';
     const destaque = req.body.destaque === true || req.body.destaque === 'true';
     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
         const r = await pool.query(
-            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, destaque=$6, descricao=$7 WHERE id=$8',
-            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, destaque, descricao, id]);
+            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, banda=$6, destaque=$7, descricao=$8 WHERE id=$9',
+            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, banda, destaque, descricao, id]);
         // Update full-text search vector
         await pool.query("UPDATE produtos SET busca_tsv = to_tsvector('portuguese', COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,'')) WHERE id = $1", [id]);
         if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
@@ -716,9 +728,9 @@ app.post('/api/produtos/:id/duplicate', requireAuth, writeLimiter, async (req, r
         if (orig.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         const p = orig.rows[0];
         const r = await pool.query(
-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, destaque, descricao)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8) RETURNING id`,
-            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.descricao]);
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, $9) RETURNING id`,
+            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.banda, p.descricao]);
         res.status(201).json({ id: r.rows[0].id });
     } catch (e) {
         console.error('POST duplicate:', e.message);
@@ -741,6 +753,53 @@ app.patch('/api/produtos/bulk-visibility', requireAuth, writeLimiter, async (req
     } catch (e) {
         console.error('PATCH bulk-visibility:', e.message);
         res.status(500).json({ error: 'Erro ao alterar visibilidade em lote.' });
+    }
+});
+
+// ── BULK FIELD UPDATE (Fase 3) ────────────────────────────────
+// Só permite os três campos abaixo. Nunca preço ou nome — sobrescrever o
+// mesmo preço ou nome em vários produtos de uma vez quase nunca é o que a
+// pessoa quer, e um erro de filtro aqui teria efeito muito mais silencioso
+// que ocultar/mostrar (que é óbvio e reversível de imediato).
+const BULK_CAMPOS_PERMITIDOS = ['genero', 'tipo', 'banda'];
+app.patch('/api/produtos/bulk-campo', requireAuth, writeLimiter, async (req, res) => {
+    const { ids, campo, valor } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'IDs obrigatórios.' });
+    if (!BULK_CAMPOS_PERMITIDOS.includes(campo)) return res.status(400).json({ error: 'Campo não permitido para edição em massa.' });
+    if (typeof valor !== 'string' || !valor.trim()) return res.status(400).json({ error: 'Valor obrigatório.' });
+    const safeIds = ids.filter(id => Number.isInteger(id) && id > 0);
+    if (safeIds.length === 0) return res.status(400).json({ error: 'Nenhum ID válido.' });
+    const valorFinal = valor.trim().slice(0, 80);
+
+    try {
+        const antes = await pool.query(
+            `SELECT id, ${campo} AS valor_anterior FROM produtos WHERE id = ANY($1::int[])`,
+            [safeIds]);
+
+        await pool.query(
+            `UPDATE produtos SET ${campo} = $1 WHERE id = ANY($2::int[])`,
+            [valorFinal, safeIds]);
+
+        // busca_tsv só depende de tipo/genero hoje, não de banda.
+        if (campo === 'tipo' || campo === 'genero') {
+            await pool.query(
+                `UPDATE produtos SET busca_tsv = to_tsvector('portuguese',
+                    COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,''))
+                 WHERE id = ANY($1::int[])`,
+                [safeIds]);
+        }
+
+        await registrarEvento(pool, {
+            modulo:     'produtos',
+            tipo:       'edicao_em_massa',
+            resumo:     `Campo "${campo}" alterado para "${valorFinal}" em ${safeIds.length} produto(s).`,
+            detalhes:   { campo, valorNovo: valorFinal, ids: safeIds, valoresAnteriores: antes.rows },
+        });
+
+        res.json({ success: true, affected: safeIds.length });
+    } catch (e) {
+        console.error('PATCH bulk-campo:', e.message);
+        res.status(500).json({ error: 'Erro na operação em lote.' });
     }
 });
 

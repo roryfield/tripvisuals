@@ -2475,3 +2475,109 @@ kbd {
     .cat-th-hide  { display: none; }
     .cat-band-input { width: 120px; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 3 — filtros, seleção em massa e edição por campo
+   admin-produtos.html / admin-produtos.js
+═══════════════════════════════════════════════════════ */
+
+/* ── Filtros estruturados ─────────────────────────────── */
+.produtos-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0 20px;
+}
+.produtos-filtros select,
+.produtos-filtro-texto {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    padding: 8px 12px;
+}
+.produtos-filtro-texto { min-width: 160px; }
+.btn-limpar-filtros {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.btn-limpar-filtros:hover { color: var(--text); border-color: var(--text-muted); }
+
+/* ── Checkbox de seleção em massa ─────────────────────── */
+.bulk-check-wrap {
+    position: absolute;
+    top: 12px; right: 12px;
+    z-index: 3;
+    background: rgba(8,8,8,0.75);
+    border-radius: 6px;
+    padding: 4px;
+    display: flex;
+}
+.bulk-check { width: 18px; height: 18px; cursor: pointer; accent-color: var(--cyan); }
+
+/* ── Barra flutuante de ações em massa ────────────────── */
+.bulk-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 50;
+    max-width: calc(100vw - 32px);
+}
+.bulk-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+.bulk-sep { width: 1px; height: 20px; background: var(--border); }
+.bulk-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    transition: background 0.15s, border-color 0.15s;
+}
+.bulk-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.bulk-btn-cancel:hover { border-color: var(--danger); color: var(--danger); }
+.bulk-btn-campo { background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.35); color: var(--cyan); }
+.bulk-campo-select,
+.bulk-campo-valor {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 7px 10px;
+}
+.bulk-campo-valor { width: 140px; }
+
+@media (max-width: 600px) {
+    .bulk-bar { bottom: 8px; padding: 8px 10px; gap: 6px; }
+    .bulk-campo-valor { width: 100px; }
+}

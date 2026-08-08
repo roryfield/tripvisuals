@@ -6,6 +6,7 @@ let produtos = [];
 let bulkSelection = new Set();
 let currentView = (function(){try{return localStorage.getItem('vz-produtos-view')||'grid';}catch(_){return'grid';}}());
 let currentFilter = '';
+let currentFilters = { tipo: '', banda: '', genero: '' };
 
         // XSS-safe helpers
         const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
@@ -51,16 +52,24 @@ let currentFilter = '';
             }
 
             // Build cards via DOM creation (safer than innerHTML with interpolation)
-            const filtered = currentFilter
-                ? lista.filter(p => {
+            const filtered = lista.filter(p => {
+                if (currentFilter) {
                     const q = currentFilter.toLowerCase();
-                    return (p.nome || '').toLowerCase().includes(q) ||
-                           (p.cor  || '').toLowerCase().includes(q);
-                })
-                : lista;
+                    const match = (p.nome || '').toLowerCase().includes(q) ||
+                                  (p.cor  || '').toLowerCase().includes(q);
+                    if (!match) return false;
+                }
+                if (currentFilters.tipo && p.tipo !== currentFilters.tipo) return false;
+                if (currentFilters.banda && !(p.banda || '').toLowerCase().includes(currentFilters.banda.toLowerCase())) return false;
+                if (currentFilters.genero && !(p.genero || '').toLowerCase().includes(currentFilters.genero.toLowerCase())) return false;
+                return true;
+            });
 
             if (filtered.length === 0) {
-                area.innerHTML = '<div class="vz-empty-state">Nenhum produto encontrado para "' + escapeAttr(currentFilter) + '".</div>';
+                const msg = currentFilter
+                    ? 'Nenhum produto encontrado para "' + escapeAttr(currentFilter) + '".'
+                    : 'Nenhum produto encontrado com os filtros aplicados.';
+                area.innerHTML = '<div class="vz-empty-state">' + msg + '</div>';
                 return;
             }
 
@@ -78,6 +87,9 @@ let currentFilter = '';
                 card.dataset.nome = p.nome; // used by gallery mode CSS ::after
                 card.innerHTML = `
                     ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
+                    <label class="bulk-check-wrap">
+                        <input type="checkbox" class="bulk-check" data-id="${p.id}" ${bulkSelection.has(p.id) ? 'checked' : ''} aria-label="Selecionar ${escapeAttr(p.nome)}">
+                    </label>
                     <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
                     <div class="produto-card-body">
                         <div class="produto-fields">
@@ -105,6 +117,10 @@ let currentFilter = '';
                             <div class="field-group">
                                 <label class="field-label" for="genero-${p.id}">Gênero</label>
                                 <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label" for="banda-${p.id}">Banda</label>
+                                <input type="text" id="banda-${p.id}" value="${escapeAttr(p.banda || '')}" maxlength="80" placeholder="ex: iron-maiden">
                             </div>
                             <div class="field-group field-full">
                                 <label class="field-label" for="desc-${p.id}">Descrição (opcional)</label>
@@ -227,14 +243,51 @@ let currentFilter = '';
                 '<span class="bulk-count">' + bulkSelection.size + ' selecionado' + (bulkSelection.size > 1 ? 's' : '') + '</span>' +
                 '<button type="button" class="bulk-btn bulk-btn-hide">Ocultar</button>' +
                 '<button type="button" class="bulk-btn bulk-btn-show">Mostrar</button>' +
+                '<span class="bulk-sep" aria-hidden="true"></span>' +
+                '<select class="bulk-campo-select" aria-label="Campo para alterar em massa">' +
+                    '<option value="genero">Gênero</option>' +
+                    '<option value="tipo">Tipo</option>' +
+                    '<option value="banda">Banda</option>' +
+                '</select>' +
+                '<input type="text" class="bulk-campo-valor" placeholder="novo valor" maxlength="80">' +
+                '<button type="button" class="bulk-btn bulk-btn-campo">Aplicar a todos</button>' +
                 '<button type="button" class="bulk-btn bulk-btn-cancel">Cancelar</button>';
             bar.querySelector('.bulk-btn-hide').addEventListener('click', () => bulkAction(true));
             bar.querySelector('.bulk-btn-show').addEventListener('click', () => bulkAction(false));
+            bar.querySelector('.bulk-btn-campo').addEventListener('click', bulkCampoAction);
             bar.querySelector('.bulk-btn-cancel').addEventListener('click', () => {
                 bulkSelection.clear();
                 renderBulkBar();
                 carregar();
             });
+        }
+
+        async function bulkCampoAction() {
+            const select = document.querySelector('.bulk-campo-select');
+            const input  = document.querySelector('.bulk-campo-valor');
+            const campo  = select ? select.value : '';
+            const valor  = input  ? input.value.trim() : '';
+            const ids    = [...bulkSelection];
+
+            if (!valor) { mostrarToast('Informe o novo valor antes de aplicar.', true); return; }
+            const nomeCampo = { genero: 'gênero', tipo: 'tipo', banda: 'banda' }[campo] || campo;
+            if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valor}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
+
+            try {
+                const res = await fetch('/api/produtos/bulk-campo', {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids, campo, valor })
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast(ids.length + ' produto(s) atualizado(s).');
+                bulkSelection.clear();
+                renderBulkBar();
+                carregar();
+            } catch (_) {
+                mostrarToast('Erro na edição em massa.', true);
+            }
         }
 
         async function bulkAction(oculto) {
@@ -303,6 +356,7 @@ let currentFilter = '';
                         cor,
                         tipo:      document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
                         genero:    (document.getElementById(`genero-${id}`)?.value || '').trim(),
+                        banda:     (document.getElementById(`banda-${id}`)?.value || '').trim(),
                         descricao: (document.getElementById(`desc-${id}`)?.value || '').trim(),
                         destaque:  document.querySelector(`[data-id="${id}"][data-action="destaque"]`)?.dataset.destaque === 'true'
                     })
@@ -393,4 +447,36 @@ let currentFilter = '';
                 }, 180);
             });
         }
+
+        // Filtros estruturados (Fase 3): tipo, banda, gênero
+        const filtroTipo   = document.getElementById('filtroTipo');
+        const filtroBanda  = document.getElementById('filtroBanda');
+        const filtroGenero = document.getElementById('filtroGenero');
+        const btnLimpar    = document.getElementById('btnLimparFiltros');
+        let filtroTimer;
+        function aplicarFiltrosDebounced() {
+            clearTimeout(filtroTimer);
+            filtroTimer = setTimeout(() => renderProdutos(produtos), 180);
+        }
+        if (filtroTipo) filtroTipo.addEventListener('change', () => {
+            currentFilters.tipo = filtroTipo.value;
+            renderProdutos(produtos);
+        });
+        if (filtroBanda) filtroBanda.addEventListener('input', () => {
+            currentFilters.banda = filtroBanda.value.trim();
+            aplicarFiltrosDebounced();
+        });
+        if (filtroGenero) filtroGenero.addEventListener('input', () => {
+            currentFilters.genero = filtroGenero.value.trim();
+            aplicarFiltrosDebounced();
+        });
+        if (btnLimpar) btnLimpar.addEventListener('click', () => {
+            currentFilters = { tipo: '', banda: '', genero: '' };
+            currentFilter  = '';
+            if (searchInput)  searchInput.value  = '';
+            if (filtroTipo)   filtroTipo.value    = '';
+            if (filtroBanda)  filtroBanda.value   = '';
+            if (filtroGenero) filtroGenero.value  = '';
+            renderProdutos(produtos);
+        });
 })();
