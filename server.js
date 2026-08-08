@@ -541,7 +541,12 @@ const catalogadorLimiter = rateLimit({
     standardHeaders: true, legacyHeaders: false
 });
 const catalogadorRouter = require('./catalogador-router');
+const { criarAdapter }  = require('./tripvisuals-adapter');
 catalogadorRouter.setPool(pool); // reaproveita o pool já existente, não abre outro
+catalogadorRouter.setAdapter(criarAdapter({
+    pool, uploadToCloudinary, cloudTransform, TRANSFORM_PRODUCT, detectImageType,
+    registrarEvento: require('./eventos').registrarEvento,
+}));
 app.use('/api/catalogador', requireAuth, catalogadorLimiter, catalogadorRouter);
 
 // ════════════════════════════════════════════════════════════
