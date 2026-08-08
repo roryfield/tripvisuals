@@ -18,6 +18,7 @@
     async function saveConfig(chave, valor) {
         const res = await fetch('/api/config', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chave, valor })
         });
@@ -28,7 +29,7 @@
     // ── Load existing values ─────────────────────────────────────
     async function loadConfig() {
         try {
-            const r = await fetch('/api/config');
+            const r = await fetch('/api/config', { credentials: 'include' });
             if (!r.ok) return;
             const cfg = await r.json();
 
@@ -97,7 +98,7 @@
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
             try {
-                await fetch('/api/logout', { method: 'POST' });
+                await fetch('/api/logout', { method: 'POST', credentials: 'include' });
             } finally {
                 window.location.href = '/login.html';
             }
