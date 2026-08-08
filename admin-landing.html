@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Visuals | Landing Page</title>
+    <title>Trip Visuals | Aparência</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
@@ -20,7 +20,7 @@
         <header class="page-header">
             <div>
                 <p class="page-eyebrow">Configurações</p>
-                <h2 class="page-title">LANDING PAGE</h2>
+                <h2 class="page-title">APARÊNCIA</h2>
             </div>
             <div class="page-header-actions">
             <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
@@ -36,6 +36,53 @@
             </a>
         </div><!-- /page-header-actions -->
     </header>
+
+        <!-- ═══════════════════════ ABAS: VITRINE / MARCA ═══════════════════════ -->
+        <div class="aparencia-tabs" role="tablist" aria-label="Seção de aparência">
+            <button type="button" class="aparencia-tab-btn active" id="btnTabVitrine" role="tab" aria-selected="true" aria-controls="tabVitrine">Vitrine</button>
+            <button type="button" class="aparencia-tab-btn" id="btnTabMarca" role="tab" aria-selected="false" aria-controls="tabMarca">Marca</button>
+        </div>
+
+        <!-- ═══════════════════════ VITRINE (antigo Painel de Layout) ═══════════════════════ -->
+        <div id="tabVitrine" role="tabpanel" aria-labelledby="btnTabVitrine">
+            <section class="section" aria-labelledby="sec-vitrine">
+                <div class="section-header">
+                    <h3 class="section-title" id="sec-vitrine">DISPOSIÇÃO DO CATÁLOGO</h3>
+                    <span class="section-hint">Como os produtos aparecem para os clientes por padrão</span>
+                </div>
+                <div class="layout-options" role="radiogroup" aria-label="Layout padrão">
+                    <button class="opt" type="button" role="radio" aria-checked="false" id="opt-grid-3">
+                        <div class="opt-preview prev-grid3" aria-hidden="true">
+                            <div class="preview-bar"></div>
+                            <div class="preview-bar"></div>
+                            <div class="preview-bar"></div>
+                        </div>
+                        <strong>GRADE</strong>
+                        <p>3 colunas — visualização rápida de muitos itens.</p>
+                    </button>
+                    <button class="opt" type="button" role="radio" aria-checked="false" id="opt-grid-2">
+                        <div class="opt-preview prev-grid2" aria-hidden="true">
+                            <div class="preview-bar"></div>
+                            <div class="preview-bar"></div>
+                        </div>
+                        <strong>DUO</strong>
+                        <p>2 colunas — equilíbrio entre quantidade e destaque.</p>
+                    </button>
+                    <button class="opt" type="button" role="radio" aria-checked="false" id="opt-grid-1">
+                        <div class="opt-preview prev-grid1" aria-hidden="true">
+                            <div class="preview-bar"></div>
+                            <div class="preview-bar"></div>
+                            <div class="preview-bar"></div>
+                        </div>
+                        <strong>LISTA</strong>
+                        <p>1 coluna — foco em branding e fotos grandes.</p>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ═══════════════════════ MARCA (antigo Landing Page) ═══════════════════════ -->
+        <div id="tabMarca" role="tabpanel" aria-labelledby="btnTabMarca" hidden>
 
         <!-- ═══════════════════════ ESTILO ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-estilo">
@@ -219,10 +266,10 @@
                 <h3 class="section-title" id="sec-sobre-link">PÁGINA SOBRE</h3>
                 <span class="section-hint">Agora é uma página dedicada com design imersivo</span>
             </div>
-            <p class="field-hint" style="margin-bottom:16px;">A história, os pilares e a missão da Trip Visuals ganharam uma página própria em <strong>/sobre</strong> com animações e layout de marca. Gerencie o conteúdo no painel dedicado.</p>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <p class="field-hint sobre-link-hint">A história, os pilares e a missão da Trip Visuals ganharam uma página própria em <strong>/sobre</strong> com animações e layout de marca. Gerencie o conteúdo no painel dedicado.</p>
+            <div class="sobre-link-actions">
                 <a href="/admin-sobre.html" class="btn-launch">Gerenciar Página Sobre →</a>
-                <a href="/sobre.html" target="_blank" rel="noopener" class="vz-btn-ghost" style="font-size:0.8rem;">Ver ao vivo ↗</a>
+                <a href="/sobre.html" target="_blank" rel="noopener" class="vz-btn-ghost sobre-link-ver-ao-vivo">Ver ao vivo ↗</a>
             </div>
         </section>
 
@@ -263,6 +310,8 @@
             </div>
         </section>
 
+        </div><!-- /tabMarca -->
+
     </main>
 
     <!-- ═══════════════════════ ADMIN BOTTOM NAV ═══════════════════════ -->
@@ -289,20 +338,14 @@
             </svg>
             Produtos
         </a>
-        <a href="/admin-layout.html" class="nav-tab" id="tab-layout">
+        <a href="/admin-landing.html" class="nav-tab active" id="tab-aparencia" aria-current="page">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
-            </svg>
-            Layout
-        </a>
-        <a href="/admin-landing.html" class="nav-tab active" id="tab-landing" aria-current="page">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="2" y="4" width="20" height="14" rx="2"/>
-                <line x1="2" y1="9" x2="22" y2="9"/>
-                <line x1="8" y1="22" x2="16" y2="22"/><line x1="12" y1="18" x2="12" y2="22"/>
-            </svg>
-            Landing Page
+                    <rect x="2" y="4" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="9" x2="22" y2="9"/>
+                    <line x1="8" y1="22" x2="16" y2="22"/>
+                    <line x1="12" y1="18" x2="12" y2="22"/>
+                </svg>
+            Aparência
         </a>
         <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -320,6 +363,7 @@
     </a>
 </nav>
 
+    <script src="/admin-layout.js"></script>
     <script src="/admin-landing.js"></script>
 
 
