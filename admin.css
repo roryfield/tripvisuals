@@ -2683,3 +2683,6 @@ kbd {
     .atividade-item { flex-wrap: wrap; }
     .atividade-quando { width: 100%; padding-left: 26px; }
 }
+
+/* [VZ] Fase 5 — aviso de redirecionamento em admin-layout.html (legado) */
+.redirect-notice { text-align: center; padding: 40px 20px; }

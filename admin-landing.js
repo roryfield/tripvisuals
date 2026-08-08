@@ -37,8 +37,11 @@
     // ═════════════════════════ REGISTRIES ═══════════════════════
     // Add a theme: drop landing-<slug>.html in the repo + one entry below.
     // Add a preset: drop /defaults/<file> + one entry below.
+    // [VZ] slug 'classico' continua resolvendo pra index.html (ver server.js,
+    // rota GET '/'). Só o nome exibido mudou — renomear o slug quebraria a
+    // rota dinâmica e exigiria mexer no arquivo físico também.
     const THEMES = [
-        { slug: 'classico', name: 'Clássico', description: 'Original com botões neon.' },
+        { slug: 'classico', name: 'VDZN Signature', description: 'Assinatura visual da Voidzone. Botões neon.' },
         { slug: 'retro',    name: 'Retro',    description: 'Psicodélico, CRT, anos 70.' }
     ];
     const PRESET_LOGOS = [
@@ -110,7 +113,13 @@
     }
 
     // ═════════════════════════ ARSENAL (presets) ═════════════════
-    const presetsGrid = $('presetsGrid');
+    const presetsGrid   = $('presetsGrid');
+    const arsenalPreview     = $('arsenalPreview');
+    const arsenalPreviewImg  = $('arsenalPreviewImg');
+    const arsenalPreviewLbl  = $('arsenalPreviewLabel');
+    const btnAplicarArsenal  = $('btnAplicarArsenal');
+    const btnCancelarArsenal = $('btnCancelarArsenal');
+    let pendingPreset = null; // { url, name } — ainda não salvo, só em pré-visualização
 
     function renderPresets() {
         presetsGrid.innerHTML = '';
@@ -118,11 +127,13 @@
             const card = document.createElement('button');
             card.type = 'button';
             const active = p.url === currentLogoUrl;
-            card.className = 'vz-card preset' + (active ? ' active' : '');
+            const pending = pendingPreset && pendingPreset.url === p.url;
+            card.className = 'vz-card preset' + (active ? ' active' : '') + (pending ? ' pending' : '');
             card.setAttribute('role', 'radio');
             card.setAttribute('aria-checked', active ? 'true' : 'false');
             card.tabIndex = (active || (!currentLogoUrl && idx === 0)) ? 0 : -1;
             card.dataset.url = p.url;
+            card.dataset.name = p.name;
             card.innerHTML = `
                 <div class="preset-thumb"><img src="${escapeAttr(p.url)}" alt="" loading="lazy"></div>
                 <span class="preset-label">${escapeHTML(p.name)}</span>
@@ -130,10 +141,33 @@
             presetsGrid.appendChild(card);
         });
         presetsGrid.querySelectorAll('.vz-card').forEach(card => {
-            card.addEventListener('click', () => selectPreset(card.dataset.url));
-            card.addEventListener('keydown', e => handleRadioKeys(e, presetsGrid, url => selectPreset(url), 'url'));
+            card.addEventListener('click', () => previsualizarPreset(card.dataset.url, card.dataset.name));
+            card.addEventListener('keydown', e => handleRadioKeys(e, presetsGrid, url => previsualizarPreset(url, PRESET_LOGOS.find(p => p.url === url)?.name || ''), 'url'));
         });
     }
+
+    function previsualizarPreset(url, name) {
+        if (url === currentLogoUrl) { fecharPreviewArsenal(); return; }
+        pendingPreset = { url, name };
+        arsenalPreviewImg.src = url;
+        arsenalPreviewLbl.textContent = 'Pré-visualizando: ' + name;
+        arsenalPreview.hidden = false;
+        renderPresets();
+    }
+
+    function fecharPreviewArsenal() {
+        pendingPreset = null;
+        arsenalPreview.hidden = true;
+        renderPresets();
+    }
+
+    btnCancelarArsenal.addEventListener('click', fecharPreviewArsenal);
+
+    btnAplicarArsenal.addEventListener('click', async () => {
+        if (!pendingPreset) return;
+        await selectPreset(pendingPreset.url);
+        fecharPreviewArsenal();
+    });
 
     async function selectPreset(url) {
         const previous = currentLogoUrl;
@@ -243,10 +277,15 @@
     const stBgPos        = $('st-bg-position');
     const btnClearBgColor= $('btnClearBgColor');
 
+    const ambientePreview = $('ambientePreview');
+
     function renderBgPreview(src) {
         bgPreview.innerHTML = src
             ? `<img src="${escapeAttr(src)}" alt="Imagem de fundo atual">`
             : '<span class="placeholder">SEM IMAGEM</span>';
+        if (ambientePreview) {
+            ambientePreview.style.backgroundImage = src ? `url("${src}")` : 'none';
+        }
     }
 
     function flashColorStatus(state) {
@@ -338,6 +377,7 @@
         cp.cursor.style.background = hex;
         cp.area.setAttribute('aria-valuenow', Math.round(cp.s));
         cp.hue.setAttribute('aria-valuenow', Math.round(cp.h));
+        if (ambientePreview) ambientePreview.style.backgroundColor = hex;
     }
 
     function cpSetFromHex(hex, persist = true) {
@@ -566,14 +606,38 @@
     // ═════════════════════════ CONTENT EDITOR ════════════════════
     // Single unified handler: covers all inputs + textareas with data-key
     // (landing content, about title/bio, howto steps)
+    //
+    // [VZ] Fase 5: dois campos têm formato esperado (link do Instagram e do
+    // WhatsApp). Campo vazio é sempre permitido — a pessoa pode querer
+    // remover o link. Formato errado bloqueia o save e explica o que
+    // esperar, em vez de salvar um link quebrado silenciosamente.
+    const VALIDADORES_LINK = {
+        'cf-instagram': {
+            testar: v => /^https?:\/\/(www\.)?instagram\.com\/.+/i.test(v),
+            exemplo: 'https://www.instagram.com/seuusuario/'
+        },
+        'cf-whatsapp': {
+            testar: v => /^https?:\/\/(www\.)?wa\.me\/\d{10,15}/i.test(v),
+            exemplo: 'https://wa.me/5511999999999'
+        }
+    };
+
     document.querySelectorAll('[data-key]').forEach(input => {
         const key = input.dataset.key;
         if (!key) return;
         const statusEl = $('st-' + input.id);
+        const validador = VALIDADORES_LINK[input.id];
         let lastSaved = input.value;
         const doSave = async () => {
             const val = input.value.trim();
             if (val === lastSaved) return;
+            if (validador && val && !validador.testar(val)) {
+                if (statusEl) {
+                    statusEl.textContent = '✗ formato esperado: ' + validador.exemplo;
+                    statusEl.className = 'field-status show error';
+                }
+                return; // não salva link malformado
+            }
             if (statusEl) { statusEl.textContent = 'salvando…'; statusEl.className = 'field-status show saving'; }
             try {
                 await saveConfig(key, val);

@@ -1,0 +1,109 @@
+/* ═══ landing-dark.html — editorial preto e branco ═══
+   Paleta: preto puro, branco puro, cinza só pra legenda. Zero cor.
+   Tipografia: Fraunces (display serifado) + Work Sans (utilitária).
+   Estrutura: navegação tipográfica pura, nenhum botão/card. */
+
+:root {
+    --bg:    #000000;
+    --text:  #ffffff;
+    --muted: #999999;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Work Sans', ui-sans-serif, sans-serif;
+}
+
+.stage {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 88px 24px 64px;
+}
+
+.eyebrow {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+
+.title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 10vw, 5rem);
+    line-height: 0.98;
+    letter-spacing: -0.5px;
+}
+
+.tagline {
+    margin-top: 16px;
+    font-size: 1rem;
+    color: var(--muted);
+}
+
+.mark {
+    width: 44px; height: 44px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-top: 32px;
+    filter: grayscale(1);
+}
+
+.links {
+    margin-top: 56px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 28px;
+    border-top: 1px solid #2a2a2a;
+    padding-top: 24px;
+}
+.links a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.18s ease, color 0.18s ease;
+}
+.links a:hover, .links a:focus-visible {
+    border-color: var(--text);
+    outline: none;
+}
+
+.footer {
+    margin-top: 40px;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+.footer a { color: var(--muted); }
+.footer a:hover, .footer a:focus-visible { color: var(--text); }
+
+/* ── Como funciona ─────────────────────────────────────── */
+.landing-howto { border-top: 1px solid #2a2a2a; padding: 56px 24px; }
+.howto-inner { max-width: 720px; margin: 0 auto; }
+.howto-heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-bottom: 22px;
+}
+.howto-steps { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.howto-step { display: flex; gap: 16px; font-size: 0.9rem; }
+.step-n { color: var(--muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.step-t { color: var(--text); }
+
+/* ── Imagem de fundo customizada ─────────────────────────── */
+body.has-bg-image { background-color: rgba(0,0,0,0.78); background-blend-mode: multiply; }
+
+@media (max-width: 480px) {
+    .stage { padding: 56px 20px 48px; }
+    .links { flex-direction: column; gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .links a { transition: none; }
+}

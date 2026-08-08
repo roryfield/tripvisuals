@@ -1,0 +1,128 @@
+/* ═══ landing-minimalista.html — a capa do vinil ═══
+   Paleta: quase-preto, branco-osso, vermelho só no hover.
+   Tipografia: Anton (display) + Space Mono (utilitária).
+   Estrutura: lista vertical com regra fina, sem botão, sem glow. */
+
+:root {
+    --bg:      #0a0a0a;
+    --text:    #ededed;
+    --muted:   #6b6b6b;
+    --hair:    #262626;
+    --accent:  #c81e1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', ui-monospace, monospace;
+}
+
+.stage {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 96px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.mark {
+    width: 56px; height: 56px;
+    object-fit: cover;
+    border-radius: 50%;
+    filter: grayscale(1) contrast(1.1);
+    margin-bottom: 28px;
+}
+
+.title {
+    font-family: 'Anton', 'Arial Narrow', sans-serif;
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    letter-spacing: 0.5px;
+    line-height: 1.05;
+    text-transform: uppercase;
+}
+
+.tagline {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.rows {
+    width: 100%;
+    margin-top: 56px;
+    border-top: 1px solid var(--hair);
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 4px;
+    border-bottom: 1px solid var(--hair);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: padding-left 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.row .arrow {
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    color: var(--accent);
+}
+.row:hover,
+.row:focus-visible {
+    padding-left: 12px;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.row:hover .arrow,
+.row:focus-visible .arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+.row:focus-visible { outline: none; }
+
+.footer {
+    margin-top: 48px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+}
+.footer a { color: var(--muted); }
+.footer a:hover, .footer a:focus-visible { color: var(--text); }
+
+/* ── Como funciona ─────────────────────────────────────── */
+.landing-howto { border-top: 1px solid var(--hair); padding: 48px 24px; }
+.howto-inner { max-width: 520px; margin: 0 auto; }
+.howto-heading {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+.howto-steps { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.howto-step { display: flex; gap: 14px; font-size: 0.85rem; }
+.step-n { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.step-t { color: var(--muted); }
+
+/* ── Imagem de fundo customizada ─────────────────────────── */
+body.has-bg-image { background-color: rgba(10,10,10,0.72); background-blend-mode: multiply; }
+
+@media (max-width: 480px) {
+    .stage { padding: 64px 20px 48px; }
+    .row { font-size: 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .row, .row .arrow { transition: none; }
+}

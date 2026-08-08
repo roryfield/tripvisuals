@@ -1,0 +1,128 @@
+/* ═══ landing-clean.html — catálogo digital ═══
+   Paleta: grafite frio + ciano (mesmo tom do admin, --cyan).
+   Tipografia: Space Grotesk (display) + Inter (corpo).
+   Estrutura: grid de cards 2×2, não pilha de botões. */
+
+:root {
+    --bg:      #101314;
+    --card:    #1b2023;
+    --border:  #2a3033;
+    --text:    #f2f5f6;
+    --muted:   #8a9296;
+    --accent:  #00e5ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', ui-sans-serif, sans-serif;
+}
+
+.stage {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 72px 24px 56px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 44px;
+}
+.mark {
+    width: 64px; height: 64px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+.title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.4rem, 5vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+.tagline {
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--text);
+    overflow: hidden;
+    transition: border-color 0.18s ease, transform 0.18s ease;
+}
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.22s ease;
+}
+.card:hover, .card:focus-visible {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    outline: none;
+}
+.card:hover::before, .card:focus-visible::before { transform: scaleX(1); }
+.card-icon { font-size: 1.4rem; color: var(--accent); }
+.card-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.footer {
+    margin-top: 36px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+}
+.footer a { color: var(--muted); }
+.footer a:hover, .footer a:focus-visible { color: var(--accent); }
+
+/* ── Como funciona ─────────────────────────────────────── */
+.landing-howto { border-top: 1px solid var(--border); padding: 44px 24px; }
+.howto-inner { max-width: 560px; margin: 0 auto; }
+.howto-heading {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.howto-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.howto-step { display: flex; gap: 12px; font-size: 0.88rem; }
+.step-n { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.step-t { color: var(--muted); }
+
+/* ── Imagem de fundo customizada ─────────────────────────── */
+body.has-bg-image .card { background: rgba(27,32,35,0.82); backdrop-filter: blur(6px); }
+
+@media (max-width: 480px) {
+    .stage { padding: 48px 18px 40px; }
+    .grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card, .card::before { transition: none; }
+}
