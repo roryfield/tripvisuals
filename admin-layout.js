@@ -43,6 +43,7 @@
         try {
             const res = await fetch('/api/config', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chave: 'layout_padrao', valor: layout })
             });
@@ -74,7 +75,7 @@
 
     async function loadConfig() {
         try {
-            const res  = await fetch('/api/config');
+            const res  = await fetch('/api/config', { credentials: 'include' });
             if (!res.ok) return;
             const data = await res.json();
             const layout = data.layout_padrao || 'grid-3';

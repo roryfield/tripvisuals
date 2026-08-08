@@ -171,6 +171,24 @@ async function initDB() {
         )
     `);
 
+    // [VZ] Log central de eventos — erros, sucessos e ações em lote de
+    // qualquer módulo (catalogador, produtos, dashboard). Append-only,
+    // mesmo espírito do webhook_log acima. Ver eventos.js.
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_events (
+            id          SERIAL PRIMARY KEY,
+            projeto     TEXT NOT NULL DEFAULT 'tripvisuals',
+            modulo      TEXT NOT NULL,
+            tipo        TEXT NOT NULL,
+            severidade  TEXT NOT NULL DEFAULT 'info',
+            resumo      TEXT NOT NULL,
+            detalhes    JSONB,
+            criado_em   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_events_criado ON system_events (criado_em DESC)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_events_modulo ON system_events (modulo)`);
+
     await pool.query(`
         CREATE TABLE IF NOT EXISTS configuracoes (
             chave TEXT PRIMARY KEY,
@@ -509,6 +527,22 @@ function validarProduto({ nome, preco }) {
         return 'Preço inválido.';
     return null;
 }
+
+// ── CATALOGADOR IA ─────────────────────────────────────────────
+// Ferramenta de processamento em lote — identificação de bandas via IA.
+// Todas as rotas herdadas pelo requireAuth do sistema principal.
+// Requer: GROQ_API_KEY no .env  |  npm install groq-sdk
+// Limite generoso (mesma faixa do uploadLimiter): uso é um lote manual de uma
+// pessoa só, mas a rota fica exposta e chama uma API paga por token, então
+// precisa de defesa própria em vez de herdar o limite de outra rota.
+const catalogadorLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 100,
+    message: { error: 'Muitas requisições ao Catalogador. Espere um momento.' },
+    standardHeaders: true, legacyHeaders: false
+});
+const catalogadorRouter = require('./catalogador-router');
+catalogadorRouter.setPool(pool); // reaproveita o pool já existente, não abre outro
+app.use('/api/catalogador', requireAuth, catalogadorLimiter, catalogadorRouter);
 
 // ════════════════════════════════════════════════════════════
 //  PUBLIC ROUTES
