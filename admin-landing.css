@@ -524,3 +524,62 @@ html[data-init] body { visibility: visible !important; }
 @media (max-width: 700px) {
     .vz-grid-3 { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 5 — Arsenal com preview, prévia de ambiente
+═══════════════════════════════════════════════════════ */
+
+.vz-card.preset.pending {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px var(--cyan);
+}
+
+.arsenal-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--cyan);
+    border-radius: var(--radius);
+}
+.arsenal-preview-thumb {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #050505;
+    flex-shrink: 0;
+}
+.arsenal-preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.arsenal-preview-info { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.arsenal-preview-info > span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+.arsenal-preview-actions { display: flex; gap: 8px; }
+
+.ambiente-preview {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background-color: #050505;
+    background-size: cover;
+    background-position: center;
+    margin-bottom: 18px;
+    transition: background-color 0.15s;
+}
+.ambiente-preview-label {
+    position: absolute;
+    top: 8px; left: 10px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    background: rgba(8,8,8,0.6);
+    padding: 2px 8px;
+    border-radius: 4px;
+}

@@ -51,9 +51,19 @@
         <section class="section" aria-labelledby="sec-arsenal">
             <div class="section-header">
                 <h3 class="section-title" id="sec-arsenal">ARSENAL</h3>
-                <span class="section-hint">Logos do sistema · clique para usar</span>
+                <span class="section-hint">Logos do sistema · clique para pré-visualizar</span>
             </div>
             <div class="card-grid-presets" id="presetsGrid" role="radiogroup" aria-label="Logos do arsenal"></div>
+            <div class="arsenal-preview" id="arsenalPreview" hidden>
+                <div class="arsenal-preview-thumb"><img id="arsenalPreviewImg" src="" alt="Pré-visualização da logo selecionada"></div>
+                <div class="arsenal-preview-info">
+                    <span id="arsenalPreviewLabel"></span>
+                    <div class="arsenal-preview-actions">
+                        <button type="button" class="btn-launch" id="btnAplicarArsenal">Usar esta logo</button>
+                        <button type="button" class="vz-btn-ghost" id="btnCancelarArsenal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ═══════════════════════ LOGO PERSONALIZADA ═══════════════════════ -->
@@ -86,8 +96,12 @@
         <!-- ═══════════════════════ AMBIENTE ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-ambiente">
             <div class="section-header">
-                <h3 class="section-title" id="sec-ambiente">AMBIENTE</h3>
-                <span class="section-hint">Cor ou imagem de fundo</span>
+                <h3 class="section-title" id="sec-ambiente">CORES E FUNDO</h3>
+                <span class="section-hint">Personalize além dos 5 estilos prontos, se quiser</span>
+            </div>
+
+            <div class="ambiente-preview" id="ambientePreview" aria-hidden="true">
+                <span class="ambiente-preview-label">Prévia</span>
             </div>
 
             <!-- ── COLOR PICKER (Figma-style) ──────────────────────── -->
