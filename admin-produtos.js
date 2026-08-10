@@ -93,19 +93,20 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                     <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
                     <div class="produto-card-body">
                         <div class="produto-fields">
-                            <div class="field-group">
+                            <div class="field-group field-primary">
                                 <label class="field-label" for="nome-${p.id}">Nome</label>
                                 <input type="text" id="nome-${p.id}" value="${escapeAttr(p.nome)}">
                             </div>
-                            <div class="field-group">
+                            <div class="field-group field-primary">
                                 <label class="field-label" for="preco-${p.id}">Preço (R$)</label>
                                 <input type="number" id="preco-${p.id}" value="${Number(p.preco).toFixed(2)}" step="0.01" min="0" max="999999">
                             </div>
-                            <div class="field-group">
+                            <div class="field-classificacao-label">Classificação</div>
+                            <div class="field-group field-compact">
                                 <label class="field-label" for="cor-${p.id}">Cor</label>
                                 <input type="text" id="cor-${p.id}" list="coresList" value="${escapeAttr(p.cor || '')}" maxlength="50" placeholder="ex: Preta">
                             </div>
-                            <div class="field-group">
+                            <div class="field-group field-compact">
                                 <label class="field-label" for="tipo-${p.id}">Tipo</label>
                                 <select id="tipo-${p.id}" aria-label="Tipo">
                                     <option value="Camiseta"  ${p.tipo === 'Camiseta'  ? 'selected' : ''}>Camiseta</option>
@@ -114,11 +115,11 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                                     <option value="Moletom"   ${p.tipo === 'Moletom'   ? 'selected' : ''}>Moletom</option>
                                 </select>
                             </div>
-                            <div class="field-group">
+                            <div class="field-group field-compact">
                                 <label class="field-label" for="genero-${p.id}">Gênero</label>
                                 <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
                             </div>
-                            <div class="field-group">
+                            <div class="field-group field-compact">
                                 <label class="field-label" for="banda-${p.id}">Banda</label>
                                 <input type="text" id="banda-${p.id}" value="${escapeAttr(p.banda || '')}" maxlength="80" placeholder="ex: iron-maiden">
                             </div>
