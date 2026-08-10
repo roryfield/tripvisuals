@@ -1501,3 +1501,23 @@
     flex-shrink: 0;
 }
 .gallery-thumb:hover { opacity: 1; border-color: var(--cyan); }
+
+/* [VZ] Fase 7 — campo de CEP e resultado do frete no modal do produto */
+.product-modal-frete-field { margin-bottom: 16px; text-align: left; }
+.product-modal-frete-field label {
+    display: block; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+    color: #888; margin-bottom: 6px;
+}
+.product-modal-frete-field input {
+    width: 100%; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; color: #ddd;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 11px 12px; min-height: 44px;
+}
+.product-modal-frete-field input:focus {
+    outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,229,255,0.12);
+}
+.product-modal-frete-resultado {
+    font-size: 0.78rem;
+    color: var(--cyan);
+    min-height: 16px;
+    margin-top: 6px;
+}

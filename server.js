@@ -15,6 +15,7 @@ const { Pool }   = require('pg');
 const cloudinary = require('cloudinary').v2;
 const asaas      = require('./asaas');
 const { registrarEvento, listarEventos } = require('./eventos');
+const frete      = require('./frete');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -266,6 +267,10 @@ async function initDB() {
         UPDATE configuracoes SET valor = 'retro'
          WHERE chave = 'landing_theme' AND valor = 'cosmico'
     `);
+
+    // [VZ] Fase 7 — schema do módulo de frete, auto-contido (frete.js
+    // sabe criar sua própria tabela, igual ao catalogador).
+    await frete.ensureSchema(pool);
 
     console.log('✅ Banco PostgreSQL pronto.');
 }
@@ -864,6 +869,62 @@ app.post('/api/produtos/bulk-campo/desfazer/:eventoId', requireAuth, writeLimite
     } catch (e) {
         console.error('POST bulk-campo/desfazer:', e.message);
         res.status(500).json({ error: 'Erro ao desfazer edição em massa.' });
+    }
+});
+
+// ── FRETE POR REGIÃO (Fase 7) ─────────────────────────────────
+// Pública: qualquer visitante do catálogo pode calcular. Rate limit
+// próprio porque bate na ViaCEP a cada chamada sem cache.
+const freteLimiter = rateLimit({
+    windowMs: 60 * 1000, max: 30,
+    message: { error: 'Muitas consultas de frete. Espere um momento.' },
+    standardHeaders: true, legacyHeaders: false
+});
+app.get('/api/frete', freteLimiter, async (req, res) => {
+    try {
+        const resultado = await frete.calcularFrete(pool, req.query.cep);
+        res.json(resultado);
+    } catch (e) {
+        console.error('GET /api/frete:', e.message);
+        res.status(500).json({ error: 'Erro ao calcular frete.' });
+    }
+});
+
+// Admin: gerenciar os valores por região
+app.get('/api/frete/regioes', requireAuth, async (req, res) => {
+    try {
+        res.json(await frete.listarRegioes(pool));
+    } catch (e) {
+        console.error('GET /api/frete/regioes:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar regiões.' });
+    }
+});
+
+const UFS_VALIDAS = new Set(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']);
+app.put('/api/frete/regioes/:uf', requireAuth, writeLimiter, async (req, res) => {
+    const uf = String(req.params.uf || '').toUpperCase();
+    if (!UFS_VALIDAS.has(uf)) return res.status(400).json({ error: 'UF inválida.' });
+    const valor = parseFloat(req.body.valor);
+    const prazoDias = parseInt(req.body.prazoDias, 10);
+    if (!Number.isFinite(valor) || valor < 0 || valor > 9999) return res.status(400).json({ error: 'Valor de frete inválido.' });
+    if (!Number.isInteger(prazoDias) || prazoDias < 1 || prazoDias > 90) return res.status(400).json({ error: 'Prazo inválido.' });
+    try {
+        await frete.definirRegiao(pool, uf, valor, prazoDias);
+        res.json({ success: true, uf, valor, prazoDias });
+    } catch (e) {
+        console.error('PUT /api/frete/regioes:', e.message);
+        res.status(500).json({ error: 'Erro ao salvar região.' });
+    }
+});
+
+app.delete('/api/frete/regioes/:uf', requireAuth, writeLimiter, async (req, res) => {
+    const uf = String(req.params.uf || '').toUpperCase();
+    try {
+        await frete.removerRegiao(pool, uf);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('DELETE /api/frete/regioes:', e.message);
+        res.status(500).json({ error: 'Erro ao remover região.' });
     }
 });
 

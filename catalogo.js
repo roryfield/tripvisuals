@@ -129,17 +129,62 @@
     });
 
     // ── PURCHASE ─────────────────────────────────────────────────
+    var freteAtual = null; // último resultado de /api/frete pro CEP digitado
+
     function comprarItem(nome, preco, tamanho) {
+        var freteTexto = '';
+        if (freteAtual && freteAtual.atendido) {
+            freteTexto = '\n*Frete estimado:* R$ ' + freteAtual.valor.toFixed(2) +
+                ' (' + freteAtual.endereco.cidade + '/' + freteAtual.endereco.uf +
+                ', ' + freteAtual.prazoDias + ' dias úteis)\n';
+        }
         var texto = 'Olá, equipe Trip Visuals! 🛸\n\n' +
             'Vim pelo catálogo e tenho interesse neste item:\n\n' +
             '*Item:* ' + nome + '\n' +
             '*Tamanho:* ' + tamanho + '\n' +
-            '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n\n' +
-            'Poderia me confirmar a disponibilidade nesse tamanho e calcular o frete para o meu CEP?';
+            '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n' +
+            freteTexto + '\n' +
+            'Poderia me confirmar a disponibilidade nesse tamanho' +
+            (freteAtual && freteAtual.atendido ? '?' : ' e calcular o frete para o meu CEP?');
         window.open(
             'https://wa.me/' + NUMERO_LOJA + '?text=' + encodeURIComponent(texto),
             '_blank', 'noopener'
         );
+    }
+
+    // [VZ] Fase 7 — cálculo de frete direto no modal, debounced, só chama
+    // a API quando o CEP já tem 8 dígitos.
+    var freteDebounce = null;
+    function consultarFreteModal(cepDigitado) {
+        var resultEl = document.getElementById('freteResultado');
+        var limpo = String(cepDigitado || '').replace(/\D/g, '');
+        clearTimeout(freteDebounce);
+        if (limpo.length !== 8) {
+            freteAtual = null;
+            if (resultEl) resultEl.textContent = '';
+            return;
+        }
+        if (resultEl) resultEl.textContent = 'Calculando frete…';
+        freteDebounce = setTimeout(function () {
+            fetch('/api/frete?cep=' + limpo)
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    freteAtual = d;
+                    if (!resultEl) return;
+                    if (!d.encontrado) {
+                        resultEl.textContent = 'CEP não encontrado. Confira e tente de novo.';
+                    } else if (!d.atendido) {
+                        resultEl.textContent = 'Frete pra ' + d.endereco.cidade + '/' + d.endereco.uf + ' combinado direto pelo WhatsApp.';
+                    } else {
+                        resultEl.textContent = 'Frete pra ' + d.endereco.cidade + '/' + d.endereco.uf +
+                            ': R$ ' + d.valor.toFixed(2) + ', ' + d.prazoDias + ' dias úteis.';
+                    }
+                })
+                .catch(function () {
+                    freteAtual = null;
+                    if (resultEl) resultEl.textContent = 'Não foi possível calcular agora. Frete combinado pelo WhatsApp.';
+                });
+        }, 500);
     }
 
     // ── SKELETON LOADING ─────────────────────────────────────────
@@ -339,6 +384,13 @@
         if (tamanhoEl) tamanhoEl.value = '';
         if (sizeErrorEl) sizeErrorEl.textContent = '';
 
+        // [VZ] Fase 7 — CEP e frete não persistem entre produtos diferentes
+        var cepEl = document.getElementById('modalCep');
+        var freteResultEl = document.getElementById('freteResultado');
+        if (cepEl) cepEl.value = '';
+        if (freteResultEl) freteResultEl.textContent = '';
+        freteAtual = null;
+
         img.src    = p.imagem_url || '';
         img.alt    = p.nome;
         setImgFallback(img);
@@ -428,6 +480,17 @@
 
         if (closeBtn) closeBtn.addEventListener('click', fecharModal);
         if (backdrop) backdrop.addEventListener('click', fecharModal);
+
+        // [VZ] Fase 7 — CEP: formata enquanto digita e calcula com debounce
+        var cepEl = document.getElementById('modalCep');
+        if (cepEl) {
+            cepEl.addEventListener('input', function () {
+                var digitos = cepEl.value.replace(/\D/g, '').slice(0, 8);
+                cepEl.value = digitos.length > 5 ? digitos.slice(0, 5) + '-' + digitos.slice(5) : digitos;
+                consultarFreteModal(digitos);
+            });
+        }
+
         if (buyBtn)   buyBtn.addEventListener('click', function () {
             if (!modalProduto) return;
             var tamanhoEl = document.getElementById('modalTamanho');

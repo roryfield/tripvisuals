@@ -33,6 +33,31 @@
             </div>
         </header>
 
+        <!-- [VZ] Fase 7 — configuração de frete por região (UF). Nativo
+             <details>/<summary>, sem JS pra abrir/fechar. -->
+        <details class="frete-config-panel" id="freteConfigPanel">
+            <summary>Configurar frete por região (UF)</summary>
+            <p class="frete-config-hint">Defina um valor e prazo por estado. O catálogo público calcula sozinho a partir do CEP do cliente. Estado sem valor aqui continua sendo combinado manualmente pelo WhatsApp.</p>
+            <div class="frete-config-form">
+                <select id="freteUf" aria-label="Estado">
+                    <option value="">UF...</option>
+                    <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+                    <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+                    <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+                    <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                    <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+                    <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+                    <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+                    <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                    <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                </select>
+                <input type="number" id="freteValor" placeholder="Valor (R$)" min="0" max="9999" step="0.01">
+                <input type="number" id="fretePrazo" placeholder="Prazo (dias)" min="1" max="90" step="1">
+                <button type="button" class="btn-launch" id="btnSalvarFrete">Salvar</button>
+            </div>
+            <div class="frete-config-lista" id="freteConfigLista"></div>
+        </details>
+
         <!-- Filter + actions bar -->
         <div class="pedidos-controls">
             <div class="pedidos-filter-chips" role="group" aria-label="Filtrar por status">
