@@ -2,13 +2,21 @@
 // Montado em: app.use('/api/catalogador', requireAuth, catalogadorRouter)
 // Requer: GROQ_API_KEY no .env  |  npm install groq-sdk
 // Opcional: CATALOGADOR_MODEL no .env (sobrescreve o modelo padrão sem redeploy de código)
-// Toda a lógica é auto-contida: staging, progresso e SSE vivem aqui.
+//
+// [VZ] Fase 6 — staging e progresso migraram de disco/JSON local para
+// Cloudinary + Postgres. Motivo: disco e arquivo JSON local não sobrevivem
+// a um restart do container no Railway; um lote de 800 fotos em andamento
+// se perderia silenciosamente. Cloudinary e Postgres sobrevivem.
+//
+// Continua arquiteturalmente isolado: nenhuma linha aqui menciona a
+// tabela "produtos" ou qualquer nome específico da Trip Visuals. Tudo
+// que este arquivo sabe sobre é "itens" com uma imagem e um resultado de
+// leitura. A ponte pro catálogo real vive só em tripvisuals-adapter.js.
 'use strict';
 
 const express   = require('express');
 const multer    = require('multer');
 const path      = require('path');
-const fs        = require('fs');
 const crypto    = require('crypto');
 const { EventEmitter } = require('events');
 const Groq      = require('groq-sdk');
@@ -16,21 +24,52 @@ const { registrarEvento } = require('./eventos');
 
 const router = express.Router();
 
-// ── Pool do Postgres (injetado pelo server.js via router.setPool) ─────────────
-// Sem isso o módulo teria que abrir sua própria conexão, duplicando o pool
-// que o server.js já mantém. Ver chamada de setPool logo após o require, no
-// server.js.
+// ── Dependências injetadas pelo server.js via os setters no fim do arquivo ────
+// Nenhuma delas é reinstanciada aqui — todas reaproveitam o que o server.js
+// já mantém (pool, conexão com a Cloudinary), pelo mesmo motivo do pool:
+// evitar duplicar conexão.
 let _pool = null;
 let _adapter = null;
+let _uploadToCloudinary = null;   // (buffer, filename, folder?) => Promise<{url, public_id}>
+let _destroyCloudinary  = null;   // (public_id) => Promise<void>
 
-// ── Diretórios (ephemeral no Railway — persist within a deploy session) ────────
-const ROOT        = __dirname;
-const STAGING     = path.join(ROOT, '.cat-staging');
-const PROG_FILE   = path.join(ROOT, '.cat-progress.json');
-const IMAGE_RE    = /\.(jpe?g|png|webp)$/i;
-const MAX_MB      = 20;
+const IMAGE_RE = /\.(jpe?g|png|webp)$/i;
+const MAX_MB   = 20;
+const CLOUDINARY_FOLDER = 'tripvisuals/catalogador-staging';
 
-if (!fs.existsSync(STAGING)) fs.mkdirSync(STAGING, { recursive: true });
+// ── Schema próprio do módulo ────────────────────────────────────────────────
+// Criado pelo próprio catalogador-router.js, não pelo initDB() do server.js,
+// de propósito: se este arquivo for extraído pra outro projeto (vdzn-sm,
+// record-store), ele continua se auto-suficiente, sem exigir que o novo
+// projeto saiba criar essa tabela.
+let _schemaPronto = null;
+function ensureSchema() {
+    if (!_pool) return Promise.resolve();
+    if (!_schemaPronto) {
+        _schemaPronto = _pool.query(`
+            CREATE TABLE IF NOT EXISTS catalogador_itens (
+                id               SERIAL PRIMARY KEY,
+                chave            TEXT NOT NULL UNIQUE,
+                arquivo_original TEXT NOT NULL,
+                cloudinary_url   TEXT NOT NULL,
+                cloudinary_id    TEXT NOT NULL,
+                banda            TEXT,
+                output_file      TEXT,
+                processado_em    TIMESTAMPTZ,
+                aplicado         BOOLEAN NOT NULL DEFAULT false,
+                produto_id       INTEGER,
+                criado_em        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `).then(() => _pool.query(
+            `CREATE INDEX IF NOT EXISTS idx_catalogador_itens_aplicado ON catalogador_itens (aplicado)`
+        )).catch(err => {
+            console.error('[catalogador] falha ao criar schema:', err.message);
+            _schemaPronto = null; // permite tentar de novo na próxima chamada
+            throw err;
+        });
+    }
+    return _schemaPronto;
+}
 
 // ── Rate limiter (token bucket, chained promises) ──────────────────────────────
 // Groq free tier: ~30 req/min. Default conservador em 25.
@@ -48,25 +87,16 @@ class RateLimiter {
 }
 
 // ── Magic bytes — valida conteúdo real, não só extensão ───────────────────────
-async function isValidImage(filePath) {
-    let fd;
-    try {
-        const buf = Buffer.alloc(12);
-        fd = await fs.promises.open(filePath, 'r');
-        const { bytesRead } = await fd.read(buf, 0, 12, 0);
-        if (bytesRead < 3) return false;
-        const b = buf;
-        // JPEG: FF D8 FF
-        if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return true;
-        // PNG: 89 50 4E 47
-        if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return true;
-        // WebP: RIFF????WEBP
-        if (bytesRead >= 12 &&
-            b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
-            b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return true;
-        return false;
-    } catch (_) { return false; }
-    finally { if (fd) await fd.close().catch(() => {}); }
+// Antes lia do disco; agora valida o buffer em memória, antes de subir pra
+// Cloudinary, pra nunca gastar upload com lixo.
+function bufferPareceImagemValida(buf) {
+    if (!buf || buf.length < 12) return false;
+    const b = buf;
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return true; // JPEG
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return true; // PNG
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+        b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return true; // WebP
+    return false;
 }
 
 // ── Slug sanitizer ────────────────────────────────────────────────────────────
@@ -75,16 +105,10 @@ function toSlug(raw) {
         .replace(/[^a-z0-9-]/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
 }
 
-// ── Path traversal guard ──────────────────────────────────────────────────────
-function assertSafePath(base, filename) {
-    const resolved = path.resolve(base, filename);
-    const safeBase = path.resolve(base);
-    if (!resolved.startsWith(safeBase + path.sep) && resolved !== safeBase)
-        throw Object.assign(new Error('Path traversal detectado'), { status: 400 });
-    return resolved;
-}
-
-// ── Estado compartilhado ──────────────────────────────────────────────────────
+// ── Estado compartilhado (fila de execução em memória; sobrevive dentro da
+//    mesma instância, não precisa persistir — se o processo reiniciar no
+//    meio de uma sessão, os itens já salvos em Postgres não se perdem, só a
+//    fila em andamento precisa ser reiniciada com "start" de novo) ────────────
 const emitter = new EventEmitter();
 emitter.setMaxListeners(32);
 
@@ -101,18 +125,63 @@ let   groqClient  = null;
 const sleep       = ms => new Promise(r => setTimeout(r, ms));
 const emit        = data => emitter.emit('update', data);
 
-// ── Progresso ─────────────────────────────────────────────────────────────────
-function loadProgress() {
-    try {
-        if (fs.existsSync(PROG_FILE))
-            return JSON.parse(fs.readFileSync(PROG_FILE, 'utf8'));
-    } catch (_) {}
-    return { processed: {} };
+// ── Acesso aos itens (Postgres) ─────────────────────────────────────────────
+// listarItens() devolve o mesmo formato { [chave]: {...} } que o resto do
+// arquivo já usava quando isso vinha de um JSON local, pra minimizar o
+// tanto de coisa que muda no restante da lógica.
+async function listarItens() {
+    await ensureSchema();
+    const { rows } = await _pool.query(
+        `SELECT id, chave, arquivo_original, cloudinary_url, cloudinary_id,
+                banda, output_file, processado_em, aplicado, produto_id
+         FROM catalogador_itens ORDER BY id`
+    );
+    const processed = {};
+    for (const r of rows) {
+        if (!r.processado_em) continue; // ainda não lido, não entra em "processed"
+        processed[r.chave] = {
+            originalFile: r.arquivo_original,
+            band:         r.banda,
+            outputFile:   r.output_file,
+            processedAt:  r.processado_em,
+            aplicado:     r.aplicado,
+            produtoId:    r.produto_id,
+        };
+    }
+    return { processed, linhas: rows };
 }
 
-function saveProgress(p) {
-    try { fs.writeFileSync(PROG_FILE, JSON.stringify(p, null, 2)); }
-    catch (e) { console.error('[catalogador] saveProgress:', e.message); }
+async function buscarItem(chave) {
+    await ensureSchema();
+    const { rows } = await _pool.query(`SELECT * FROM catalogador_itens WHERE chave = $1`, [chave]);
+    return rows[0] || null;
+}
+
+async function inserirStaging({ chave, arquivoOriginal, url, publicId }) {
+    await ensureSchema();
+    await _pool.query(
+        `INSERT INTO catalogador_itens (chave, arquivo_original, cloudinary_url, cloudinary_id)
+         VALUES ($1, $2, $3, $4)`,
+        [chave, arquivoOriginal, url, publicId]
+    );
+}
+
+async function marcarProcessado(chave, { banda, outputFile }) {
+    await _pool.query(
+        `UPDATE catalogador_itens SET banda = $1, output_file = $2, processado_em = NOW() WHERE chave = $3`,
+        [banda, outputFile, chave]
+    );
+}
+
+async function marcarAplicado(chave, produtoId) {
+    await _pool.query(
+        `UPDATE catalogador_itens SET aplicado = true, produto_id = $1 WHERE chave = $2`,
+        [produtoId, chave]
+    );
+}
+
+async function removerItem(chave) {
+    await _pool.query(`DELETE FROM catalogador_itens WHERE chave = $1`, [chave]);
 }
 
 // ── Groq client ───────────────────────────────────────────────────────────────
@@ -124,10 +193,18 @@ function getGroq() {
 }
 
 // ── Identificação de banda ────────────────────────────────────────────────────
-async function identifyBand(filePath) {
-    const ext  = path.extname(filePath).toLowerCase();
+// Antes lia bytes do disco; agora busca da Cloudinary. O formato da
+// chamada pro Groq (data URI em base64) continua idêntico ao que já
+// funcionava, só a origem dos bytes mudou — reduz o risco de mudar duas
+// coisas de uma vez numa integração que não dá pra testar contra a API
+// real neste ambiente.
+async function identifyBand(cloudinaryUrl) {
+    const ext  = path.extname(cloudinaryUrl).toLowerCase().split('?')[0];
     const mime = { '.png': 'image/png', '.webp': 'image/webp' }[ext] ?? 'image/jpeg';
-    const b64  = (await fs.promises.readFile(filePath)).toString('base64');
+
+    const imgRes = await fetch(cloudinaryUrl);
+    if (!imgRes.ok) throw new Error(`Falha ao buscar imagem da Cloudinary: HTTP ${imgRes.status}`);
+    const b64 = Buffer.from(await imgRes.arrayBuffer()).toString('base64');
 
     const res = await getGroq().chat.completions.create({
         model:       process.env.CATALOGADOR_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -149,41 +226,26 @@ async function identifyBand(filePath) {
     return toSlug(res.choices[0]?.message?.content) || 'sem-identificacao';
 }
 
-// ── Processador por arquivo ───────────────────────────────────────────────────
-async function processFile(item, progress) {
-    const { key, absPath, display } = item;
-
-    if (!fs.existsSync(absPath)) {
-        state.stats.errors++;
-        emit({ type: 'error', file: display, error: 'Arquivo não encontrado' });
-        return;
-    }
-    if (!(await isValidImage(absPath))) {
-        state.stats.errors++;
-        emit({ type: 'error', file: display, error: 'Formato inválido (magic bytes)' });
-        return;
-    }
+// ── Processador por item ───────────────────────────────────────────────────────
+async function processFile(item) {
+    const { chave, cloudinaryUrl, display } = item;
 
     emit({ type: 'start', file: display });
 
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             await limiter.acquire();
-            const band = await identifyBand(absPath);
-            const hash = crypto.createHash('md5').update(key).digest('hex').slice(0, 8);
-            const ext  = path.extname(absPath);
+            const band = await identifyBand(cloudinaryUrl);
+            const hash = crypto.createHash('md5').update(chave).digest('hex').slice(0, 8);
+            const ext  = path.extname(cloudinaryUrl).split('?')[0] || '.jpg';
 
-            const result = {
-                originalFile: key,
-                band,
-                outputFile:   `${band}-${hash}${ext}`,
-                processedAt:  new Date().toISOString(),
-            };
+            const outputFile = `${band}-${hash}${ext}`;
+            await marcarProcessado(chave, { banda: band, outputFile });
 
-            progress.processed[key] = result;
-            saveProgress(progress);
             state.stats.done++;
-            emit({ type: 'done', file: display, result });
+            emit({ type: 'done', file: display, result: {
+                originalFile: chave, band, outputFile, processedAt: new Date().toISOString(),
+            }});
             return;
 
         } catch (err) {
@@ -212,7 +274,7 @@ async function processFile(item, progress) {
 
 // ── Fila de workers ───────────────────────────────────────────────────────────
 // state.index é incrementado atomicamente (event loop single-thread do Node.js).
-async function runQueue(items, concurrency, progress) {
+async function runQueue(items, concurrency) {
     state.running = true;
     state.paused  = false;
     state.index   = 0;
@@ -229,12 +291,7 @@ async function runQueue(items, concurrency, progress) {
             if (!item) return;
 
             state.stats.pending = Math.max(0, state.stats.pending - 1);
-
-            if (progress.processed[item.key]) {
-                emit({ type: 'skip', file: item.display });
-                continue;
-            }
-            await processFile(item, progress);
+            await processFile(item);
         }
     }
 
@@ -255,17 +312,9 @@ async function runQueue(items, concurrency, progress) {
     }
 }
 
-// ── Multer (uploads para staging) ─────────────────────────────────────────────
+// ── Multer (memória — nada toca o disco, sobe direto pra Cloudinary) ──────────
 const catUpload = multer({
-    storage: multer.diskStorage({
-        destination: (_, __, cb) => cb(null, STAGING),
-        filename: (_, file, cb) => {
-            const ext  = path.extname(file.originalname).toLowerCase().replace(/[^.a-z]/g, '');
-            const base = path.basename(file.originalname, path.extname(file.originalname))
-                .replace(/[^\w\-. ]/g, '_').slice(0, 80);
-            cb(null, `${base}_${Date.now()}${ext}`);
-        },
-    }),
+    storage: multer.memoryStorage(),
     fileFilter: (_, file, cb) => {
         IMAGE_RE.test(file.originalname)
             ? cb(null, true)
@@ -279,39 +328,67 @@ const catUpload = multer({
 // ══════════════════════════════════════════════════════════════════════════════
 
 // GET /api/catalogador/status
-router.get('/status', (_, res) => {
-    res.json({
-        running:  state.running,
-        paused:   state.paused,
-        stats:    { ...state.stats },
-        done:     Object.keys(loadProgress().processed).length,
-        hasKey:   !!process.env.GROQ_API_KEY,
-    });
+router.get('/status', async (_, res) => {
+    try {
+        const { processed } = await listarItens();
+        res.json({
+            running: state.running,
+            paused:  state.paused,
+            stats:   { ...state.stats },
+            done:    Object.keys(processed).length,
+            hasKey:  !!process.env.GROQ_API_KEY,
+        });
+    } catch (e) {
+        console.error('[catalogador] GET /status:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar status.' });
+    }
 });
 
 // GET /api/catalogador/files
-router.get('/files', (_, res) => {
-    const progress = loadProgress();
-    const files    = fs.readdirSync(STAGING).filter(f => IMAGE_RE.test(f));
-    res.json({
-        total:   files.length,
-        done:    files.filter(f => !!progress.processed[f]).length,
-        pending: files.filter(f => !progress.processed[f]).length,
-        files:   files.map(f => ({ name: f, result: progress.processed[f] || null })),
-    });
+router.get('/files', async (_, res) => {
+    try {
+        const { linhas } = await listarItens();
+        res.json({
+            total:   linhas.length,
+            done:    linhas.filter(r => r.processado_em).length,
+            pending: linhas.filter(r => !r.processado_em).length,
+            files:   linhas.map(r => ({
+                name: r.chave,
+                result: r.processado_em ? {
+                    originalFile: r.chave, band: r.banda, outputFile: r.output_file,
+                    processedAt: r.processado_em,
+                } : null,
+            })),
+        });
+    } catch (e) {
+        console.error('[catalogador] GET /files:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar arquivos.' });
+    }
 });
 
 // POST /api/catalogador/upload
+// Valida em memória, sobe pra Cloudinary, registra em Postgres. Nada
+// escreve em disco em nenhum momento deste fluxo.
 router.post('/upload', catUpload.array('images'), async (req, res) => {
     if (!req.files?.length) return res.status(400).json({ error: 'Nenhuma imagem recebida.' });
+    if (!_uploadToCloudinary) return res.status(503).json({ error: 'Upload de imagem não configurado.' });
 
     const valid = [], rejected = [];
     await Promise.all(req.files.map(async f => {
-        if (await isValidImage(f.path)) {
-            valid.push(f.filename);
-        } else {
+        if (!bufferPareceImagemValida(f.buffer)) {
             rejected.push(f.originalname);
-            await fs.promises.unlink(f.path).catch(() => {});
+            return;
+        }
+        try {
+            const base = path.basename(f.originalname, path.extname(f.originalname))
+                .replace(/[^\w\-. ]/g, '_').slice(0, 80);
+            const chave = `${base}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+            const { url, public_id } = await _uploadToCloudinary(f.buffer, chave, CLOUDINARY_FOLDER);
+            await inserirStaging({ chave, arquivoOriginal: f.originalname, url, publicId: public_id });
+            valid.push(chave);
+        } catch (e) {
+            console.error('[catalogador] upload individual falhou:', e.message);
+            rejected.push(f.originalname);
         }
     }));
 
@@ -324,33 +401,38 @@ router.post('/upload', catUpload.array('images'), async (req, res) => {
 });
 
 // POST /api/catalogador/start
-router.post('/start', (req, res) => {
+router.post('/start', async (req, res) => {
     if (state.running) return res.status(409).json({ error: 'Já em execução.' });
 
-    const progress    = loadProgress();
-    const { concurrency = 2, ratePerMinute = 25 } = req.body || {};
+    try {
+        const { linhas } = await listarItens();
+        const { concurrency = 2, ratePerMinute = 25 } = req.body || {};
 
-    limiter.setRate(Math.min(Math.max(5, +ratePerMinute || 25), 40));
+        limiter.setRate(Math.min(Math.max(5, +ratePerMinute || 25), 40));
 
-    const items = fs.readdirSync(STAGING)
-        .filter(f => IMAGE_RE.test(f) && !progress.processed[f])
-        .map(f => ({ key: f, absPath: path.join(STAGING, f), display: f }));
+        const items = linhas
+            .filter(r => !r.processado_em)
+            .map(r => ({ chave: r.chave, cloudinaryUrl: r.cloudinary_url, display: r.arquivo_original }));
 
-    if (!items.length) return res.json({ message: 'Nenhum arquivo novo para processar.' });
+        if (!items.length) return res.json({ message: 'Nenhum arquivo novo para processar.' });
 
-    const concurrenciaFinal = Math.min(Math.max(1, +concurrency || 2), 5);
-    runQueue(items, concurrenciaFinal, progress);
+        const concurrenciaFinal = Math.min(Math.max(1, +concurrency || 2), 5);
+        runQueue(items, concurrenciaFinal);
 
-    if (_pool) {
-        registrarEvento(_pool, {
-            modulo:   'catalogador',
-            tipo:     'sessao_iniciada',
-            resumo:   `Sessão do scanner iniciada: ${items.length} imagem(ns) na fila.`,
-            detalhes: { quantidade: items.length, concurrency: concurrenciaFinal, ratePerMinute },
-        });
+        if (_pool) {
+            registrarEvento(_pool, {
+                modulo:   'catalogador',
+                tipo:     'sessao_iniciada',
+                resumo:   `Sessão do scanner iniciada: ${items.length} imagem(ns) na fila.`,
+                detalhes: { quantidade: items.length, concurrency: concurrenciaFinal, ratePerMinute },
+            });
+        }
+
+        res.json({ started: true, queued: items.length });
+    } catch (e) {
+        console.error('[catalogador] POST /start:', e.message);
+        res.status(500).json({ error: 'Erro ao iniciar processamento.' });
     }
-
-    res.json({ started: true, queued: items.length });
 });
 
 // POST /api/catalogador/pause  /resume  /stop
@@ -363,102 +445,130 @@ router.post('/stop',   (_, res) => {
 });
 
 // GET /api/catalogador/results
-router.get('/results', (_, res) => res.json(loadProgress().processed));
+router.get('/results', async (_, res) => {
+    try {
+        const { processed } = await listarItens();
+        res.json(processed);
+    } catch (e) {
+        console.error('[catalogador] GET /results:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar resultados.' });
+    }
+});
 
 // PATCH /api/catalogador/result/:file
-router.patch('/result/:file', (req, res) => {
-    const progress = loadProgress();
-    const file     = decodeURIComponent(req.params.file);
-    const entry    = progress.processed[file];
-    if (!entry) return res.status(404).json({ error: 'Resultado não encontrado.' });
+router.patch('/result/:file', async (req, res) => {
+    try {
+        const chave = decodeURIComponent(req.params.file);
+        const item  = await buscarItem(chave);
+        if (!item || !item.processado_em) return res.status(404).json({ error: 'Resultado não encontrado.' });
 
-    const slug = toSlug(req.body?.band ?? '');
-    if (slug.length < 2) return res.status(400).json({ error: 'Nome de banda inválido.' });
+        const slug = toSlug(req.body?.band ?? '');
+        if (slug.length < 2) return res.status(400).json({ error: 'Nome de banda inválido.' });
 
-    progress.processed[file].band = slug;
-    saveProgress(progress);
-    res.json({ updated: true, band: slug, file });
+        await marcarProcessado(chave, { banda: slug, outputFile: item.output_file });
+        res.json({ updated: true, band: slug, file: chave });
+    } catch (e) {
+        console.error('[catalogador] PATCH /result:', e.message);
+        res.status(500).json({ error: 'Erro ao corrigir resultado.' });
+    }
 });
 
 // POST /api/catalogador/itens/:file/aplicar
 // Cria o produto (rascunho, oculto, preço 0) a partir do resultado do
-// scanner. A escrita em si vive em tripvisuals-adapter.js — este router
-// não sabe o nome de nenhuma tabela.
+// scanner. A imagem já está na Cloudinary desde o upload — aqui só
+// referencia o mesmo asset, não sobe de novo. A escrita em si vive em
+// tripvisuals-adapter.js — este router não sabe o nome de nenhuma tabela.
 router.post('/itens/:file/aplicar', async (req, res) => {
     if (!_adapter) return res.status(503).json({ error: 'Integração com o catálogo não configurada.' });
 
-    const file     = decodeURIComponent(req.params.file);
-    const progress = loadProgress();
-    const entry    = progress.processed[file];
-    if (!entry) return res.status(404).json({ error: 'Resultado não encontrado.' });
-    if (entry.aplicado) {
-        return res.status(409).json({ error: 'Este item já foi aplicado ao catálogo.', produtoId: entry.produtoId });
-    }
-
     try {
+        const chave = decodeURIComponent(req.params.file);
+        const item  = await buscarItem(chave);
+        if (!item || !item.processado_em) return res.status(404).json({ error: 'Resultado não encontrado.' });
+        if (item.aplicado) {
+            return res.status(409).json({ error: 'Este item já foi aplicado ao catálogo.', produtoId: item.produto_id });
+        }
+
         const resultado = await _adapter.aplicarItem({
-            absPath:      path.join(STAGING, file),
-            band:         entry.band,
-            outputFile:   entry.outputFile,
-            tipoPadrao:   typeof req.body?.tipo   === 'string' ? req.body.tipo   : 'Camiseta',
-            generoPadrao: typeof req.body?.genero === 'string' ? req.body.genero : '',
+            cloudinaryUrl: item.cloudinary_url,
+            cloudinaryId:  item.cloudinary_id,
+            band:          item.banda,
+            outputFile:    item.output_file,
+            tipoPadrao:    typeof req.body?.tipo   === 'string' ? req.body.tipo   : 'Camiseta',
+            generoPadrao:  typeof req.body?.genero === 'string' ? req.body.genero : '',
         });
-        entry.aplicado  = true;
-        entry.produtoId = resultado.produtoId;
-        saveProgress(progress);
+        await marcarAplicado(chave, resultado.produtoId);
         res.json({ aplicado: true, ...resultado });
     } catch (err) {
+        console.error('[catalogador] POST /aplicar:', err.message);
         res.status(err.status || 500).json({ error: err.message || 'Erro ao aplicar item ao catálogo.' });
     }
 });
 
 // POST /api/catalogador/itens/:file/descartar
-// Remove o item do lote sem criar produto nenhum.
+// Remove o item do lote sem criar produto nenhum. Apaga o asset na
+// Cloudinary também, já que ele nunca virou produto. Não usa o adapter —
+// apagar imagem não tem nada a ver com a tabela produtos.
 router.post('/itens/:file/descartar', async (req, res) => {
-    if (!_adapter) return res.status(503).json({ error: 'Integração com o catálogo não configurada.' });
+    try {
+        const chave = decodeURIComponent(req.params.file);
+        const item  = await buscarItem(chave);
+        if (!item) return res.status(404).json({ error: 'Resultado não encontrado.' });
 
-    const file     = decodeURIComponent(req.params.file);
-    const progress = loadProgress();
-    const entry    = progress.processed[file];
-    if (!entry) return res.status(404).json({ error: 'Resultado não encontrado.' });
-
-    await _adapter.descartarItem({ absPath: path.join(STAGING, file) });
-    delete progress.processed[file];
-    saveProgress(progress);
-    res.json({ descartado: true, file });
+        if (_destroyCloudinary && item.cloudinary_id) {
+            await _destroyCloudinary(item.cloudinary_id).catch(() => {});
+        }
+        await removerItem(chave);
+        res.json({ descartado: true, file: chave });
+    } catch (e) {
+        console.error('[catalogador] POST /descartar:', e.message);
+        res.status(500).json({ error: 'Erro ao descartar item.' });
+    }
 });
 
 // DELETE /api/catalogador/progress
-router.delete('/progress', (_, res) => {
+// Reset do lote inteiro. Itens já aplicados a um produto NÃO têm o asset
+// da Cloudinary apagado — a foto está em uso por um produto real agora,
+// apagar quebraria a imagem dele. Só limpa o que nunca virou produto.
+router.delete('/progress', async (_, res) => {
     if (state.running) return res.status(409).json({ error: 'Pare o processamento antes de resetar.' });
     try {
-        if (fs.existsSync(PROG_FILE)) fs.unlinkSync(PROG_FILE);
-        // Limpa staging
-        for (const f of fs.readdirSync(STAGING)) {
-            fs.unlinkSync(path.join(STAGING, f));
+        await ensureSchema();
+        const { rows } = await _pool.query(`SELECT cloudinary_id FROM catalogador_itens WHERE aplicado = false`);
+        if (_destroyCloudinary) {
+            await Promise.all(rows.map(r => _destroyCloudinary(r.cloudinary_id).catch(() => {})));
         }
+        await _pool.query(`DELETE FROM catalogador_itens`);
         res.json({ reset: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+        console.error('[catalogador] DELETE /progress:', e.message);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // GET /api/catalogador/export/csv
-router.get('/export/csv', (_, res) => {
-    const p    = loadProgress();
-    const q    = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
-    const rows = [
-        'arquivo_original,banda,arquivo_sugerido,processado_em',
-        ...Object.entries(p.processed).map(([k, v]) =>
-            [q(k), q(v.band), q(v.outputFile), q(v.processedAt)].join(','))
-    ];
-    res.setHeader('Content-Type',        'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="catalogador-tripvisuals.csv"');
-    res.send('\uFEFF' + rows.join('\r\n'));
+router.get('/export/csv', async (_, res) => {
+    try {
+        const { processed } = await listarItens();
+        const q    = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+        const rows = [
+            'arquivo_original,banda,arquivo_sugerido,processado_em',
+            ...Object.entries(processed).map(([k, v]) =>
+                [q(k), q(v.band), q(v.outputFile), q(v.processedAt)].join(','))
+        ];
+        res.setHeader('Content-Type',        'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="catalogador-tripvisuals.csv"');
+        res.send('\uFEFF' + rows.join('\r\n'));
+    } catch (e) {
+        console.error('[catalogador] GET /export/csv:', e.message);
+        res.status(500).json({ error: 'Erro ao exportar CSV.' });
+    }
 });
 
 // GET /api/catalogador/events — SSE
 // O requireAuth do mount verifica o cookie vztoken antes de chegar aqui.
 // EventSource envia cookies same-origin automaticamente.
-router.get('/events', (req, res) => {
+router.get('/events', async (req, res) => {
     res.setHeader('Content-Type',      'text/event-stream');
     res.setHeader('Cache-Control',     'no-cache');
     res.setHeader('Connection',        'keep-alive');
@@ -467,12 +577,17 @@ router.get('/events', (req, res) => {
 
     const send = d => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch (_) {} };
 
-    const snap = loadProgress();
+    let done = 0;
+    try {
+        const { processed } = await listarItens();
+        done = Object.keys(processed).length;
+    } catch (_) { /* segue com done=0, não derruba a conexão SSE por isso */ }
+
     send({
         type:    'connected',
         running: state.running,
         paused:  state.paused,
-        done:    Object.keys(snap.processed).length,
+        done,
         hasKey:  !!process.env.GROQ_API_KEY,
     });
 
@@ -494,7 +609,11 @@ router.use((err, req, res, next) => {
     res.status(err.status || 500).json({ error: err.message || 'Erro interno' });
 });
 
-router.setPool = function (p) { _pool = p; };
+router.setPool = function (p) { _pool = p; ensureSchema().catch(() => {}); };
 router.setAdapter = function (a) { _adapter = a; };
+router.setCloudinary = function ({ upload, destroy }) {
+    _uploadToCloudinary = upload;
+    _destroyCloudinary  = destroy;
+};
 
 module.exports = router;

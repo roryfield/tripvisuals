@@ -550,9 +550,12 @@ const catalogadorLimiter = rateLimit({
 const catalogadorRouter = require('./catalogador-router');
 const { criarAdapter }  = require('./tripvisuals-adapter');
 catalogadorRouter.setPool(pool); // reaproveita o pool já existente, não abre outro
+catalogadorRouter.setCloudinary({
+    upload:  uploadToCloudinary,
+    destroy: publicId => cloudinary.uploader.destroy(publicId),
+});
 catalogadorRouter.setAdapter(criarAdapter({
-    pool, uploadToCloudinary, cloudTransform, TRANSFORM_PRODUCT, detectImageType,
-    registrarEvento,
+    pool, cloudTransform, TRANSFORM_PRODUCT, registrarEvento,
 }));
 app.use('/api/catalogador', requireAuth, catalogadorLimiter, catalogadorRouter);
 
@@ -789,17 +792,78 @@ app.patch('/api/produtos/bulk-campo', requireAuth, writeLimiter, async (req, res
                 [safeIds]);
         }
 
-        await registrarEvento(pool, {
+        const eventoId = await registrarEvento(pool, {
             modulo:     'produtos',
             tipo:       'edicao_em_massa',
             resumo:     `Campo "${campo}" alterado para "${valorFinal}" em ${safeIds.length} produto(s).`,
             detalhes:   { campo, valorNovo: valorFinal, ids: safeIds, valoresAnteriores: antes.rows },
         });
 
-        res.json({ success: true, affected: safeIds.length });
+        res.json({ success: true, affected: safeIds.length, eventoId });
     } catch (e) {
         console.error('PATCH bulk-campo:', e.message);
         res.status(500).json({ error: 'Erro na operação em lote.' });
+    }
+});
+
+// ── DESFAZER EDIÇÃO EM MASSA ──────────────────────────────────
+// "Inteligente": só reverte produtos cujo valor atual ainda é o mesmo que
+// a edição em massa definiu. Se alguém editou manualmente um produto
+// específico depois da edição em massa, esse produto é pulado — desfazer
+// não pode sobrescrever uma mudança mais nova sem avisar.
+app.post('/api/produtos/bulk-campo/desfazer/:eventoId', requireAuth, writeLimiter, async (req, res) => {
+    const eventoId = parseInt(req.params.eventoId, 10);
+    if (!Number.isInteger(eventoId)) return res.status(400).json({ error: 'ID de evento inválido.' });
+
+    try {
+        const evRes = await pool.query(`SELECT * FROM system_events WHERE id = $1`, [eventoId]);
+        const evento = evRes.rows[0];
+        if (!evento || evento.tipo !== 'edicao_em_massa') {
+            return res.status(404).json({ error: 'Evento de edição em massa não encontrado.' });
+        }
+        const detalhes = evento.detalhes || {};
+        if (detalhes.desfeito) {
+            return res.status(409).json({ error: 'Essa edição em massa já foi desfeita antes.' });
+        }
+        const { campo, valorNovo, valoresAnteriores } = detalhes;
+        if (!BULK_CAMPOS_PERMITIDOS.includes(campo) || !Array.isArray(valoresAnteriores)) {
+            return res.status(400).json({ error: 'Evento sem dados suficientes para desfazer.' });
+        }
+
+        let revertidos = 0, ignorados = 0;
+        for (const { id, valor_anterior } of valoresAnteriores) {
+            const atualRes = await pool.query(`SELECT ${campo} AS valor_atual FROM produtos WHERE id = $1`, [id]);
+            const valorAtual = atualRes.rows[0]?.valor_atual;
+            if (valorAtual === undefined) { ignorados++; continue; } // produto foi removido depois
+            if (valorAtual !== valorNovo) { ignorados++; continue; } // já foi editado de novo, não mexe
+            await pool.query(`UPDATE produtos SET ${campo} = $1 WHERE id = $2`, [valor_anterior, id]);
+            revertidos++;
+        }
+
+        if (revertidos > 0 && (campo === 'tipo' || campo === 'genero')) {
+            const idsRevertidos = valoresAnteriores.map(v => v.id);
+            await pool.query(
+                `UPDATE produtos SET busca_tsv = to_tsvector('portuguese',
+                    COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,''))
+                 WHERE id = ANY($1::int[])`,
+                [idsRevertidos]);
+        }
+
+        await pool.query(
+            `UPDATE system_events SET detalhes = detalhes || '{"desfeito": true}'::jsonb WHERE id = $1`,
+            [eventoId]);
+
+        await registrarEvento(pool, {
+            modulo:     'produtos',
+            tipo:       'edicao_em_massa_desfeita',
+            resumo:     `Edição em massa de "${campo}" desfeita: ${revertidos} produto(s) revertido(s), ${ignorados} ignorado(s) (já tinham mudado de novo).`,
+            detalhes:   { eventoOriginalId: eventoId, campo, revertidos, ignorados },
+        });
+
+        res.json({ success: true, revertidos, ignorados });
+    } catch (e) {
+        console.error('POST bulk-campo/desfazer:', e.message);
+        res.status(500).json({ error: 'Erro ao desfazer edição em massa.' });
     }
 });
 
