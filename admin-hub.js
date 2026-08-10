@@ -186,7 +186,7 @@
             } catch (err) {
                 btn.disabled = false;
                 btn.textContent = 'desfazer';
-                alert(err.message || 'Erro ao desfazer edição em massa.');
+                mostrarToast(err.message || 'Erro ao desfazer edição em massa.', true);
             }
         });
     }
