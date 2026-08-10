@@ -231,6 +231,8 @@
 
     // ── INIT ─────────────────────────────────────────────────────
     function init() {
+        initFreteConfig();
+
         // Filter chips
         document.querySelectorAll('.status-filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
@@ -313,6 +315,72 @@
                 } catch (_) { mostrarToast('Erro ao exportar.', true); }
             });
         }
+    }
+
+    // [VZ] Fase 7 — painel de frete por região
+    function initFreteConfig() {
+        const lista = document.getElementById('freteConfigLista');
+        const ufEl = document.getElementById('freteUf');
+        const valorEl = document.getElementById('freteValor');
+        const prazoEl = document.getElementById('fretePrazo');
+        const btnSalvar = document.getElementById('btnSalvarFrete');
+        if (!lista || !btnSalvar) return;
+
+        async function carregarFrete() {
+            try {
+                const res = await fetch('/api/frete/regioes', { credentials: 'include' });
+                if (!res.ok) throw new Error();
+                const regioes = await res.json();
+                if (!regioes.length) {
+                    lista.innerHTML = '<p class="frete-config-vazio">Nenhuma região configurada ainda. O frete de todo estado continua sendo combinado pelo WhatsApp até você adicionar um valor aqui.</p>';
+                    return;
+                }
+                lista.innerHTML = regioes.map(r =>
+                    '<div class="frete-config-item">' +
+                        '<span class="frete-config-uf">' + esc(r.uf) + '</span>' +
+                        '<span>R$ ' + Number(r.valor).toFixed(2) + '</span>' +
+                        '<span>' + r.prazo_dias + ' dias</span>' +
+                        '<button type="button" class="frete-config-remover" data-uf="' + esc(r.uf) + '" aria-label="Remover ' + esc(r.uf) + '">remover</button>' +
+                    '</div>'
+                ).join('');
+            } catch (_) {
+                lista.innerHTML = '<p class="frete-config-vazio">Erro ao carregar as regiões configuradas.</p>';
+            }
+        }
+
+        btnSalvar.addEventListener('click', async () => {
+            const uf = ufEl.value;
+            const valor = parseFloat(valorEl.value);
+            const prazoDias = parseInt(prazoEl.value, 10);
+            if (!uf) { mostrarToast('Escolha um estado.', true); return; }
+            if (!Number.isFinite(valor) || valor < 0) { mostrarToast('Valor de frete inválido.', true); return; }
+            if (!Number.isInteger(prazoDias) || prazoDias < 1) { mostrarToast('Prazo inválido.', true); return; }
+            try {
+                const res = await fetch('/api/frete/regioes/' + uf, {
+                    method: 'PUT', credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ valor, prazoDias }),
+                });
+                if (!res.ok) throw new Error();
+                mostrarToast('Frete de ' + uf + ' salvo.');
+                ufEl.value = ''; valorEl.value = ''; prazoEl.value = '';
+                carregarFrete();
+            } catch (_) { mostrarToast('Erro ao salvar frete.', true); }
+        });
+
+        lista.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.frete-config-remover');
+            if (!btn) return;
+            const uf = btn.dataset.uf;
+            if (!confirm('Remover o frete configurado para ' + uf + '? Esse estado volta a ser combinado pelo WhatsApp.')) return;
+            try {
+                const res = await fetch('/api/frete/regioes/' + uf, { method: 'DELETE', credentials: 'include' });
+                if (!res.ok) throw new Error();
+                carregarFrete();
+            } catch (_) { mostrarToast('Erro ao remover.', true); }
+        });
+
+        carregarFrete();
     }
 
     if (document.readyState === 'loading') {

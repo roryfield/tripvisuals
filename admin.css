@@ -2702,3 +2702,69 @@ kbd {
 }
 .btn-desfazer-evento:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
 .btn-desfazer-evento:disabled { opacity: 0.5; cursor: wait; }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 7 — painel de frete por região (admin-pedidos.html)
+═══════════════════════════════════════════════════════ */
+.frete-config-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 20px;
+    margin-bottom: 20px;
+}
+.frete-config-panel summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    color: var(--text);
+}
+.frete-config-panel summary:hover { color: var(--cyan); }
+.frete-config-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+}
+.frete-config-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.frete-config-form select,
+.frete-config-form input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    padding: 8px 10px;
+}
+.frete-config-form input { width: 130px; }
+.frete-config-lista { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
+.frete-config-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+.frete-config-uf { font-weight: 700; width: 32px; }
+.frete-config-item span:not(.frete-config-uf) { color: var(--text-muted); }
+.frete-config-remover {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+.frete-config-remover:hover { color: var(--danger); border-color: var(--danger); }
+.frete-config-vazio { font-size: 0.82rem; color: var(--text-muted); padding-bottom: 12px; }
