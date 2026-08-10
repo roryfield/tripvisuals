@@ -139,6 +139,35 @@ html[data-init] body { visibility: visible !important; }
             border-radius: 3px;
             box-shadow: 3px 3px 0 #ff2d8a;
         }
+        /* Minimalista — hairline vertical, sem cor */
+        .theme-thumb-minimalista { background: #0a0a0a; }
+        .theme-thumb-minimalista::before {
+            content: ''; position: absolute;
+            top: 22px; left: 22%; right: 22%; height: 1px;
+            background: #333;
+        }
+        .theme-thumb-minimalista::after {
+            content: ''; position: absolute;
+            top: 42px; left: 22%; right: 22%; height: 1px;
+            background: #333;
+            box-shadow: 0 22px 0 #333;
+        }
+        /* Clean — grid 2×2 de cards com aresta ciano */
+        .theme-thumb-clean { background: #101314; }
+        .theme-thumb-clean::before {
+            content: ''; position: absolute;
+            top: 20px; left: 24px; width: 26px; height: 26px;
+            border-radius: 6px; background: #1b2023; border: 1px solid #00e5ff;
+            box-shadow: 34px 0 0 -1px #1b2023, 34px 0 0 0 #2a3033,
+                        0 32px 0 -1px #1b2023, 0 32px 0 0 #2a3033,
+                        34px 32px 0 -1px #1b2023, 34px 32px 0 0 #2a3033;
+        }
+        /* Dark — letra grande, editorial */
+        .theme-thumb-dark { background: #000000; display: flex; align-items: center; justify-content: center; }
+        .theme-thumb-dark::before {
+            content: 'Aa'; font-family: Georgia, serif; font-weight: 700;
+            font-size: 2.4rem; color: #fff; position: static; transform: none; background: none; box-shadow: none;
+        }
         .theme-body {
             padding: 12px 14px;
             display: flex; justify-content: space-between; align-items: center; gap: 10px;
@@ -583,3 +612,32 @@ html[data-init] body { visibility: visible !important; }
     padding: 2px 8px;
     border-radius: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 5 — Aparência: abas Vitrine / Marca
+═══════════════════════════════════════════════════════ */
+.aparencia-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 20px 0 28px;
+    border-bottom: 1px solid var(--border);
+}
+.aparencia-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.aparencia-tab-btn:hover { color: var(--text); }
+.aparencia-tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* [VZ] Fase 10 — substituem style inline (violava o CSP style-src) */
+.sobre-link-hint { margin-bottom: 16px; }
+.sobre-link-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.sobre-link-ver-ao-vivo { font-size: 0.8rem; }

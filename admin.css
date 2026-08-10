@@ -2768,3 +2768,37 @@ kbd {
 }
 .frete-config-remover:hover { color: var(--danger); border-color: var(--danger); }
 .frete-config-vazio { font-size: 0.82rem; color: var(--text-muted); padding-bottom: 12px; }
+
+/* ═══════════════════════════════════════════════════════
+   FASE 8 — conferência de comprovante (admin-pedidos.html)
+═══════════════════════════════════════════════════════ */
+.comprovante-field {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 4px;
+}
+.comprovante-field input[type="file"] {
+    display: block;
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+.comprovante-resultado {
+    font-size: 0.82rem;
+    min-height: 18px;
+    margin: 8px 0;
+}
+.comprovante-resultado.ok      { color: var(--success); }
+.comprovante-resultado.alerta  { color: #e0a82e; }
+.comprovante-resultado.erro    { color: var(--danger); }
+.comprovante-confirmar { margin-top: 4px; }
+
+/* [VZ] Fase 10 — substituem style inline em admin-catalogador.html (violava o CSP style-src) */
+.cat-pbar-fill { width: 0; }
+.cat-log-actions { padding: 8px 16px; }

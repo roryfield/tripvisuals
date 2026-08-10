@@ -166,6 +166,24 @@
             if (pedido?.cep) consultarCep(pedido.cep, cepInfo);
             else cepInfo.textContent = '';
         }
+
+        // [VZ] Fase 8 — comprovante só faz sentido num pedido que já existe
+        const comprovanteField = document.getElementById('comprovanteField');
+        const comprovanteResultado = document.getElementById('comprovanteResultado');
+        const btnConfirmarPagamento = document.getElementById('btnConfirmarPagamento');
+        const fComprovante = document.getElementById('fComprovante');
+        if (comprovanteField) comprovanteField.hidden = !pedido;
+        if (comprovanteResultado) {
+            if (pedido?.payment_status === 'pago') {
+                comprovanteResultado.textContent = '✓ Pagamento já confirmado.';
+                comprovanteResultado.className = 'comprovante-resultado ok';
+            } else {
+                comprovanteResultado.textContent = '';
+                comprovanteResultado.className = 'comprovante-resultado';
+            }
+        }
+        if (btnConfirmarPagamento) btnConfirmarPagamento.hidden = true;
+        if (fComprovante) fComprovante.value = '';
     }
 
     async function consultarCep(cepValue, cepInfo) {
@@ -232,6 +250,7 @@
     // ── INIT ─────────────────────────────────────────────────────
     function init() {
         initFreteConfig();
+        initComprovantePagamento();
 
         // Filter chips
         document.querySelectorAll('.status-filter-chip').forEach(chip => {
@@ -381,6 +400,82 @@
         });
 
         carregarFrete();
+    }
+
+    // [VZ] Fase 8 — conferência de comprovante assistida por IA
+    function initComprovantePagamento() {
+        const btnAnalisar = document.getElementById('btnAnalisarComprovante');
+        const btnConfirmar = document.getElementById('btnConfirmarPagamento');
+        const resultadoEl = document.getElementById('comprovanteResultado');
+        const fComprovante = document.getElementById('fComprovante');
+        if (!btnAnalisar || !resultadoEl || !fComprovante) return;
+
+        btnAnalisar.addEventListener('click', async () => {
+            if (!editingId) return;
+            const file = fComprovante.files[0];
+            if (!file) { mostrarToast('Escolha uma imagem do comprovante primeiro.', true); return; }
+
+            btnAnalisar.disabled = true;
+            resultadoEl.className = 'comprovante-resultado';
+            resultadoEl.textContent = 'Analisando comprovante…';
+            if (btnConfirmar) btnConfirmar.hidden = true;
+
+            try {
+                const form = new FormData();
+                form.append('comprovante', file);
+                const res = await fetch('/api/pedidos/' + editingId + '/comprovante', {
+                    method: 'POST', credentials: 'include', body: form,
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || 'Erro ao analisar.');
+
+                if (d.naoEComprovante) {
+                    resultadoEl.textContent = '⚠ Essa imagem não parece um comprovante de pagamento. Confira o arquivo.';
+                    resultadoEl.className = 'comprovante-resultado alerta';
+                } else if (d.valor == null) {
+                    resultadoEl.textContent = '⚠ Não consegui ler o valor nessa imagem. Confira manualmente e confirme se estiver certo.';
+                    resultadoEl.className = 'comprovante-resultado alerta';
+                    if (btnConfirmar) btnConfirmar.hidden = false;
+                } else if (d.confere) {
+                    resultadoEl.textContent = '✓ Valor confere: R$ ' + d.valor.toFixed(2) +
+                        (d.nomePagador ? ', pago por ' + d.nomePagador : '') +
+                        (d.dataHora ? ' em ' + d.dataHora : '') + '.';
+                    resultadoEl.className = 'comprovante-resultado ok';
+                    if (btnConfirmar) btnConfirmar.hidden = false;
+                } else {
+                    resultadoEl.textContent = '⚠ Valor lido (R$ ' + d.valor.toFixed(2) + ') diferente do esperado (R$ ' + d.valorEsperado.toFixed(2) + '). Confira antes de confirmar.';
+                    resultadoEl.className = 'comprovante-resultado alerta';
+                    if (btnConfirmar) btnConfirmar.hidden = false;
+                }
+            } catch (err) {
+                resultadoEl.textContent = '✗ ' + (err.message || 'Erro ao analisar comprovante.');
+                resultadoEl.className = 'comprovante-resultado erro';
+            } finally {
+                btnAnalisar.disabled = false;
+            }
+        });
+
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener('click', async () => {
+                if (!editingId) return;
+                if (!confirm('Confirmar que o pagamento deste pedido foi recebido? O status vai avançar pra "Confirmado".')) return;
+                btnConfirmar.disabled = true;
+                try {
+                    const res = await fetch('/api/pedidos/' + editingId + '/confirmar-pagamento', {
+                        method: 'POST', credentials: 'include',
+                    });
+                    if (!res.ok) throw new Error();
+                    mostrarToast('Pagamento confirmado!');
+                    resultadoEl.textContent = '✓ Pagamento confirmado.';
+                    resultadoEl.className = 'comprovante-resultado ok';
+                    btnConfirmar.hidden = true;
+                    carregar();
+                } catch (_) {
+                    mostrarToast('Erro ao confirmar pagamento.', true);
+                    btnConfirmar.disabled = false;
+                }
+            });
+        }
     }
 
     if (document.readyState === 'loading') {

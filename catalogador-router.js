@@ -550,7 +550,14 @@ router.delete('/progress', async (_, res) => {
 router.get('/export/csv', async (_, res) => {
     try {
         const { processed } = await listarItens();
-        const q    = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+        // [VZ] Fase 10 — arquivo_original vem do nome do arquivo enviado,
+        // então pode ser adversarial; mesma proteção contra injeção de
+        // fórmula usada no export de pedidos.
+        const csvSafe = v => {
+            const s = String(v ?? '');
+            return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+        };
+        const q    = s => `"${csvSafe(s).replace(/"/g, '""')}"`;
         const rows = [
             'arquivo_original,banda,arquivo_sugerido,processado_em',
             ...Object.entries(processed).map(([k, v]) =>

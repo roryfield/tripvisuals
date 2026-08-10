@@ -7,6 +7,7 @@ process.chdir(__dirname);
 
 const path        = require('path');
 const crypto      = require('crypto');
+const bcrypt      = require('bcryptjs');
 const express     = require('express');
 const compression = require('compression');
 const multer      = require('multer');
@@ -16,6 +17,8 @@ const cloudinary = require('cloudinary').v2;
 const asaas      = require('./asaas');
 const { registrarEvento, listarEventos } = require('./eventos');
 const frete      = require('./frete');
+const { lerComprovante } = require('./comprovante-ia');
+const { validarCpfCnpj } = require('./documentos');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -36,15 +39,17 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Constant-time string compare (prevents login timing attacks) ──
+// [VZ] Fase 10 — a versão anterior tinha um branch de tamanho: quando os
+// buffers tinham comprimento diferente, retornava logo, e esse próprio
+// atalho já era um sinal de tempo que dava pra medir de fora (confirma ou
+// descarta o tamanho da senha real antes mesmo de comparar o conteúdo).
+// A correção: hashear os dois lados com SHA-256 antes de comparar. Hash
+// tem tamanho fixo sempre, então o branch de tamanho desaparece, não tem
+// mais nada pra vazar por tempo.
 function timingSafeStringCompare(a, b) {
-    const ba = Buffer.from(String(a || ''));
-    const bb = Buffer.from(String(b || ''));
-    if (ba.length !== bb.length) {
-        // Still do a comparison of equal-length buffers to keep timing flat.
-        crypto.timingSafeEqual(bb, bb);
-        return false;
-    }
-    return crypto.timingSafeEqual(ba, bb);
+    const ha = crypto.createHash('sha256').update(String(a ?? '')).digest();
+    const hb = crypto.createHash('sha256').update(String(b ?? '')).digest();
+    return crypto.timingSafeEqual(ha, hb);
 }
 
 // ── ENV VALIDATION ─────────────────────────────────────────────
@@ -52,13 +57,23 @@ const REQUIRED_ENV = [
     'DATABASE_URL',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET',
-    'ADMIN_PASSWORD'
+    'CLOUDINARY_API_SECRET'
 ];
 const missing = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missing.length) {
     console.error('❌ Variáveis de ambiente obrigatórias faltando:', missing.join(', '));
     process.exit(1);
+}
+// [VZ] Fase 10 — ADMIN_PASSWORD_HASH (bcrypt) é o caminho correto.
+// ADMIN_PASSWORD em texto plano continua aceito, só pra não quebrar
+// ambientes já no ar, mas gera aviso todo boot até migrar. Ver
+// SEGURANCA.md pra gerar o hash a partir da senha atual.
+if (!process.env.ADMIN_PASSWORD_HASH && !process.env.ADMIN_PASSWORD) {
+    console.error('❌ Defina ADMIN_PASSWORD_HASH (recomendado) ou ADMIN_PASSWORD nas variáveis de ambiente.');
+    process.exit(1);
+}
+if (!process.env.ADMIN_PASSWORD_HASH && process.env.ADMIN_PASSWORD) {
+    console.warn('⚠️  Usando ADMIN_PASSWORD em texto plano. Migre para ADMIN_PASSWORD_HASH quando puder — ver SEGURANCA.md.');
 }
 
 const app      = express();
@@ -163,6 +178,13 @@ async function initDB() {
     await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pix_copia_cola TEXT DEFAULT ''`);
     await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS pix_expira_em TIMESTAMPTZ`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_asaas_payment ON pedidos (asaas_payment_id) WHERE asaas_payment_id != ''`);
+
+    // [VZ] Fase 8 — conferência de comprovante assistida por IA. Caminho
+    // paralelo ao pagamento_status='pago' que o webhook da Asaas já usa:
+    // aqui quem decide é a dona da loja, a IA só ajuda a conferir.
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS comprovante_url TEXT DEFAULT ''`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS comprovante_valor_detectado NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS comprovante_analisado_em TIMESTAMPTZ`);
 
     // [VZ] Webhook log — every Asaas notification is recorded here BEFORE
     // processing, so a payment confirmation is never silently lost even if
@@ -613,7 +635,17 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     const { senha } = req.body || {};
     if (typeof senha !== 'string' || !senha)
         return res.status(400).json({ success: false, message: 'Senha obrigatória.' });
-    if (timingSafeStringCompare(senha, process.env.ADMIN_PASSWORD)) {
+
+    let ok = false;
+    if (process.env.ADMIN_PASSWORD_HASH) {
+        // bcrypt.compare já é internamente resistente a timing attack —
+        // não precisa (e não deve) envolver timingSafeStringCompare aqui.
+        ok = await bcrypt.compare(senha, process.env.ADMIN_PASSWORD_HASH).catch(() => false);
+    } else if (process.env.ADMIN_PASSWORD) {
+        ok = timingSafeStringCompare(senha, process.env.ADMIN_PASSWORD);
+    }
+
+    if (ok) {
         const token = crypto.randomBytes(32).toString('hex');
         try {
             await dbCreateSession(token);
@@ -1000,13 +1032,22 @@ app.get('/api/pedidos/export', requireAuth, exportLimiter, async (req, res) => {
         const r = await pool.query('SELECT * FROM pedidos ORDER BY criado_em DESC');
         const rows = r.rows;
         if (rows.length === 0) return res.status(200).send('Nenhum pedido.');
+        // [VZ] Fase 10 — neutraliza injeção de fórmula: campo de texto livre
+        // (nome, notas) que comece com =, +, -, @ ou tab/CR é interpretado
+        // como fórmula por Excel/Sheets ao abrir o CSV, o que pode rodar
+        // comando ou vazar dado. Um apóstrofo na frente força "texto puro",
+        // sem mudar o que a pessoa vê na célula.
+        const csvSafe = v => {
+            const s = String(v ?? '');
+            return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+        };
         const header = 'ID,Produto,Valor,Tamanho,Cliente,WhatsApp,Notas,Status,Data\n';
         const csv = header + rows.map(p =>
-            [p.id, '"'+String(p.produto_nome||'').replace(/"/g,'""')+'"',
+            [p.id, '"'+csvSafe(p.produto_nome).replace(/"/g,'""')+'"',
              p.valor || '', p.tamanho || '',
-             '"'+String(p.cliente_nome||'').replace(/"/g,'""')+'"',
-             p.cliente_whatsapp || '',
-             '"'+String(p.notas||'').replace(/"/g,'""')+'"',
+             '"'+csvSafe(p.cliente_nome).replace(/"/g,'""')+'"',
+             '"'+csvSafe(p.cliente_whatsapp).replace(/"/g,'""')+'"',
+             '"'+csvSafe(p.notas).replace(/"/g,'""')+'"',
              p.status,
              new Date(p.criado_em).toISOString().slice(0,10)
             ].join(',')
@@ -1142,6 +1183,83 @@ app.delete('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
     }
 });
 
+// ── CONFERÊNCIA DE COMPROVANTE ASSISTIDA POR IA (Fase 8) ──────
+// Caminho pensado especificamente pra quando o CNPJ ainda não libera o
+// gateway automático: a loja recebe PIX na chave pessoal dela do jeito
+// que já faz hoje, anexa o print aqui, e a IA só ajuda a conferir o
+// valor — quem confirma o pagamento continua sendo sempre a pessoa, num
+// clique à parte, nunca automático.
+app.post('/api/pedidos/:id/comprovante', requireAuth, writeLimiter, upload.single('comprovante'), async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+
+    try {
+        const pedidoRes = await pool.query('SELECT valor FROM pedidos WHERE id = $1', [id]);
+        if (!pedidoRes.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        const valorEsperado = Number(pedidoRes.rows[0].valor);
+
+        const tipo = detectImageType(req.file.buffer);
+        if (!tipo) return res.status(400).json({ error: 'Arquivo não é uma imagem válida (JPG, PNG ou WebP).' });
+
+        const leitura = await lerComprovante({
+            buffer:     req.file.buffer,
+            mimeType:   'image/' + tipo,
+            groqApiKey: process.env.GROQ_API_KEY,
+            model:      process.env.CATALOGADOR_MODEL,
+        });
+
+        const baseName = 'comprovante_pedido_' + id + '_' + Date.now();
+        const enviado = await uploadToCloudinary(req.file.buffer, baseName, 'tripvisuals/comprovantes');
+
+        await pool.query(
+            `UPDATE pedidos SET comprovante_url = $1, comprovante_valor_detectado = $2, comprovante_analisado_em = NOW()
+             WHERE id = $3`,
+            [enviado.url, leitura.valor, id]
+        );
+
+        const confere = leitura.valor != null && Math.abs(leitura.valor - valorEsperado) < 0.01;
+
+        await registrarEvento(pool, {
+            modulo:     'pedidos',
+            tipo:       'comprovante_analisado',
+            severidade: leitura.naoEComprovante || leitura.erroLeitura ? 'erro' : (confere ? 'sucesso' : 'info'),
+            resumo:     `Comprovante do pedido #${id} analisado: ${leitura.valor != null ? 'R$ ' + leitura.valor.toFixed(2) + ' lido' : 'valor não identificado'}, esperado R$ ${valorEsperado.toFixed(2)}.`,
+            detalhes:   { pedidoId: id, ...leitura, valorEsperado, confere },
+        });
+
+        res.json({ ...leitura, valorEsperado, confere, comprovanteUrl: enviado.url });
+    } catch (err) {
+        console.error('POST /comprovante:', err.message);
+        res.status(err.status || 500).json({ error: err.message || 'Erro ao analisar comprovante.' });
+    }
+});
+
+// Confirmar pagamento é sempre um ato manual e separado da leitura da IA,
+// de propósito — a leitura só embasa a decisão, nunca decide sozinha.
+app.post('/api/pedidos/:id/confirmar-pagamento', requireAuth, writeLimiter, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    try {
+        const r = await pool.query(
+            `UPDATE pedidos SET payment_status = 'pago', status = 'confirmado' WHERE id = $1 RETURNING id`,
+            [id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+
+        await registrarEvento(pool, {
+            modulo:   'pedidos',
+            tipo:     'pagamento_confirmado_manual',
+            resumo:   `Pagamento do pedido #${id} confirmado manualmente após conferência de comprovante.`,
+            detalhes: { pedidoId: id },
+        });
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('POST /confirmar-pagamento:', e.message);
+        res.status(500).json({ error: 'Erro ao confirmar pagamento.' });
+    }
+});
+
 // ════════════════════════════════════════════════════════════
 // [VZ] CHECKOUT AUTOMÁTICO (PIX via Asaas)
 //
@@ -1187,7 +1305,7 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
     if (!TAMANHOS_VALIDOS.includes(tamanho))
         return res.status(400).json({ error: 'Selecione um tamanho válido.' });
     const cpfDigits = String(cpfCnpj || '').replace(/\D/g, '');
-    if (cpfDigits.length !== 11 && cpfDigits.length !== 14)
+    if (!validarCpfCnpj(cpfDigits))
         return res.status(400).json({ error: 'CPF/CNPJ inválido.' });
 
     // [VZ SECURITY] The price is NEVER taken from the request body — a client
