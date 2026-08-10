@@ -1042,8 +1042,25 @@ html[data-init] body { visibility: visible !important; }
         }
 
         .produto-card-body { padding: 16px; }
-        .produto-fields    { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-        .field-group       { display: flex; flex-direction: column; gap: 4px; }
+        .produto-fields    { display: flex; flex-flow: row wrap; gap: 8px; margin-bottom: 14px; }
+        .field-group       { display: flex; flex-direction: column; gap: 4px; flex: 1 1 100%; }
+        /* [VZ] Fase 11 — nome e preço continuam ocupando a linha toda,
+           são a identidade do produto, o que mais importa ver primeiro. */
+        .field-primary { flex: 1 1 100%; }
+        /* Classificação (cor/tipo/gênero/banda) agrupada em pares, menos
+           proeminente que nome/preço, mais compacta que ocupar a linha
+           toda uma de cada vez. */
+        .field-classificacao-label {
+            flex: 1 1 100%;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted, #888);
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+        .field-compact { flex: 1 1 calc(50% - 4px); }
+        .field-compact .field-label { opacity: 0.75; }
         .field-label {
             font-size: 10px;
             text-transform: uppercase;
@@ -2089,8 +2106,9 @@ input[list="coresList"]:focus {
 .btn-duplicar-item:hover { border-color: var(--purple); color: var(--purple); }
 
 /* ── Description textarea in card ───────────────────────── */
-.field-full { grid-column: 1 / -1; }
-.field-stats { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+.field-full { flex: 1 1 100%; }
+.field-stats { flex: 1 1 100%; display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+.field-stats .stat-cliques { font-size: 0.72rem; color: var(--text-muted, #888); opacity: 0.8; }
 .stat-cliques { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.5px; }
 
 /* ── CEP info ───────────────────────────────────────────── */
@@ -2132,53 +2150,6 @@ input[list="coresList"]:focus {
     width: 16px; height: 16px;
     accent-color: var(--cyan);
     cursor: pointer;
-}
-
-.bulk-bar {
-    position: fixed;
-    bottom: 80px; left: 50%; transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(10,10,10,0.95);
-    border: 1px solid var(--cyan);
-    border-radius: 8px;
-    padding: 12px 20px;
-    z-index: 800;
-    box-shadow: 0 8px 32px rgba(0,229,255,0.15);
-    animation: bulk-bar-in 0.25s ease both;
-}
-@keyframes bulk-bar-in {
-    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-.bulk-count {
-    font-size: 0.8rem;
-    color: var(--cyan);
-    font-weight: 600;
-    white-space: nowrap;
-}
-.bulk-btn {
-    background: transparent;
-    border: 1px solid #333;
-    color: var(--text-muted);
-    padding: 7px 14px;
-    border-radius: 4px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-.bulk-btn-hide:hover  { border-color: var(--danger); color: var(--danger); }
-.bulk-btn-show:hover  { border-color: var(--cyan); color: var(--cyan); }
-.bulk-btn-cancel:hover { border-color: #666; color: #ccc; }
-
-@media (max-width: 600px) {
-    .bulk-bar { left: 10px; right: 10px; transform: none; flex-wrap: wrap; justify-content: center; bottom: 76px; }
-    .bulk-btn { padding: 9px 12px; min-height: 44px; }
 }
 
 .melhor-envio-note { margin-top: 4px !important; }
@@ -2528,7 +2499,13 @@ kbd {
 .bulk-bar {
     position: fixed;
     left: 50%;
-    bottom: 24px;
+    /* [VZ] antes era um número fixo (24px) que não descontava a altura
+       real da barra de navegação inferior — quando esta barra crescia
+       (2 campos + 4 botões, sem caber numa linha só), a parte de baixo
+       ficava escondida atrás da navegação. Agora sempre soma a altura
+       de verdade da nav (--nav-h) mais uma folga, então nunca colide,
+       não importa quantas linhas a barra precisar. */
+    bottom: calc(var(--nav-h) + 16px);
     transform: translateX(-50%);
     display: flex;
     align-items: center;
@@ -2539,7 +2516,7 @@ kbd {
     border-radius: 10px;
     padding: 10px 16px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    z-index: 50;
+    z-index: 850;
     max-width: calc(100vw - 32px);
 }
 .bulk-count {
@@ -2578,7 +2555,7 @@ kbd {
 .bulk-campo-valor { width: 140px; }
 
 @media (max-width: 600px) {
-    .bulk-bar { bottom: 8px; padding: 8px 10px; gap: 6px; }
+    .bulk-bar { bottom: calc(var(--nav-h) + 8px); padding: 8px 10px; gap: 6px; }
     .bulk-campo-valor { width: 100px; }
 }
 
@@ -2802,3 +2779,24 @@ kbd {
 /* [VZ] Fase 10 — substituem style inline em admin-catalogador.html (violava o CSP style-src) */
 .cat-pbar-fill { width: 0; }
 .cat-log-actions { padding: 8px 16px; }
+
+/* [VZ] Fase 11 — atividade recente recolhível, reduz o comprimento
+   padrão do Hub sem esconder a ação de exportar. */
+.atividade-details summary.atividade-toggle {
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--cyan);
+    padding: 4px 0 2px;
+    list-style: none;
+}
+.atividade-details summary.atividade-toggle::-webkit-details-marker { display: none; }
+.atividade-details summary.atividade-toggle::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.15s;
+}
+.atividade-details[open] summary.atividade-toggle::before { transform: rotate(90deg); }
+.atividade-details[open] summary.atividade-toggle { margin-bottom: 8px; }
