@@ -21,16 +21,19 @@
 async function registrarEvento(pool, { modulo, tipo, severidade = 'info', resumo, detalhes = null }) {
     if (!modulo || !tipo || !resumo) {
         console.error('⚠️  registrarEvento chamado sem modulo/tipo/resumo — evento descartado.');
-        return;
+        return null;
     }
     try {
-        await pool.query(
+        const r = await pool.query(
             `INSERT INTO system_events (modulo, tipo, severidade, resumo, detalhes)
-             VALUES ($1, $2, $3, $4, $5)`,
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id`,
             [modulo, tipo, severidade, resumo, detalhes ? JSON.stringify(detalhes) : null]
         );
+        return r.rows[0]?.id ?? null;
     } catch (err) {
         console.error('⚠️  Falha ao registrar evento em system_events:', err.message);
+        return null;
     }
 }
 

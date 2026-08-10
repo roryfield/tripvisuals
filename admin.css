@@ -2686,3 +2686,19 @@ kbd {
 
 /* [VZ] Fase 5 — aviso de redirecionamento em admin-layout.html (legado) */
 .redirect-notice { text-align: center; padding: 40px 20px; }
+
+/* [VZ] Fase 6 — botão de desfazer na atividade recente do dashboard */
+.btn-desfazer-evento {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.btn-desfazer-evento:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
+.btn-desfazer-evento:disabled { opacity: 0.5; cursor: wait; }

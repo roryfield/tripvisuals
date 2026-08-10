@@ -148,15 +148,47 @@
             }
             el.innerHTML = eventos.map(function (ev) {
                 const icone = SEVERIDADE_ICON[ev.severidade] || 'ℹ️';
+                const podeDesfazer = ev.tipo === 'edicao_em_massa' && !(ev.detalhes && ev.detalhes.desfeito);
+                const botao = podeDesfazer
+                    ? '<button type="button" class="btn-desfazer-evento" data-evento-id="' + ev.id + '">desfazer</button>'
+                    : '';
                 return '<div class="atividade-item atividade-' + ev.severidade + '">' +
                            '<span class="atividade-icone" aria-hidden="true">' + icone + '</span>' +
                            '<span class="atividade-texto">' + escapeHTMLLocal(ev.resumo) + '</span>' +
+                           botao +
                            '<span class="atividade-quando">' + formatarQuando(ev.criado_em) + '</span>' +
                        '</div>';
             }).join('');
         } catch (_) {
             el.innerHTML = '<span class="atividade-vazia">Erro ao carregar atividade recente.</span>';
         }
+    }
+
+    // [VZ] Fase 6 — desfazer edição em massa direto da atividade recente.
+    // Delegação de evento no container, não um listener por botão (a lista
+    // é recriada inteira a cada carregamento).
+    const atividadeListaEl = document.getElementById('atividadeLista');
+    if (atividadeListaEl) {
+        atividadeListaEl.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-desfazer-evento');
+            if (!btn) return;
+            const eventoId = btn.dataset.eventoId;
+            if (!confirm('Desfazer essa edição em massa? Produtos que já foram alterados de novo depois não serão mexidos.')) return;
+            btn.disabled = true;
+            btn.textContent = 'desfazendo…';
+            try {
+                const res = await fetch('/api/produtos/bulk-campo/desfazer/' + eventoId, {
+                    method: 'POST', credentials: 'include',
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Erro ao desfazer.');
+                await loadAtividadeRecente();
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'desfazer';
+                alert(err.message || 'Erro ao desfazer edição em massa.');
+            }
+        });
     }
 
     // Escape local — admin-hub não tinha esse helper antes (Fase 4).
