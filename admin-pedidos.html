@@ -122,7 +122,6 @@
                         <label class="field-label" for="fCep">CEP do cliente</label>
                         <input type="text" id="fCep" placeholder="01001-000" maxlength="9" inputmode="numeric">
                         <p class="cep-info" id="cepInfo"></p>
-                        <p class="help-note melhor-envio-note">Cálculo automático de frete via Melhor Envio disponível em breve.</p>
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="fStatus">Status</label>
@@ -139,6 +138,17 @@
                     <label class="field-label" for="fNotas">Observações</label>
                     <textarea id="fNotas" rows="2" placeholder="CEP, referência, etc..." maxlength="1000"></textarea>
                 </div>
+
+                <!-- [VZ] Fase 8 — só aparece editando um pedido já existente
+                     (precisa de um ID pra anexar o comprovante a). -->
+                <div class="field-group comprovante-field" id="comprovanteField" hidden>
+                    <label class="field-label" for="fComprovante">Comprovante de pagamento (PIX recebido na chave pessoal)</label>
+                    <input type="file" id="fComprovante" accept="image/jpeg,image/png,image/webp">
+                    <button type="button" class="btn-secondary" id="btnAnalisarComprovante">Analisar comprovante</button>
+                    <p class="comprovante-resultado" id="comprovanteResultado" aria-live="polite"></p>
+                    <button type="button" class="btn-launch comprovante-confirmar" id="btnConfirmarPagamento" hidden>Confirmar pagamento recebido</button>
+                </div>
+
                 <div class="pedido-form-actions">
                     <button type="button" class="btn-secondary" id="btnCancelarForm">Cancelar</button>
                     <button type="submit" class="btn-launch">Salvar</button>
