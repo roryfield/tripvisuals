@@ -39,10 +39,10 @@
             <a href="#tour">Tour rápido</a>
             <a href="#hub">Hub</a>
             <a href="#upload">Upload</a>
+            <a href="#catalogador">Catalogador IA</a>
             <a href="#produtos">Produtos</a>
             <a href="#pedidos">Pedidos</a>
-            <a href="#layout">Layout</a>
-            <a href="#landing">Landing Page</a>
+            <a href="#aparencia">Aparência</a>
             <a href="#sobre">Página Sobre</a>
             <a href="#catalogo">Catálogo público</a>
             <a href="#tarefas">Tarefas comuns</a>
@@ -59,12 +59,12 @@
                 <h2>TOUR RÁPIDO</h2>
                 <div class="sub">O que cada aba faz</div>
                 <ul>
-                    <li><strong>Hub</strong> · ponto de partida. Mostra estatísticas da loja: produtos ativos, pedidos em aberto, layout e tema. Atalhos rápidos pra cada área.</li>
-                    <li><strong>Upload</strong> · onde você adiciona produtos novos ao catálogo em lote, com nomenclatura automática a partir do nome do arquivo.</li>
-                    <li><strong>Produtos</strong> · onde você edita, oculta ou remove produtos já cadastrados. Tem busca e alternância de visualização.</li>
-                    <li><strong>Pedidos</strong> · controle de vendas. Registre cada pedido do WhatsApp, acompanhe o status de produção e envio.</li>
-                    <li><strong>Layout</strong> · escolhe como o catálogo aparece pra quem visita: grade de 3, 2 colunas, ou lista.</li>
-                    <li><strong>Landing</strong> · controla a página inicial: estilo visual, logo, fundo, textos e links de contato.</li>
+                    <li><strong>Hub</strong> · ponto de partida. Mostra estatísticas da loja, a produção de pedidos por estágio e a atividade recente do sistema.</li>
+                    <li><strong>Upload</strong> · onde você adiciona produtos um por um ou em pequenos lotes manuais, com nomenclatura automática a partir do nome do arquivo.</li>
+                    <li><strong>Catalogador IA</strong> · leitura automática de estampa por inteligência artificial, pra quando tem uma pasta grande de fotos sem nome identificável. A IA identifica a banda, você revisa, e aplica direto no catálogo.</li>
+                    <li><strong>Produtos</strong> · onde você edita, filtra, oculta ou remove produtos já cadastrados, individualmente ou em massa.</li>
+                    <li><strong>Pedidos</strong> · controle de vendas, cálculo de frete por região, e conferência de comprovante de pagamento assistida por IA.</li>
+                    <li><strong>Aparência</strong> · duas abas: Vitrine (como o catálogo aparece: grade, duo ou lista) e Marca (estilo visual, logo, fundo, textos e links da landing).</li>
                     <li><strong>Catálogo</strong> · abre a página pública em outra aba pra você conferir como o cliente vê.</li>
                     <li><strong>Manual</strong> · você tá aqui.</li>
                 </ul>
@@ -78,16 +78,20 @@
                 <h2>HUB</h2>
                 <div class="sub">Painel principal</div>
                 <p>
-                    O Hub é a primeira tela que você vê ao entrar. Mostra quatro estatísticas no topo:
+                    O Hub é a primeira tela que você vê ao entrar. Mostra cinco estatísticas no topo:
                 </p>
                 <ul>
                     <li><strong>Produtos ativos</strong> — total de produtos visíveis no catálogo público.</li>
                     <li><strong>Pedidos em aberto</strong> — pedidos que ainda não foram marcados como entregues.</li>
                     <li><strong>Layout padrão</strong> — grade que os clientes veem ao acessar o catálogo.</li>
                     <li><strong>Tema atual</strong> — claro ou escuro para o painel admin.</li>
+                    <li><strong>Pagamentos automáticos</strong> — mostra "Inativo" enquanto o CNPJ da loja não estiver liberado. Nada muda no fluxo de venda até isso acontecer.</li>
                 </ul>
                 <p>
-                    Abaixo dos cards de estatísticas há atalhos diretos pra cada seção. Clique em qualquer um pra ir direto.
+                    Logo abaixo, dois painéis novos: <strong>Produção de pedidos</strong> mostra quantos pedidos estão em cada estágio (Novo, Confirmado, Em produção, Enviado, Entregue), e <strong>Atividade recente</strong> lista as últimas ações do sistema — sessões do Catalogador, edições em massa de produtos, erros. Uma edição em massa recente pode ser desfeita direto ali, com o botão <strong>desfazer</strong> ao lado dela.
+                </p>
+                <p>
+                    Mais abaixo há atalhos diretos pra cada seção. Clique em qualquer um pra ir direto.
                 </p>
             </section>
 
@@ -129,6 +133,36 @@
 
                 <h3>Pré-visualização hover</h3>
                 <p>Passe o mouse em cima da miniatura na tabela para ver a imagem em tamanho maior antes de enviar.</p>
+                <div class="callout">
+                    Se você tem uma pasta grande de fotos sem nome identificável (do WhatsApp, câmera, etc.), veja a seção <strong>Catalogador IA</strong> abaixo — ele identifica a banda pra você em vez de renomear cada arquivo na mão.
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════ CATALOGADOR -->
+            <section class="help-section" id="catalogador">
+                <h2>CATALOGADOR IA</h2>
+                <div class="sub">Leitura automática de estampa por inteligência artificial</div>
+                <p>
+                    Pensado pra quando você tem um lote grande de fotos sem nome identificável, tipo uma pasta antiga de fotos de estampa que foi acumulando. Em vez de abrir uma por uma pra descobrir a banda, a IA olha a imagem e sugere.
+                </p>
+
+                <h3>Como usar</h3>
+                <ol>
+                    <li>Vá na aba <strong>Catalogador IA</strong>.</li>
+                    <li>Suba as imagens (arraste ou clique pra selecionar).</li>
+                    <li>Clique em <strong>Iniciar</strong>. A leitura roda sozinha, uma imagem de cada vez, com uma barra de progresso.</li>
+                    <li>Revise a tabela de resultados. Se a IA errou o nome da banda, corrija o campo e clique em <strong>salvar</strong> naquela linha antes de aplicar.</li>
+                    <li>Pra cada item, clique em <strong>aplicar</strong> pra criar o produto no catálogo, ou <strong>descartar</strong> pra remover o item sem criar nada.</li>
+                </ol>
+
+                <div class="callout warn">
+                    Todo produto criado pelo Catalogador nasce <strong>oculto</strong> e com <strong>preço R$ 0,00</strong>, de propósito — ninguém consegue comprar antes de você revisar. Vá em Produtos, preencha o preço de verdade e clique em Mostrar quando estiver pronto.
+                </div>
+
+                <h3>Pausar, retomar e parar</h3>
+                <p>
+                    Enquanto uma leitura está rodando, dá pra pausar e retomar sem perder o progresso, ou parar de vez. Itens já lidos continuam disponíveis pra aplicar mesmo depois de parar.
+                </p>
             </section>
 
             <!-- ═══════════════════════════════════════════════ PRODUTOS -->
@@ -136,9 +170,9 @@
                 <h2>PRODUTOS</h2>
                 <div class="sub">Editar, ocultar, remover</div>
 
-                <h3>Buscar um produto</h3>
+                <h3>Buscar e filtrar um produto</h3>
                 <p>
-                    No topo da página há uma barra de busca. Digite qualquer parte do nome ou da cor do produto para filtrar a lista instantaneamente.
+                    No topo da página há uma barra de busca — digite qualquer parte do nome ou da cor pra filtrar a lista instantaneamente. Logo abaixo, três filtros combináveis: <strong>tipo</strong>, <strong>banda</strong> e <strong>gênero</strong>. Dá pra usar busca e filtros ao mesmo tempo. <strong>Limpar filtros</strong> volta a mostrar tudo.
                 </p>
 
                 <h3>Modos de visualização</h3>
@@ -155,9 +189,17 @@
                 <h3>Editar um produto</h3>
                 <ol>
                     <li>Encontre o produto na grade ou lista.</li>
-                    <li>Edite os campos diretamente no card: nome, preço, cor, tipo e gênero.</li>
+                    <li>Edite os campos diretamente no card: nome, preço, cor, tipo, gênero e banda.</li>
                     <li>Clique em <strong>Salvar</strong>. Aparece uma notificação quando grava.</li>
                 </ol>
+
+                <h3>Editar vários produtos de uma vez</h3>
+                <p>
+                    Marque o checkbox no canto de cada produto que quiser alterar junto. Uma barra aparece fixa na parte de baixo da tela com a opção de ocultar, mostrar, ou definir gênero, tipo ou banda pra todos os marcados de uma vez. O sistema sempre pede confirmação antes, mostrando quantos produtos serão afetados.
+                </p>
+                <div class="callout">
+                    Se você mudar de ideia depois de uma edição em massa, vá no Hub, em Atividade Recente, e clique em <strong>desfazer</strong> ao lado daquela ação. Produtos que você já editou individualmente depois da edição em massa não são mexidos — o desfazer é inteligente o suficiente pra não sobrescrever uma mudança mais recente.
+                </div>
 
                 <h3>Ocultar e mostrar um produto</h3>
                 <p>
@@ -179,6 +221,7 @@
                     <li><strong>Cor</strong> — dropdown com 28 cores disponíveis. Aceita qualquer valor digitado.</li>
                     <li><strong>Tipo</strong> — Camiseta, Regata, Babylook ou Moletom. Usado nos filtros do catálogo.</li>
                     <li><strong>Gênero</strong> — Rock, Metal, Grunge, etc. Usado nos filtros do catálogo. Opcional.</li>
+                    <li><strong>Banda</strong> — nome da banda separado do nome de exibição. Preenchido automaticamente quando o produto vem do Catalogador IA; em produtos manuais, é opcional, mas ajuda o filtro por banda a funcionar melhor.</li>
                 </ul>
             </section>
 
@@ -220,15 +263,31 @@
                 <p>
                     Clique em <strong>Editar</strong> no card para alterar qualquer campo. <strong>Remover</strong> apaga o pedido permanentemente — use com cuidado.
                 </p>
+
+                <h3>Configurar frete por região</h3>
+                <p>
+                    No topo da página, o painel <strong>Configurar frete por região</strong> deixa você definir um valor e prazo por estado. Uma vez cadastrado, o próprio catálogo público calcula o frete pro cliente a partir do CEP dele, e a mensagem que chega no seu WhatsApp já vem com o valor estimado. Estado sem valor cadastrado continua sendo combinado na conversa, como já era antes.
+                </p>
+
+                <h3>Conferir comprovante de pagamento</h3>
+                <p>
+                    Como o pagamento automático por PIX ainda depende do CNPJ, a forma de agilizar a conferência é: você continua recebendo o PIX na sua chave pessoal, do jeito que já faz hoje, e anexa o print do comprovante no pedido, editando ele. A IA lê o valor e mostra se bate com o valor do pedido.
+                </p>
+                <div class="callout warn">
+                    A IA só confere e avisa — ela nunca confirma o pagamento sozinha, mesmo quando o valor bate certinho. O clique em <strong>Confirmar pagamento recebido</strong> é sempre seu.
+                </div>
             </section>
 
-            <!-- ═══════════════════════════════════════════════ LAYOUT -->
-            <section class="help-section" id="layout">
-                <h2>LAYOUT</h2>
-                <div class="sub">Como o catálogo aparece</div>
+            <!-- ═══════════════════════════════════════════════ APARÊNCIA -->
+            <section class="help-section" id="aparencia">
+                <h2>APARÊNCIA</h2>
+                <div class="sub">Vitrine do catálogo e marca da landing, numa tela só</div>
                 <p>
-                    Na aba <strong>Layout</strong> você escolhe a grade padrão do catálogo para todos os visitantes:
+                    A aba <strong>Aparência</strong> tem duas abas internas, sem precisar trocar de página: <strong>Vitrine</strong> e <strong>Marca</strong>.
                 </p>
+
+                <h3>Aba Vitrine — como o catálogo aparece</h3>
+                <p>Escolhe a grade padrão do catálogo para todos os visitantes:</p>
                 <ul>
                     <li><strong>Grade (3 colunas)</strong> — mais produtos visíveis de uma vez. Bom para acervo grande.</li>
                     <li><strong>Duo (2 colunas)</strong> — equilíbrio entre visualização e detalhe.</li>
@@ -240,27 +299,26 @@
                 <div class="callout">
                     Cada cliente pode mudar o layout por conta própria usando os botões no cabeçalho do catálogo. A sua configuração aqui define o padrão para quem entra pela primeira vez.
                 </div>
-            </section>
 
-            <!-- ═══════════════════════════════════════════════ LANDING -->
-            <section class="help-section" id="landing">
-                <h2>LANDING PAGE</h2>
-                <div class="sub">A página inicial da loja</div>
+                <h3>Aba Marca — Estilo</h3>
                 <p>
-                    A landing é a primeira tela quando alguém abre <code>tripvisuals.shop</code>. Na aba <strong>Landing</strong> você controla 5 blocos:
+                    Escolhe o visual entre cinco estilos, cada um com identidade própria, não uma variação de cor do mesmo layout:
+                </p>
+                <ul>
+                    <li><strong>VDZN Signature</strong> — a assinatura visual original da loja, com botões neon.</li>
+                    <li><strong>Retro</strong> — psicodélico, efeito CRT, clima anos 70.</li>
+                    <li><strong>Minimalista</strong> — preto e branco, lista com regra fina, sem enfeite.</li>
+                    <li><strong>Clean</strong> — cards em grade, tipografia geométrica, ciano sobre grafite.</li>
+                    <li><strong>Dark</strong> — editorial, serifado, contraste total, sem cor nenhuma.</li>
+                </ul>
+                <p>Clique num card para ativar — a mudança é imediata. Para ver o resultado, clique em <strong>Ver ao vivo ↗</strong> no canto superior direito.</p>
+
+                <h3>Aba Marca — Arsenal</h3>
+                <p>
+                    Coleção de logos prontas do sistema. Clique numa logo pra ver ela ampliada numa prévia, com os botões <strong>Usar esta logo</strong> e <strong>Cancelar</strong> — a troca só acontece de verdade quando você clica em Usar esta logo.
                 </p>
 
-                <h3>1 · Estilo</h3>
-                <p>
-                    Escolhe o visual entre os temas disponíveis (Clássico, Retro). Clique num card para ativar — a mudança é imediata. Para ver o resultado, clique em <strong>Ver ao vivo ↗</strong> no canto superior direito.
-                </p>
-
-                <h3>2 · Arsenal</h3>
-                <p>
-                    Coleção de logos prontas do sistema (Logo 1, Logo 2, Logo 3, Logo 4). Clique em qualquer uma para ativar.
-                </p>
-
-                <h3>3 · Logo personalizada</h3>
+                <h3>Aba Marca — Logo personalizada</h3>
                 <p>
                     Use sua própria imagem em vez das do arsenal. PNG, JPG ou WEBP, quadrada de preferência, até 10 MB. Arraste para a área de upload ou clique em <strong>Escolher</strong>, depois <strong>Enviar</strong>. <strong>Reverter ao padrão</strong> volta para a logo original.
                 </p>
@@ -268,19 +326,14 @@
                     Logos <strong>quadradas</strong> ficam melhores — a landing recorta em círculo. Imagens retangulares têm parte cortada.
                 </div>
 
-                <h3>4 · Ambiente</h3>
+                <h3>Aba Marca — Cores e Fundo</h3>
                 <p>
-                    Controla o fundo da landing:
+                    Personalize além dos 5 estilos prontos, se quiser: cor de fundo (seletor de cor ou hex, ex.: <code>#0A0510</code>) e imagem de fundo. Uma prévia acima dos controles mostra o resultado combinado em tempo real, antes mesmo de salvar. <strong>Limpar cor</strong> e <strong>Remover imagem</strong> voltam ao padrão do estilo escolhido.
                 </p>
-                <ul>
-                    <li><strong>Cor de fundo</strong> — seletor de cor ou hex (ex.: <code>#0A0510</code>). <strong>Limpar cor</strong> volta ao padrão do estilo.</li>
-                    <li><strong>Imagem de fundo</strong> — sobe uma imagem que aparece atrás de tudo. <strong>Remover imagem</strong> apaga.</li>
-                </ul>
-                <p>Os dois podem ser usados juntos. Se nenhum estiver definido, usa o fundo padrão do estilo escolhido.</p>
 
-                <h3>5 · Conteúdo</h3>
+                <h3>Aba Marca — Conteúdo</h3>
                 <p>
-                    Campos de texto editáveis da landing: título, tagline, links do Instagram e WhatsApp, além da seção "Como funciona". <strong>Salva automaticamente ao sair do campo</strong>. Aparece <em>✓ salvo</em> quando grava.
+                    Campos de texto editáveis da landing: título, tagline, links do Instagram e WhatsApp, além da seção "Como funciona". <strong>Salva automaticamente ao sair do campo</strong>. Aparece <em>✓ salvo</em> quando grava. Os links de Instagram e WhatsApp são validados — um link em formato errado não salva, e o sistema mostra o formato esperado.
                 </p>
                 <p>
                     A seção "Sobre" virou uma página própria — veja <a href="#sobre">Página Sobre</a> abaixo.
@@ -340,12 +393,12 @@
 
                 <h3>Layout alternável</h3>
                 <p>
-                    Os três botões no cabeçalho permitem que o cliente escolha entre grade de 3, 2 ou 1 coluna. A escolha é salva no navegador de cada um. O padrão inicial é o que você configurou na aba Layout.
+                    Os três botões no cabeçalho permitem que o cliente escolha entre grade de 3, 2 ou 1 coluna. A escolha é salva no navegador de cada um. O padrão inicial é o que você configurou em Aparência, na aba Vitrine.
                 </p>
 
                 <h3>Modal de detalhes do produto</h3>
                 <p>
-                    Clicar em qualquer produto abre uma janela com a foto em tamanho maior, tipo, cor, preço e descrição. O botão verde <strong>Adquirir via WhatsApp</strong> manda uma mensagem pré-preenchida com o nome do produto e o preço base diretamente para o WhatsApp da loja.
+                    Clicar em qualquer produto abre uma janela com a foto em tamanho maior, tipo, cor, preço e descrição. Um campo de CEP calcula o frete estimado na hora, se você já tiver cadastrado a região dele em Pedidos. O botão verde <strong>Adquirir via WhatsApp</strong> manda uma mensagem pré-preenchida com o nome do produto, o preço base e o frete calculado (quando houver) diretamente para o WhatsApp da loja.
                 </p>
 
                 <h3>Confirmação após compra</h3>
@@ -370,34 +423,46 @@
                 <div class="sub">Passo a passo das ações mais frequentes</div>
 
                 <h3>Trocar a logo da landing</h3>
-                <p>Landing → seção Arsenal (para logos prontas) ou Logo personalizada (para a sua imagem). Clique na logo desejada ou suba o arquivo e clique em Enviar.</p>
+                <p>Aparência → Marca → seção Arsenal (para logos prontas) ou Logo personalizada (para a sua imagem). Clique na logo pra pré-visualizar, depois em Usar esta logo pra confirmar, ou suba o arquivo e clique em Enviar.</p>
 
                 <h3>Mudar a cor de fundo da landing</h3>
-                <p>Landing → Ambiente → Cor de fundo. Use o seletor ou digite o código hex direto.</p>
+                <p>Aparência → Marca → Cores e Fundo. Use o seletor ou digite o código hex direto — a prévia acima atualiza em tempo real.</p>
 
                 <h3>Colocar uma imagem de fundo</h3>
-                <p>Landing → Ambiente → Imagem de fundo. Suba a imagem, clique em Enviar. Para remover, clique em Remover imagem.</p>
+                <p>Aparência → Marca → Cores e Fundo. Suba a imagem, clique em Enviar. Para remover, clique em Remover imagem.</p>
 
                 <h3>Mudar o título ou tagline</h3>
-                <p>Landing → Conteúdo → campos Título e Tagline. Edite e clique fora — salva sozinho.</p>
+                <p>Aparência → Marca → Conteúdo → campos Título e Tagline. Edite e clique fora — salva sozinho.</p>
 
                 <h3>Atualizar o link do WhatsApp</h3>
-                <p>Landing → Conteúdo → campo "Link do WhatsApp". Cole o link completo no formato <code>https://wa.me/5511999999999</code>.</p>
+                <p>Aparência → Marca → Conteúdo → campo "Link do WhatsApp". Cole o link completo no formato <code>https://wa.me/5511999999999</code>.</p>
 
                 <h3>Editar a história ou missão da loja</h3>
                 <p>Hub → Página Sobre (ou <code>/admin-sobre.html</code>). Edite o campo de história ou missão e clique fora — salva sozinho. Veja o resultado em <code>/sobre</code>.</p>
 
                 <h3>Adicionar um produto novo</h3>
-                <p>Upload → configure o lote → arraste as imagens → revise → Lançar.</p>
+                <p>Upload → configure o lote → arraste as imagens → revise → Lançar. Pra uma pasta grande sem nome identificável, use o Catalogador IA em vez disso.</p>
+
+                <h3>Processar uma pasta grande de fotos sem nome</h3>
+                <p>Catalogador IA → suba as imagens → Iniciar → revise a banda identificada → aplicar item por item. Cada produto criado nasce oculto e com preço R$ 0,00, ajuste em Produtos antes de mostrar.</p>
 
                 <h3>Ocultar um produto temporariamente</h3>
                 <p>Produtos → encontre o produto → clique em Ocultar. O produto sai do catálogo público mas fica cadastrado aqui para você reativar quando quiser.</p>
 
+                <h3>Alterar vários produtos de uma vez</h3>
+                <p>Produtos → marque o checkbox dos produtos desejados → escolha o campo e o valor na barra que aparece embaixo → confirme. Pra desfazer, Hub → Atividade Recente → desfazer.</p>
+
                 <h3>Registrar uma venda do WhatsApp</h3>
                 <p>Pedidos → Novo Pedido → preencha produto, cliente, tamanho e valor → Salvar → avance o status conforme a produção progride.</p>
 
+                <h3>Cadastrar o frete de um estado</h3>
+                <p>Pedidos → Configurar frete por região → escolha o estado, valor e prazo → Salvar.</p>
+
+                <h3>Conferir se um PIX recebido bate com o pedido</h3>
+                <p>Pedidos → edite o pedido → anexe o print do comprovante → Analisar comprovante → confira o resultado → Confirmar pagamento recebido, se estiver tudo certo.</p>
+
                 <h3>Mudar o estilo visual da loja</h3>
-                <p>Layout (para grade do catálogo) ou Landing → Estilo (para tema visual da página inicial).</p>
+                <p>Aparência → aba Vitrine (para grade do catálogo) ou aba Marca → Estilo (para o tema visual da página inicial, entre 5 opções).</p>
 
                 <h3>Sair do painel (logout)</h3>
                 <p>Clique no botão Sair em qualquer página. A sessão expira automaticamente após 8 horas de inatividade, ou use <strong>Segurança → Encerrar todas as sessões</strong> para sair de todos os dispositivos de uma vez.</p>
@@ -441,6 +506,21 @@
                 <h3>"Os filtros do catálogo não aparecem"</h3>
                 <p>
                     Os filtros aparecem automaticamente baseados nos dados dos produtos. O filtro de tipo aparece quando há produtos cadastrados. O filtro de gênero aparece quando pelo menos um produto tem o campo Gênero preenchido. Preencha o gênero nos produtos pelo painel de Produtos.
+                </p>
+
+                <h3>"O Catalogador não identificou a banda direito"</h3>
+                <p>
+                    É esperado de vez em quando, principalmente em estampas estilizadas ou pouco conhecidas. Corrija o campo de texto na tabela de resultado e clique em <strong>salvar</strong> naquela linha antes de aplicar. Aplicar não é bloqueado por isso — o nome errado só vira produto se você não corrigir antes.
+                </p>
+
+                <h3>"A conferência de comprovante não reconheceu a imagem"</h3>
+                <p>
+                    Confirme que o print realmente mostra o comprovante de pagamento, bem legível, sem corte. Se a leitura não bater ou não identificar o valor, você ainda pode conferir manualmente e confirmar o pagamento mesmo assim — a IA ajuda, mas nunca é obrigatória pra você confirmar.
+                </p>
+
+                <h3>"O frete não aparece pro cliente no catálogo"</h3>
+                <p>
+                    Confirme se o estado do CEP dele está cadastrado em Pedidos → Configurar frete por região. Sem cadastro pra aquele estado, o catálogo mostra a mensagem padrão de frete combinado pelo WhatsApp, o que é esperado.
                 </p>
             </section>
 
