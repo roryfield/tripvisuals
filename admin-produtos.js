@@ -246,8 +246,8 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                 '<button type="button" class="bulk-btn bulk-btn-show">Mostrar</button>' +
                 '<span class="bulk-sep" aria-hidden="true"></span>' +
                 '<select class="bulk-campo-select" aria-label="Campo para alterar em massa">' +
-                    '<option value="genero">Gênero</option>' +
                     '<option value="tipo">Tipo</option>' +
+                    '<option value="genero">Gênero</option>' +
                     '<option value="banda">Banda</option>' +
                 '</select>' +
                 '<input type="text" class="bulk-campo-valor" placeholder="novo valor" maxlength="80">' +
