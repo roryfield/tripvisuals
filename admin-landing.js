@@ -41,8 +41,11 @@
     // rota GET '/'). Só o nome exibido mudou — renomear o slug quebraria a
     // rota dinâmica e exigiria mexer no arquivo físico também.
     const THEMES = [
-        { slug: 'classico', name: 'VDZN Signature', description: 'Assinatura visual da Voidzone. Botões neon.' },
-        { slug: 'retro',    name: 'Retro',    description: 'Psicodélico, CRT, anos 70.' }
+        { slug: 'classico',    name: 'VDZN Signature', description: 'Assinatura visual da Voidzone. Botões neon.' },
+        { slug: 'retro',       name: 'Retro',          description: 'Psicodélico, CRT, anos 70.' },
+        { slug: 'minimalista', name: 'Minimalista',    description: 'Preto e branco, hairline, sem enfeite.' },
+        { slug: 'clean',       name: 'Clean',          description: 'Cards em grid, tipografia geométrica.' },
+        { slug: 'dark',        name: 'Dark',           description: 'Editorial, serifado, contraste total.' }
     ];
     const PRESET_LOGOS = [
         { url: '/defaults/logo-estatica-escura.jpeg', name: 'Logo 1' },
@@ -783,5 +786,36 @@
             });
         });
     }
+
+    // ═════════════════════════ ABAS: VITRINE / MARCA ══════════════
+    // [VZ] Fase 5 — Layout (Vitrine) e Landing Page (Marca) viviam em
+    // páginas separadas. Aqui só trocam de painel visível; admin-layout.js
+    // continua intacto, agindo nos próprios elementos (#opt-grid-*)
+    // independente de qual aba está visível no momento.
+    (function initAparenciaTabs() {
+        const btnVitrine = $('btnTabVitrine');
+        const btnMarca   = $('btnTabMarca');
+        const painelVitrine = $('tabVitrine');
+        const painelMarca   = $('tabMarca');
+        if (!btnVitrine || !btnMarca || !painelVitrine || !painelMarca) return;
+
+        function irPara(aba) {
+            const vitrineAtiva = aba === 'vitrine';
+            painelVitrine.hidden = !vitrineAtiva;
+            painelMarca.hidden   = vitrineAtiva;
+            btnVitrine.classList.toggle('active', vitrineAtiva);
+            btnMarca.classList.toggle('active', !vitrineAtiva);
+            btnVitrine.setAttribute('aria-selected', String(vitrineAtiva));
+            btnMarca.setAttribute('aria-selected', String(!vitrineAtiva));
+            try { sessionStorage.setItem('vz-aparencia-aba', aba); } catch (_) {}
+        }
+
+        btnVitrine.addEventListener('click', () => irPara('vitrine'));
+        btnMarca.addEventListener('click', () => irPara('marca'));
+
+        let abaInicial = 'vitrine';
+        try { abaInicial = sessionStorage.getItem('vz-aparencia-aba') || 'vitrine'; } catch (_) {}
+        irPara(abaInicial);
+    })();
 
 })();
