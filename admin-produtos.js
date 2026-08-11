@@ -4,9 +4,17 @@
 
 let produtos = [];
 let bulkSelection = new Set();
-let currentView = (function(){try{return localStorage.getItem('vz-produtos-view')||'grid';}catch(_){return'grid';}}());
+let currentView = (function(){
+    var valid = ['grid', 'compact', 'gallery'];
+    try {
+        var saved = localStorage.getItem('vz-produtos-view');
+        return valid.indexOf(saved) !== -1 ? saved : 'grid';
+    } catch (_) { return 'grid'; }
+}());
 let currentFilter = '';
 let currentFilters = { tipo: '', banda: '', genero: '' };
+let currentPage = 1;
+const PRODUTOS_POR_PAGINA = 24;
 
         // XSS-safe helpers
         const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({
@@ -22,6 +30,16 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
             t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function renderPaginacaoHTML(totalPaginas, totalFiltrado, inicio, qtdNaPagina) {
+            const de = totalFiltrado === 0 ? 0 : inicio + 1;
+            const ate = inicio + qtdNaPagina;
+            return '<div class="produtos-paginacao">' +
+                '<button type="button" class="pagina-btn" data-page-action="prev" ' + (currentPage <= 1 ? 'disabled' : '') + '>← Anterior</button>' +
+                '<span class="pagina-info">' + de + '–' + ate + ' de ' + totalFiltrado + ' · página ' + currentPage + ' de ' + totalPaginas + '</span>' +
+                '<button type="button" class="pagina-btn" data-page-action="next" ' + (currentPage >= totalPaginas ? 'disabled' : '') + '>Próxima →</button>' +
+                '</div>';
         }
 
         function renderProdutos(lista) {
@@ -73,12 +91,19 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                 return;
             }
 
+            const totalPaginas = Math.max(1, Math.ceil(filtered.length / PRODUTOS_POR_PAGINA));
+            if (currentPage > totalPaginas) currentPage = totalPaginas;
+            if (currentPage < 1) currentPage = 1;
+            const inicio = (currentPage - 1) * PRODUTOS_POR_PAGINA;
+            const pageItems = filtered.slice(inicio, inicio + PRODUTOS_POR_PAGINA);
+
             const isGallery = currentView === 'gallery';
             area.innerHTML = '<div class="produtos-grid view-' + currentView + '" id="grid"></div>' +
-                (isGallery ? '<p class="gallery-hint">Mosaico visual · alterne para Grade ou Lista para editar</p>' : '');
+                (isGallery ? '<p class="gallery-hint">Mosaico visual · alterne para Grade ou Lista para editar</p>' : '') +
+                (totalPaginas > 1 ? renderPaginacaoHTML(totalPaginas, filtered.length, inicio, pageItems.length) : '');
             const grid = document.getElementById('grid');
 
-            filtered.forEach(p => {
+            pageItems.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'produto-card';
                 card.id = `card-${p.id}`;
@@ -90,7 +115,9 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                     <label class="bulk-check-wrap">
                         <input type="checkbox" class="bulk-check" data-id="${p.id}" ${bulkSelection.has(p.id) ? 'checked' : ''} aria-label="Selecionar ${escapeAttr(p.nome)}">
                     </label>
-                    <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
+                    <div class="produto-img-wrap">
+                        <img src="${escapeAttr(p.imagem_url || '')}" alt="${escapeAttr(p.nome)}">
+                    </div>
                     <div class="produto-card-body">
                         <div class="produto-fields">
                             <div class="field-group field-primary">
@@ -228,6 +255,47 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
             }
         }
 
+        // Fonte única de valores fixos por campo — reaproveita o que já
+        // existe no projeto em vez de duplicar uma segunda lista solta.
+        function valoresFixosPara(campo) {
+            if (campo === 'tipo') {
+                // Mesma lista fixa usada no editor individual (admin-produtos.js, ~linha 114-117)
+                return ['Camiseta', 'Regata', 'Babylook', 'Moletom'];
+            }
+            if (campo === 'genero') {
+                // Mesma datalist já cadastrada em admin-produtos.html (#generosList)
+                return Array.from(document.querySelectorAll('#generosList option')).map(o => o.value);
+            }
+            if (campo === 'banda') {
+                // Bandas não têm lista fixa cadastrada (catálogo aberto) — deriva
+                // dos valores já em uso nos produtos carregados, evita erro de
+                // digitação criando uma banda nova sem querer.
+                return [...new Set(produtos.map(p => (p.banda || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            }
+            return [];
+        }
+
+        function renderBulkValorControl(campo) {
+            const wrap = document.querySelector('.bulk-campo-valor-wrap');
+            if (!wrap) return;
+            const valores = valoresFixosPara(campo);
+            const options = valores.map(v => `<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+            wrap.innerHTML =
+                `<select class="bulk-campo-valor" aria-label="Novo valor">` +
+                    `<option value="">Selecione...</option>` +
+                    options +
+                    `<option value="__outro__">Outro (digitar)...</option>` +
+                `</select>` +
+                `<input type="text" class="bulk-campo-valor-outro" placeholder="novo valor" maxlength="80" hidden>`;
+            const select = wrap.querySelector('.bulk-campo-valor');
+            const outroInput = wrap.querySelector('.bulk-campo-valor-outro');
+            select.addEventListener('change', () => {
+                const isOutro = select.value === '__outro__';
+                outroInput.hidden = !isOutro;
+                if (isOutro) outroInput.focus();
+            });
+        }
+
         function renderBulkBar() {
             let bar = document.getElementById('bulkBar');
             if (bulkSelection.size === 0) {
@@ -250,7 +318,7 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                     '<option value="genero">Gênero</option>' +
                     '<option value="banda">Banda</option>' +
                 '</select>' +
-                '<input type="text" class="bulk-campo-valor" placeholder="novo valor" maxlength="80">' +
+                '<span class="bulk-campo-valor-wrap"></span>' +
                 '<button type="button" class="bulk-btn bulk-btn-campo">Aplicar a todos</button>' +
                 '<button type="button" class="bulk-btn bulk-btn-cancel">Cancelar</button>';
             bar.querySelector('.bulk-btn-hide').addEventListener('click', () => bulkAction(true));
@@ -261,16 +329,23 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                 renderBulkBar();
                 carregar();
             });
+            const campoSelect = bar.querySelector('.bulk-campo-select');
+            campoSelect.addEventListener('change', () => renderBulkValorControl(campoSelect.value));
+            renderBulkValorControl(campoSelect.value);
         }
 
         async function bulkCampoAction() {
-            const select = document.querySelector('.bulk-campo-select');
-            const input  = document.querySelector('.bulk-campo-valor');
+            const select     = document.querySelector('.bulk-campo-select');
+            const valorSelect = document.querySelector('.bulk-campo-valor');
+            const outroInput  = document.querySelector('.bulk-campo-valor-outro');
             const campo  = select ? select.value : '';
-            const valor  = input  ? input.value.trim() : '';
+            const usandoOutro = valorSelect && valorSelect.value === '__outro__';
+            const valor  = usandoOutro
+                ? (outroInput ? outroInput.value.trim() : '')
+                : (valorSelect ? valorSelect.value.trim() : '');
             const ids    = [...bulkSelection];
 
-            if (!valor) { mostrarToast('Informe o novo valor antes de aplicar.', true); return; }
+            if (!valor) { mostrarToast('Selecione ou informe o novo valor antes de aplicar.', true); return; }
             const nomeCampo = { genero: 'gênero', tipo: 'tipo', banda: 'banda' }[campo] || campo;
             if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valor}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
 
@@ -421,6 +496,17 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
 
         carregar();
 
+        // Paginação — delegação uma única vez no container persistente,
+        // já que #listaArea nunca é recriado, só seu innerHTML muda.
+        document.getElementById('listaArea').addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-page-action]');
+            if (!btn) return;
+            if (btn.dataset.pageAction === 'prev') currentPage -= 1;
+            if (btn.dataset.pageAction === 'next') currentPage += 1;
+            renderProdutos(produtos);
+            document.getElementById('listaArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
         // View toggle
         document.querySelectorAll('.view-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -444,6 +530,7 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => {
                     currentFilter = searchInput.value.trim();
+                    currentPage = 1;
                     renderProdutos(produtos);
                 }, 180);
             });
@@ -457,10 +544,11 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
         let filtroTimer;
         function aplicarFiltrosDebounced() {
             clearTimeout(filtroTimer);
-            filtroTimer = setTimeout(() => renderProdutos(produtos), 180);
+            filtroTimer = setTimeout(() => { currentPage = 1; renderProdutos(produtos); }, 180);
         }
         if (filtroTipo) filtroTipo.addEventListener('change', () => {
             currentFilters.tipo = filtroTipo.value;
+            currentPage = 1;
             renderProdutos(produtos);
         });
         if (filtroBanda) filtroBanda.addEventListener('input', () => {
@@ -474,6 +562,7 @@ let currentFilters = { tipo: '', banda: '', genero: '' };
         if (btnLimpar) btnLimpar.addEventListener('click', () => {
             currentFilters = { tipo: '', banda: '', genero: '' };
             currentFilter  = '';
+            currentPage    = 1;
             if (searchInput)  searchInput.value  = '';
             if (filtroTipo)   filtroTipo.value    = '';
             if (filtroBanda)  filtroBanda.value   = '';

@@ -2,7 +2,7 @@
 (function () {
     'use strict';
 
-const links    = document.querySelectorAll('.help-sidebar a');
+const links    = document.querySelectorAll('.help-topics .topic-chip');
     const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
 
     function activeSection() {
@@ -21,18 +21,23 @@ const links    = document.querySelectorAll('.help-sidebar a');
         lastId = id;
         links.forEach(a => a.classList.toggle('current', a.getAttribute('href') === '#' + id));
     }
-    // Safety net: hide sidebar on narrow screens even if CSS is cached from old version
-    function applySidebarVisibility() {
-        var sidebar = document.querySelector('.help-sidebar');
-        if (!sidebar) return;
-        if (window.innerWidth <= 900) {
-            sidebar.style.display = 'none';
-        } else {
-            sidebar.style.display = '';  // let CSS take over on wide screens
-        }
-    }
-    applySidebarVisibility();
-    window.addEventListener('resize', applySidebarVisibility, { passive: true });
+    // Filtro de busca: digitar filtra os chips visíveis pelo texto, sem
+    // mexer no scroll nem na seção ativa.
+    (function () {
+        var input = document.getElementById('helpTopicsSearch');
+        var empty = document.getElementById('helpTopicsEmpty');
+        if (!input) return;
+        input.addEventListener('input', function () {
+            var q = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+            links.forEach(function (a) {
+                var match = !q || a.textContent.toLowerCase().indexOf(q) !== -1;
+                a.classList.toggle('chip-hidden', !match);
+                if (match) visibleCount++;
+            });
+            if (empty) empty.hidden = visibleCount !== 0;
+        });
+    })();
 
     window.addEventListener('scroll', syncNav, { passive: true });
     syncNav();

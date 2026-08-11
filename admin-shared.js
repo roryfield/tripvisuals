@@ -109,8 +109,8 @@
                 // Strip the outer layout wrapper; extract just the section content
                 var layout = main.querySelector('.help-layout');
                 if (layout) {
-                    var sidenav = layout.querySelector('.help-sidenav');
-                    if (sidenav) sidenav.remove();
+                    var topicsBar = layout.querySelector('.help-topics-bar');
+                    if (topicsBar) topicsBar.remove();
                     target.innerHTML = layout.innerHTML;
                 } else {
                     target.innerHTML = main.innerHTML;
