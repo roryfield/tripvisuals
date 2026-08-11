@@ -33,23 +33,32 @@
 
     <div class="help-layout">
 
-        <!-- Sidebar navigation -->
-        <nav class="help-sidebar" aria-label="Seções do manual">
-            <p class="sidebar-label">Seções</p>
-            <a href="#tour">Tour rápido</a>
-            <a href="#hub">Hub</a>
-            <a href="#upload">Upload</a>
-            <a href="#catalogador">Catalogador IA</a>
-            <a href="#produtos">Produtos</a>
-            <a href="#pedidos">Pedidos</a>
-            <a href="#aparencia">Aparência</a>
-            <a href="#sobre">Página Sobre</a>
-            <a href="#catalogo">Catálogo público</a>
-            <a href="#tarefas">Tarefas comuns</a>
-            <a href="#problemas">Problemas</a>
-            <a href="#seguranca" class="nav-seguranca">Segurança</a>
-            <a href="#contato">Contato</a>
-        </nav>
+        <!-- Sticky topic navigation: chips + search, sempre visível -->
+        <div class="help-topics-bar">
+            <div class="help-topics-search-wrap">
+                <svg class="help-topics-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="helpTopicsSearch" class="help-topics-search" placeholder="Buscar seção..." autocomplete="off" aria-label="Buscar seção do manual">
+            </div>
+            <nav class="help-topics" aria-label="Seções do manual">
+                <a href="#tour" class="topic-chip">Tour rápido</a>
+                <a href="#hub" class="topic-chip">Hub</a>
+                <a href="#upload" class="topic-chip">Upload</a>
+                <a href="#catalogador" class="topic-chip">Catalogador IA</a>
+                <a href="#produtos" class="topic-chip">Produtos</a>
+                <a href="#pedidos" class="topic-chip">Pedidos</a>
+                <a href="#aparencia" class="topic-chip">Aparência</a>
+                <a href="#sobre" class="topic-chip">Página Sobre</a>
+                <a href="#catalogo" class="topic-chip">Catálogo público</a>
+                <a href="#tarefas" class="topic-chip">Tarefas comuns</a>
+                <a href="#problemas" class="topic-chip">Problemas</a>
+                <a href="#seguranca" class="topic-chip topic-chip-danger">Segurança</a>
+                <a href="#contato" class="topic-chip">Contato</a>
+            </nav>
+            <p class="help-topics-empty" id="helpTopicsEmpty" hidden>Nenhuma seção encontrada.</p>
+        </div>
 
         <!-- Help content -->
         <div class="help-content">
