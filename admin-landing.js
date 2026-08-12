@@ -813,8 +813,8 @@
         btnVitrine.addEventListener('click', () => irPara('vitrine'));
         btnMarca.addEventListener('click', () => irPara('marca'));
 
-        let abaInicial = 'vitrine';
-        try { abaInicial = sessionStorage.getItem('vz-aparencia-aba') || 'vitrine'; } catch (_) {}
+        let abaInicial = 'marca';
+        try { abaInicial = sessionStorage.getItem('vz-aparencia-aba') || 'marca'; } catch (_) {}
         irPara(abaInicial);
     })();
 
