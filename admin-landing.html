@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Visuals | Aparência</title>
+    <title>Trip Visuals | Marca &amp; Vitrine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
@@ -20,7 +20,7 @@
         <header class="page-header">
             <div>
                 <p class="page-eyebrow">Configurações</p>
-                <h2 class="page-title">APARÊNCIA</h2>
+                <h2 class="page-title">MARCA &amp; VITRINE</h2>
             </div>
             <div class="page-header-actions">
             <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
@@ -37,14 +37,14 @@
         </div><!-- /page-header-actions -->
     </header>
 
-        <!-- ═══════════════════════ ABAS: VITRINE / MARCA ═══════════════════════ -->
-        <div class="aparencia-tabs" role="tablist" aria-label="Seção de aparência">
-            <button type="button" class="aparencia-tab-btn active" id="btnTabVitrine" role="tab" aria-selected="true" aria-controls="tabVitrine">Vitrine</button>
-            <button type="button" class="aparencia-tab-btn" id="btnTabMarca" role="tab" aria-selected="false" aria-controls="tabMarca">Marca</button>
+        <!-- ═══════════════════════ ABAS: MARCA / VITRINE (Marca primeiro — é a mais usada agora que as telas se fundiram) ═══════════════════════ -->
+        <div class="aparencia-tabs" role="tablist" aria-label="Seção de marca e vitrine">
+            <button type="button" class="aparencia-tab-btn active" id="btnTabMarca" role="tab" aria-selected="true" aria-controls="tabMarca">Marca</button>
+            <button type="button" class="aparencia-tab-btn" id="btnTabVitrine" role="tab" aria-selected="false" aria-controls="tabVitrine">Vitrine</button>
         </div>
 
         <!-- ═══════════════════════ VITRINE (antigo Painel de Layout) ═══════════════════════ -->
-        <div id="tabVitrine" role="tabpanel" aria-labelledby="btnTabVitrine">
+        <div id="tabVitrine" role="tabpanel" aria-labelledby="btnTabVitrine" hidden>
             <section class="section" aria-labelledby="sec-vitrine">
                 <div class="section-header">
                     <h3 class="section-title" id="sec-vitrine">DISPOSIÇÃO DO CATÁLOGO</h3>
@@ -82,7 +82,7 @@
         </div>
 
         <!-- ═══════════════════════ MARCA (antigo Landing Page) ═══════════════════════ -->
-        <div id="tabMarca" role="tabpanel" aria-labelledby="btnTabMarca" hidden>
+        <div id="tabMarca" role="tabpanel" aria-labelledby="btnTabMarca">
 
         <!-- ═══════════════════════ ESTILO ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-estilo">
@@ -94,6 +94,7 @@
             <p class="save-status" id="themeStatus" role="status" aria-live="polite"></p>
         </section>
 
+        <div class="marca-pair-row">
         <!-- ═══════════════════════ ARSENAL ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-arsenal">
             <div class="section-header">
@@ -139,6 +140,7 @@
                 </div>
             </div>
         </section>
+        </div><!-- /marca-pair-row -->
 
         <!-- ═══════════════════════ AMBIENTE ═══════════════════════ -->
         <section class="section" aria-labelledby="sec-ambiente">
@@ -147,6 +149,8 @@
                 <span class="section-hint">Personalize além dos 5 estilos prontos, se quiser</span>
             </div>
 
+            <div class="marca-pair-row marca-pair-row-cores">
+            <div class="cores-col">
             <div class="ambiente-preview" id="ambientePreview" aria-hidden="true">
                 <span class="ambiente-preview-label">Prévia</span>
             </div>
@@ -192,7 +196,9 @@
                     </div>
                 </div>
             </div>
+            </div><!-- /cores-col -->
 
+            <div class="cores-col">
             <!-- ── BACKGROUND IMAGE ────────────────────────────────── -->
             <div class="upload-area" id="bgUploadArea">
                 <div class="upload-preview square" id="bgPreview">
@@ -231,6 +237,8 @@
                     </label>
                 </div>
             </div>
+            </div><!-- /cores-col -->
+            </div><!-- /marca-pair-row-cores -->
         </section>
 
         <!-- ═══════════════════════ CONTEÚDO ═══════════════════════ -->
@@ -241,11 +249,11 @@
             </div>
 
             <div class="content-grid">
-                <div class="field full">
+                <div class="field">
                     <label for="cf-title">Título <span class="field-status" id="st-cf-title"></span></label>
                     <input type="text" id="cf-title" data-key="landing_title" maxlength="80" placeholder="TRIP VISUALS WEAR">
                 </div>
-                <div class="field full">
+                <div class="field">
                     <label for="cf-tagline">Tagline <span class="field-status" id="st-cf-tagline"></span></label>
                     <input type="text" id="cf-tagline" data-key="landing_tagline" maxlength="80" placeholder="Fluxo Imersivo">
                 </div>
@@ -345,7 +353,7 @@
                     <line x1="8" y1="22" x2="16" y2="22"/>
                     <line x1="12" y1="18" x2="12" y2="22"/>
                 </svg>
-            Aparência
+            Marca &amp; Vitrine
         </a>
         <a href="/catalogo.html" class="nav-tab external" id="tab-catalogo" target="_blank" rel="noopener">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">

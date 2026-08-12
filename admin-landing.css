@@ -3,7 +3,7 @@
 /* ═══ admin-landing.html → extracted styles ═══ */
 html[data-init] body { visibility: visible !important; }
 
-.main { padding: 40px 32px; max-width: 1100px; margin: 0 auto; }
+.main { padding: 40px 32px; max-width: 1440px; margin: 0 auto; }
 
         /* ── SECTIONS — unified card style ───────────────── */
         .section {
@@ -262,6 +262,21 @@ html[data-init] body { visibility: visible !important; }
         .vz-btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-muted); }
         .vz-btn-ghost:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
         .vz-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── MARCA: pares de seções lado a lado no desktop ──────── */
+        .marca-pair-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .marca-pair-row-cores {
+            gap: 32px;
+        }
+        .cores-col { display: flex; flex-direction: column; }
+        @media (max-width: 900px) {
+            .marca-pair-row { grid-template-columns: 1fr; }
+        }
 
         /* ── CONTENT EDITOR ──────────────────────────────── */
         .content-grid {
@@ -614,7 +629,7 @@ html[data-init] body { visibility: visible !important; }
 }
 
 /* ═══════════════════════════════════════════════════════
-   FASE 5 — Aparência: abas Vitrine / Marca
+   FASE 5 — Marca & Vitrine: abas Marca / Vitrine
 ═══════════════════════════════════════════════════════ */
 .aparencia-tabs {
     display: flex;
