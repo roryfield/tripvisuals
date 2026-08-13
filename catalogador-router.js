@@ -118,6 +118,7 @@ const state = {
     queue:   [],
     index:   0,
     stats:   { total: 0, pending: 0, done: 0, errors: 0, startedAt: null },
+    pararPorErro: null,
 };
 
 const limiter     = new RateLimiter(25);
@@ -192,6 +193,36 @@ function getGroq() {
     return groqClient;
 }
 
+// ── Classificação de erro conhecido ─────────────────────────────────────────
+// Diferencia problema sistêmico (afeta qualquer imagem, repetir não resolve)
+// de erro pontual (só essa imagem, vale tentar de novo). Baseado nos padrões
+// já documentados em CONTINGENCIA.md.
+function classificarErro(err) {
+    const status = err.status || err.statusCode;
+    if (status === 401 || status === 403) {
+        return {
+            tipo: 'autenticacao',
+            sistemico: true,
+            mensagem: 'GROQ_API_KEY ausente, inválida ou revogada. Confira a variável no Railway antes de tentar de novo — repetir agora só vai falhar de novo em todo item.',
+        };
+    }
+    if (status === 404) {
+        return {
+            tipo: 'modelo',
+            sistemico: true,
+            mensagem: 'O modelo configurado em CATALOGADOR_MODEL pode ter sido descontinuado pela Groq. Confira o nome do modelo em console.groq.com antes de tentar de novo.',
+        };
+    }
+    if (err.message && /ENOTFOUND|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(err.message)) {
+        return {
+            tipo: 'conectividade',
+            sistemico: true,
+            mensagem: 'Falha de conexão com a Groq ou a Cloudinary. Confira se os dois serviços estão no ar antes de tentar de novo.',
+        };
+    }
+    return { tipo: 'desconhecido', sistemico: false, mensagem: err.message };
+}
+
 // ── Identificação de banda ────────────────────────────────────────────────────
 // Antes lia bytes do disco; agora busca da Cloudinary. O formato da
 // chamada pro Groq (data URI em base64) continua idêntico ao que já
@@ -249,11 +280,34 @@ async function processFile(item) {
             return;
 
         } catch (err) {
+            const classificacao = classificarErro(err);
+
             if (err.status === 429) {
                 const wait = Math.pow(2, attempt) * 15_000;
                 emit({ type: 'rateLimit', file: display, wait, attempt });
                 await sleep(wait);
-            } else if (attempt < 3) {
+                continue;
+            }
+
+            // Erro sistêmico (chave, modelo, conectividade): tentar de novo
+            // nessa mesma imagem é desperdício garantido — para na hora e
+            // sinaliza pra fila inteira parar, em vez de esperar 3 tentativas
+            // por item até alguém perceber que é sempre o mesmo problema.
+            if (classificacao.sistemico) {
+                state.stats.errors++;
+                state.pararPorErro = classificacao;
+                emit({ type: 'error', file: display, error: classificacao.mensagem });
+                if (_pool) {
+                    registrarEvento(_pool, {
+                        modulo: 'catalogador', tipo: 'erro_sistemico', severidade: 'erro',
+                        resumo: `Parada automática: ${classificacao.mensagem}`,
+                        detalhes: { tipo: classificacao.tipo, arquivo: display },
+                    });
+                }
+                return;
+            }
+
+            if (attempt < 3) {
                 await sleep(3_000 * attempt);
             } else {
                 state.stats.errors++;
@@ -266,6 +320,16 @@ async function processFile(item) {
                         resumo:     `Falha ao ler estampa "${display}" após 3 tentativas: ${err.message}`,
                         detalhes:   { arquivo: display, erro: err.message },
                     });
+                }
+                // 3+ erros acumulados sem nenhum sucesso ainda: mesmo sem
+                // classificação específica, é sinal forte de problema
+                // estrutural, não má sorte com imagens isoladas — para.
+                if (state.stats.errors >= 3 && state.stats.done === 0 && !state.pararPorErro) {
+                    state.pararPorErro = {
+                        tipo: 'desconhecido',
+                        sistemico: true,
+                        mensagem: `${state.stats.errors} erros seguidos, nenhum item identificado com sucesso. Provavelmente não é imagem ruim isolada — confira a conexão, a chave da Groq, ou o modelo configurado antes de tentar de novo.`,
+                    };
                 }
             }
         }
@@ -280,11 +344,12 @@ async function runQueue(items, concurrency) {
     state.index   = 0;
     state.queue   = items;
     state.stats   = { total: items.length, pending: items.length, done: 0, errors: 0, startedAt: Date.now() };
+    state.pararPorErro = null;
 
     emit({ type: 'started', stats: { ...state.stats } });
 
     async function worker() {
-        while (state.running) {
+        while (state.running && !state.pararPorErro) {
             while (state.paused) { await sleep(200); if (!state.running) return; }
             const idx  = state.index++;
             const item = state.queue[idx];
@@ -298,7 +363,7 @@ async function runQueue(items, concurrency) {
     await Promise.allSettled(Array.from({ length: concurrency }, worker));
 
     state.running = false;
-    emit({ type: 'complete', stats: { ...state.stats } });
+    emit({ type: 'complete', stats: { ...state.stats }, pararPorErro: state.pararPorErro });
 
     if (_pool) {
         const duracaoMs = state.stats.startedAt ? Date.now() - state.stats.startedAt : null;
@@ -332,11 +397,12 @@ router.get('/status', async (_, res) => {
     try {
         const { processed } = await listarItens();
         res.json({
-            running: state.running,
-            paused:  state.paused,
-            stats:   { ...state.stats },
-            done:    Object.keys(processed).length,
-            hasKey:  !!process.env.GROQ_API_KEY,
+            running:      state.running,
+            paused:       state.paused,
+            stats:        { ...state.stats },
+            done:         Object.keys(processed).length,
+            hasKey:       !!process.env.GROQ_API_KEY,
+            pararPorErro: state.pararPorErro,
         });
     } catch (e) {
         console.error('[catalogador] GET /status:', e.message);
@@ -526,6 +592,44 @@ router.post('/itens/:file/descartar', async (req, res) => {
     }
 });
 
+// POST /api/catalogador/forcar-parada
+// Botão de emergência: para e limpa tudo, não importa em que estado o
+// servidor ache que está. Diferente de DELETE /progress (que exige nada
+// rodando, pensado pro fluxo normal), essa rota nunca devolve 409 — é
+// exatamente pra quando o fluxo normal está travado ou incerto.
+router.post('/forcar-parada', async (_, res) => {
+    state.running      = false;
+    state.paused       = false;
+    state.pararPorErro = null;
+    state.queue        = [];
+    state.index        = 0;
+    state.stats        = { total: 0, pending: 0, done: 0, errors: 0, startedAt: null };
+    emit({ type: 'stopped' });
+
+    try {
+        await ensureSchema();
+        const { rows } = await _pool.query(`SELECT cloudinary_id FROM catalogador_itens WHERE aplicado = false`);
+        if (_destroyCloudinary) {
+            await Promise.all(rows.map(r => _destroyCloudinary(r.cloudinary_id).catch(() => {})));
+        }
+        await _pool.query(`DELETE FROM catalogador_itens`);
+        if (_pool) {
+            registrarEvento(_pool, {
+                modulo: 'catalogador', tipo: 'parada_forcada', severidade: 'aviso',
+                resumo: 'Parada forçada acionada pelo usuário — fila e progresso zerados.',
+                detalhes: { itensLimpos: rows.length },
+            });
+        }
+        res.json({ forcado: true, itensLimpos: rows.length });
+    } catch (e) {
+        console.error('[catalogador] POST /forcar-parada:', e.message);
+        // Mesmo se a limpeza do banco falhar, o estado em memória já foi
+        // zerado acima — a tela não fica mais travada, só a fila antiga
+        // pode continuar visível até uma nova tentativa de reset.
+        res.status(500).json({ error: e.message, estadoZerado: true });
+    }
+});
+
 // DELETE /api/catalogador/progress
 // Reset do lote inteiro. Itens já aplicados a um produto NÃO têm o asset
 // da Cloudinary apagado — a foto está em uso por um produto real agora,
@@ -580,6 +684,12 @@ router.get('/events', async (req, res) => {
     res.setHeader('Cache-Control',     'no-cache');
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
+
+    // Alguns proxies retêm respostas pequenas em buffer antes de repassar ao
+    // navegador. Um "enchimento" de ~2KB logo na conexão força esse buffer a
+    // esvaziar na hora, garantindo que os eventos pequenos que vêm depois não
+    // fiquem presos esperando acumular mais dados.
+    res.write(':' + ' '.repeat(2048) + '\n\n');
 
     const send = d => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch (_) {} };
 

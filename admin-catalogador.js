@@ -61,6 +61,16 @@
                     if (banner) banner.hidden = false;
                 }
 
+                if (d.pararPorErro) {
+                    var autoBanner = $('autoStopBanner');
+                    var autoMsg    = $('autoStopMsg');
+                    if (autoBanner && autoMsg && autoBanner.hidden) {
+                        autoMsg.textContent = 'Parado automaticamente: ' + d.pararPorErro.mensagem;
+                        autoBanner.hidden = false;
+                        log('\u26d4 Parada autom\u00e1tica \u2014 ' + d.pararPorErro.mensagem, 'err');
+                    }
+                }
+
                 if (!wasRunning && running) {
                     $('pbarWrap').hidden = false;
                     log('Processamento iniciado \u2014 ' + (stats.total || 0) + ' arquivo(s)', 'ok');
@@ -289,6 +299,8 @@
                 if (d.message) { log(d.message, 'dim'); return; }
                 stats = { total: d.queued, pending: d.queued, done: 0, errors: 0, startedAt: Date.now() };
                 running = true;
+                var autoBanner = $('autoStopBanner');
+                if (autoBanner) autoBanner.hidden = true;
                 $('pbarWrap').hidden = false;
                 updateButtons();
                 updateProgress();
@@ -322,7 +334,14 @@
     function resetAll() {
         if (!confirm('Resetar todo o progresso e limpar a fila de arquivos?')) return;
         fetch(API + '/progress', { method: 'DELETE', credentials: 'include' })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.json().catch(function () { return {}; }).then(function (d) {
+                        throw new Error(d.error || ('HTTP ' + r.status));
+                    });
+                }
+                return r.json();
+            })
             .then(function () {
                 results = {};
                 stats   = { total: 0, pending: 0, done: 0, errors: 0, startedAt: null };
@@ -331,7 +350,26 @@
                 updateProgress();
                 log('Progresso e fila resetados', 'warn');
             })
-            .catch(function (e) { log(e.message, 'err'); });
+            .catch(function (e) { log('Reset falhou: ' + e.message + ' — tenta "Forçar parada" se continuar travado.', 'err'); });
+    }
+
+    function forcarParada() {
+        if (!confirm('Forçar parada? Isso para tudo e limpa a fila imediatamente, não importa o estado atual.')) return;
+        fetch(API + '/forcar-parada', { method: 'POST', credentials: 'include' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                running = false; paused = false;
+                results = {};
+                stats   = { total: 0, pending: 0, done: 0, errors: 0, startedAt: null };
+                var banner = $('autoStopBanner');
+                if (banner) banner.hidden = true;
+                buildTable([]);
+                $('pbarWrap').hidden = true;
+                updateButtons();
+                updateProgress();
+                log('Parada forçada — ' + (d.itensLimpos || 0) + ' item(ns) limpo(s) da fila', 'warn');
+            })
+            .catch(function (e) { log('Forçar parada falhou: ' + e.message, 'err'); });
     }
 
     // ── Upload ────────────────────────────────────────────────────────────────
@@ -397,6 +435,7 @@
         if (t.id === 'btnPause')    { togglePause();     return; }
         if (t.id === 'btnStop')     { stopProcessing();  return; }
         if (t.id === 'btnReset')    { resetAll();        return; }
+        if (t.id === 'btnForceStop' || t.id === 'btnAutoStopReset') { forcarParada(); return; }
         if (t.id === 'btnExport')   { window.location.href = API + '/export/csv'; return; }
         if (t.id === 'btnClearLog') {
             $('log').innerHTML = '<div class="cat-log-item cat-log-dim">Log limpo.</div>';

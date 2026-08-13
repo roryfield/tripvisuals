@@ -2368,6 +2368,44 @@ kbd {
     border: 1px solid rgba(230,160,32,0.35);
     color: #e6a020;
 }
+.cat-banner-danger {
+    background: rgba(255,77,77,0.1);
+    border: 1px solid rgba(255,77,77,0.35);
+    color: var(--danger);
+}
+.cat-banner-danger span { flex: 1; }
+.cat-banner-btn {
+    flex-shrink: 0;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.cat-banner-btn:hover { opacity: 0.85; }
+
+.cat-btn-force-stop {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid rgba(255,77,77,0.4);
+    border-radius: 6px;
+    color: var(--danger);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.18s;
+}
+.cat-btn-force-stop:hover { background: rgba(255,77,77,0.12); border-color: var(--danger); }
 
 /* ── Dropzone variante catalogador ──────────────────── */
 .cat-dropzone:hover    { border-color: var(--purple); }
