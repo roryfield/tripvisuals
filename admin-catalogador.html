@@ -45,6 +45,16 @@
         <span><strong>GROQ_API_KEY</strong> não configurada. Adicione a variável de ambiente para usar o Catalogador.</span>
     </div>
 
+    <!-- Aviso: parada automática por erro sistêmico -->
+    <div class="cat-banner cat-banner-danger" id="autoStopBanner" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="autoStopMsg">Processamento parado automaticamente.</span>
+        <button type="button" class="cat-banner-btn" id="btnAutoStopReset">Resetar e tentar de novo</button>
+    </div>
+
     <!-- Drop zone -->
     <div class="dropzone cat-dropzone" id="dropzone" role="button" tabindex="0" aria-label="Selecionar imagens para catalogar">
         <h3>+ ADICIONAR IMAGENS</h3>
@@ -127,6 +137,9 @@
             </button>
             <button type="button" class="cat-btn-ghost" id="btnReset">
                 ⟳ Resetar tudo
+            </button>
+            <button type="button" class="cat-btn-force-stop" id="btnForceStop" title="Para e limpa tudo, não importa o que a tela achar que está acontecendo">
+                ⛔ Forçar parada
             </button>
         </div>
     </div>
