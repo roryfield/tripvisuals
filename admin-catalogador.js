@@ -30,104 +30,59 @@
         return apiJSON(url, { method: 'POST', body: JSON.stringify(body) });
     }
 
-    // ── SSE ───────────────────────────────────────────────────────────────────
-    function connectSSE() {
-        // Autenticação: EventSource same-origin envia cookies automaticamente.
-        // Em caso de 401 o onerror dispara e redirecionamos para login.
-        var es = new EventSource(API + '/events');
+    // ── Polling de status (substitui SSE — a conexão de streaming estava sendo
+    //    descartada por algo na infraestrutura entre o Railway e o navegador,
+    //    confirmado via curl puro sem nenhum byte chegando em 15s de conexão
+    //    aberta. Request/response comum, a cada 1.5s, é o que já funciona de
+    //    forma comprovada em toda outra chamada desta tela.) ──────────────────
+    var lastDoneCount  = 0;
+    var lastErrorCount = 0;
+    var lastResultKeys = 0;
+    var pollTimer      = null;
 
-        es.onmessage = function (ev) {
-            try { handle(JSON.parse(ev.data)); } catch (_) {}
-        };
+    function pollStatus() {
+        fetch(API + '/status', CREDS)
+            .then(function (r) {
+                if (r.status === 401) { window.location.replace('/login.html'); return null; }
+                return r.json();
+            })
+            .then(function (d) {
+                if (!d) return;
 
-        es.onerror = function () {
-            // Verifica se ainda está autenticado
-            fetch(API + '/status', { credentials: 'include' })
-                .then(function (r) {
-                    if (r.status === 401) { window.location.replace('/login.html'); return; }
-                    log('Reconectando...', 'warn');
-                    es.close();
-                    setTimeout(connectSSE, 3000);
-                })
-                .catch(function () {
-                    es.close();
-                    setTimeout(connectSSE, 3000);
-                });
-        };
+                var wasRunning = running;
+                running = d.running;
+                paused  = d.paused;
+                stats   = Object.assign({}, stats, d.stats);
+                updateButtons();
+                updateProgress();
+
+                if (d.hasKey === false) {
+                    var banner = $('noKeyBanner');
+                    if (banner) banner.hidden = false;
+                }
+
+                if (!wasRunning && running) {
+                    $('pbarWrap').hidden = false;
+                    log('Processamento iniciado \u2014 ' + (stats.total || 0) + ' arquivo(s)', 'ok');
+                }
+                if (wasRunning && !running) {
+                    log('Conclu\u00eddo! \u2714 ' + (stats.done || 0) + ' identificados \u00b7 \u2716 ' + (stats.errors || 0) + ' erros', 'ok');
+                    fetchFileCount();
+                }
+
+                if ((stats.done || 0) !== lastDoneCount || (stats.errors || 0) !== lastErrorCount) {
+                    lastDoneCount  = stats.done   || 0;
+                    lastErrorCount = stats.errors || 0;
+                    fetchResults();
+                }
+            })
+            .catch(function () { /* falha pontual de rede — próximo ciclo tenta de novo, sem poluir o log */ });
     }
 
-    // ── Handler de eventos SSE ────────────────────────────────────────────────
-    function handle(m) {
-        switch (m.type) {
-            case 'connected':
-                running = m.running;
-                paused  = m.paused;
-                updateButtons();
-                if (m.hasKey === false) {
-                    var b = $('noKeyBanner');
-                    if (b) b.hidden = false;
-                }
-                fetchResults();
-                fetchFileCount();
-                break;
-
-            case 'started':
-                running = true; paused = false;
-                stats   = Object.assign({}, m.stats);
-                $('pbarWrap').hidden = false;
-                updateButtons();
-                updateProgress();
-                log('Processamento iniciado — ' + m.stats.total + ' arquivo(s)', 'ok');
-                break;
-
-            case 'start':
-                log('Analisando: ' + sh(m.file));
-                break;
-
-            case 'done':
-                results[m.result.originalFile] = m.result;
-                stats.done    = (stats.done || 0) + 1;
-                stats.pending = Math.max(0, (stats.pending || 1) - 1);
-                updateProgress();
-                appendRow(m.result);
-                log(sh(m.file) + ' \u2192 ' + esc(m.result.band), 'ok');
-                break;
-
-            case 'skip':
-                log('J\u00e1 processado: ' + sh(m.file), 'dim');
-                break;
-
-            case 'error':
-                stats.errors  = (stats.errors || 0) + 1;
-                stats.pending = Math.max(0, (stats.pending || 1) - 1);
-                updateProgress();
-                log(sh(m.file) + ': ' + esc(m.error), 'err');
-                break;
-
-            case 'rateLimit':
-                log('Rate limit — aguardando ' + (m.wait / 1000) + 's (tentativa ' + m.attempt + '/3)', 'warn');
-                break;
-
-            case 'paused':
-                paused = true;  updateButtons(); log('Pausado', 'warn'); break;
-
-            case 'resumed':
-                paused = false; updateButtons(); log('Retomado', 'ok'); break;
-
-            case 'stopped':
-                running = false; paused = false; updateButtons();
-                log('Parado pelo usu\u00e1rio', 'warn');
-                break;
-
-            case 'complete':
-                running = false; paused = false;
-                stats   = Object.assign({}, m.stats);
-                updateButtons();
-                updateProgress();
-                log('Conclu\u00eddo! \u2714 ' + m.stats.done + ' identificados \u00b7 \u2716 ' + m.stats.errors + ' erros', 'ok');
-                fetchFileCount();
-                break;
-        }
+    function startPolling() {
+        if (pollTimer) return;
+        pollStatus();
+        pollTimer = setInterval(pollStatus, 1500);
     }
 
     // ── Atualiza contadores e botões ──────────────────────────────────────────
@@ -333,20 +288,34 @@
             .then(function (d) {
                 if (d.message) { log(d.message, 'dim'); return; }
                 stats = { total: d.queued, pending: d.queued, done: 0, errors: 0, startedAt: Date.now() };
+                running = true;
                 $('pbarWrap').hidden = false;
+                updateButtons();
                 updateProgress();
+                log('Processamento iniciado \u2014 ' + d.queued + ' arquivo(s)', 'ok');
+                pollStatus();
             })
             .catch(function (e) { log(e.message, 'err'); });
     }
 
     function togglePause() {
         post(API + (paused ? '/resume' : '/pause'), {})
+            .then(function () {
+                paused = !paused;
+                updateButtons();
+                log(paused ? 'Pausado' : 'Retomado', paused ? 'warn' : 'ok');
+            })
             .catch(function (e) { log(e.message, 'err'); });
     }
 
     function stopProcessing() {
         if (!confirm('Parar o processamento? O progresso já salvo é mantido.')) return;
         post(API + '/stop', {})
+            .then(function () {
+                running = false; paused = false;
+                updateButtons();
+                log('Parado pelo usu\u00e1rio', 'warn');
+            })
             .catch(function (e) { log(e.message, 'err'); });
     }
 
@@ -463,6 +432,6 @@
     $('rpmRange').addEventListener('input',  function () { $('rpmVal').textContent  = this.value; });
 
     // ── Init ──────────────────────────────────────────────────────────────────
-    connectSSE();
+    startPolling();
 
 })();
