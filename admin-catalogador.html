@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trip Visuals | Catalogador IA</title>
+    <!-- [VZ] Fase 16 — Catalogador virou a aba "Catalogador IA" dentro da Oficina.
+         Redireciona sozinho; funciona mesmo com JS desabilitado. -->
+    <meta http-equiv="refresh" content="0; url=/admin-oficina.html?tab=catalogador">
+    <link rel="canonical" href="/admin-oficina.html?tab=catalogador">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
@@ -11,166 +15,13 @@
 </head>
 <body>
 
-<main class="main">
+    <p class="subtitle redirect-notice">
+        Essa tela virou a aba <strong>Catalogador IA</strong> dentro da
+        <a href="/admin-oficina.html?tab=catalogador">Oficina</a>. Redirecionando…
+    </p>
 
-    <div class="page-header vz-page-hdr-flex">
-        <div>
-            <p class="page-eyebrow">Processamento em Lote</p>
-            <h2 class="page-title">CATALOGADOR IA</h2>
-        </div>
-        <div class="page-header-actions">
-            <a href="/admin.html" class="btn-logout" id="btnVoltar" aria-label="Voltar para Upload">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polyline points="15 18 9 12 15 6"/>
-                </svg>
-                <span class="label">Upload</span>
-            </a>
-            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                <span class="label">Sair</span>
-            </button>
-        </div>
-    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- Aviso: chave ausente -->
-    <div class="cat-banner cat-banner-warn" id="noKeyBanner" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18" aria-hidden="true">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        <span><strong>GROQ_API_KEY</strong> não configurada. Adicione a variável de ambiente para usar o Catalogador.</span>
-    </div>
-
-    <!-- Aviso: parada automática por erro sistêmico -->
-    <div class="cat-banner cat-banner-danger" id="autoStopBanner" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span id="autoStopMsg">Processamento parado automaticamente.</span>
-        <button type="button" class="cat-banner-btn" id="btnAutoStopReset">Resetar e tentar de novo</button>
-    </div>
-
-    <!-- Drop zone -->
-    <div class="dropzone cat-dropzone" id="dropzone" role="button" tabindex="0" aria-label="Selecionar imagens para catalogar">
-        <h3>+ ADICIONAR IMAGENS</h3>
-        <p>Arraste ou clique para selecionar</p>
-        <p class="upload-help">JPG · PNG · WEBP &nbsp;·&nbsp; máx. 20MB por arquivo &nbsp;·&nbsp; até 500 por envio</p>
-        <p class="cat-drop-sub">Use para <strong>grandes volumes</strong>: centenas ou milhares de fotos</p>
-    </div>
-    <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp" hidden>
-
-    <!-- Painel de controle -->
-    <div class="batch-cfg cat-controls" id="controlPanel">
-
-        <!-- Config de velocidade -->
-        <div class="cat-cfg-row">
-            <div class="batch-field">
-                <label class="batch-label" for="concRange">Concorrência: <span id="concVal">2</span> workers</label>
-                <input type="range" id="concRange" min="1" max="5" value="2" class="cat-range">
-            </div>
-            <div class="batch-field">
-                <label class="batch-label" for="rpmRange">Velocidade: <span id="rpmVal">10</span> req/min</label>
-                <input type="range" id="rpmRange" min="5" max="40" step="5" value="10" class="cat-range">
-                <p class="cat-range-hint">Padrão seguro pro plano gratuito da Groq (limite real é tokens/minuto, não requisições — sobe esse número com folga se tiver plano pago ou outra conta com mais limite).</p>
-            </div>
-        </div>
-
-        <!-- Fila e contadores -->
-        <div class="cat-queue-row">
-            <div class="cat-stat" id="statTotal">
-                <span class="cat-stat-n">0</span>
-                <span class="cat-stat-l">total</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-ok" id="statDone">0</span>
-                <span class="cat-stat-l">identificados</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-dim" id="statPend">0</span>
-                <span class="cat-stat-l">pendentes</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-err" id="statErr">0</span>
-                <span class="cat-stat-l">erros</span>
-            </div>
-            <div class="cat-stat cat-stat-eta">
-                <span class="cat-stat-n cat-dim" id="statEta">—</span>
-                <span class="cat-stat-l">estimativa</span>
-            </div>
-        </div>
-
-        <!-- Barra de progresso -->
-        <div class="cat-pbar-wrap" id="pbarWrap" hidden>
-            <div class="cat-pbar-track">
-                <div class="cat-pbar-fill" id="pbar"></div>
-            </div>
-            <span class="cat-pbar-pct" id="pbarPct">0%</span>
-        </div>
-
-    </div>
-
-    <!-- Ações -->
-    <div class="batch-footer cat-actions">
-        <div class="cat-actions-row">
-            <button type="button" class="btn-launch cat-btn-start" id="btnStart">
-                INICIAR IDENTIFICAÇÃO
-            </button>
-            <button type="button" class="cat-btn-secondary" id="btnPause" disabled>
-                ⏸ Pausar
-            </button>
-            <button type="button" class="cat-btn-secondary cat-btn-stop" id="btnStop" disabled>
-                ■ Parar
-            </button>
-        </div>
-        <div class="cat-actions-row">
-            <button type="button" class="cat-btn-secondary" id="btnExport">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Exportar CSV
-            </button>
-            <button type="button" class="cat-btn-ghost" id="btnReset">
-                ⟳ Resetar tudo
-            </button>
-            <button type="button" class="cat-btn-force-stop" id="btnForceStop" title="Para e limpa tudo, não importa o que a tela achar que está acontecendo">
-                ⛔ Forçar parada
-            </button>
-        </div>
-    </div>
-
-    <!-- Log de atividades -->
-    <details class="batch-details" id="logDetails">
-        <summary class="batch-details-toggle">Log de atividades</summary>
-        <div class="cat-log" id="log" aria-live="polite" aria-label="Log de atividades">
-            <div class="cat-log-item cat-log-dim">Aguardando...</div>
-        </div>
-        <div class="cat-log-actions">
-            <button type="button" class="cat-btn-ghost" id="btnClearLog">limpar log</button>
-        </div>
-    </details>
-
-    <!-- Resultados -->
-    <details class="batch-details cat-results-details" id="resultsDetails">
-        <summary class="batch-details-toggle">
-            Resultados identificados
-            <span class="cat-results-badge" id="resBadge"></span>
-        </summary>
-        <div id="tableWrap">
-            <p class="cat-empty" id="emptyMsg">Nenhum resultado ainda.</p>
-        </div>
-    </details>
-
-</main>
-
-
-<script src="/admin-catalogador.js"></script>
 <script src="/admin-shared.js"></script>
 </body>
 </html>

@@ -51,8 +51,8 @@
     // ── INIT ─────────────────────────────────────────────────────
 
     function init() {
-        var dropzone   = document.getElementById('dropzone');
-        var fileInput  = document.getElementById('fileInput');
+        var dropzone   = document.getElementById('dropzoneUpload');
+        var fileInput  = document.getElementById('fileInputUpload');
         var lista      = document.getElementById('lista');
         var btnLancar  = document.getElementById('btnLancar');
         var batchTipo  = document.getElementById('batchTipo');
@@ -206,7 +206,7 @@
             box = document.createElement('div');
             box.id = 'vzUploadWarning';
             box.className = 'vz-upload-warning';
-            var dropzone = document.getElementById('dropzone');
+            var dropzone = document.getElementById('dropzoneUpload');
             if (dropzone) dropzone.insertAdjacentElement('afterend', box);
         }
         box.innerHTML = msg;
@@ -429,6 +429,6 @@
 
         var resumo = sucesso + ' ✅' + (falha ? '  ' + falha + ' ❌' : '');
         btn.textContent = resumo + ' — REDIRECIONANDO...';
-        setTimeout(function () { window.location.href = '/admin-hub.html'; }, 2000);
+        setTimeout(function () { window.location.href = '/admin-oficina.html?tab=produtos'; }, 2000);
     }
 })();

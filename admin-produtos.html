@@ -4,150 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trip Visuals | Gerenciar Produtos</title>
+    <!-- [VZ] Fase 16 — Produtos virou a aba "Produtos" dentro da Oficina.
+         Redireciona sozinho; funciona mesmo com JS desabilitado. -->
+    <meta http-equiv="refresh" content="0; url=/admin-oficina.html?tab=produtos">
+    <link rel="canonical" href="/admin-oficina.html?tab=produtos">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
-
-    <!-- ✅ Auth + Theme bootstrap -->
     <script src="/admin-auth-init.js"></script>
 </head>
 <body>
 
+    <p class="subtitle redirect-notice">
+        Essa tela virou a aba <strong>Produtos</strong> dentro da
+        <a href="/admin-oficina.html?tab=produtos">Oficina</a>. Redirecionando…
+    </p>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-    <datalist id="generosList">
-        <option value="Rock">
-        <option value="Metal">
-        <option value="Grunge">
-        <option value="Alternativo">
-        <option value="Punk">
-        <option value="Pop Rock">
-        <option value="Progressivo">
-        <option value="Black Metal">
-        <option value="Death Metal">
-        <option value="Hardcore">
-        <option value="Indie">
-        <option value="Doom">
-        <option value="Thrash">
-        <option value="Stoner">
-    </datalist>
-
-    <datalist id="coresList">
-    <option value="Preta">
-    <option value="Off-White">
-    <option value="Branca">
-    <option value="Preto">
-    <option value="Azul Royal">
-    <option value="Vermelho">
-    <option value="Amarelo Ouro">
-    <option value="Azul Marinho">
-    <option value="Laranja">
-    <option value="Verde Musgo">
-    <option value="Mescla">
-    <option value="Rosa Bebê">
-    <option value="Amarelo Mostarda">
-    <option value="Azul Claro">
-    <option value="Verde Limão">
-    <option value="Bege">
-    <option value="Vinho">
-    <option value="Pink">
-    <option value="Verde Bandeira">
-    <option value="Amarelo Canário">
-    <option value="Azul Turquesa">
-    <option value="Roxo">
-    <option value="Marrom">
-    <option value="Lilás">
-    <option value="Azul Petróleo">
-    <option value="Chumbo">
-    <option value="Caqui">
-    <option value="Cinza Claro">
-</datalist>
-
-    <main class="main">
-        <div class="page-header-row">
-            <div>
-                <p class="page-eyebrow">Catálogo</p>
-                <h2 class="page-title">GERENCIAR PRODUTOS</h2>
-            </div>
-            <div class="vz-flex-actions">
-                <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-    <span class="label">Sair</span>
-</button>
-                <div class="produto-count" id="totalCount">—</div>
-                <div class="produto-count-label" id="totalLabel">produtos no acervo</div>
-            </div>
-        </div>
-
-        <!-- VIEW CONTROLS -->
-        <div class="produtos-controls">
-            <div class="produtos-search-wrap">
-                <svg class="produtos-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input type="text" id="produtosSearch" class="produtos-search" placeholder="Buscar por nome ou cor..." autocomplete="off">
-            </div>
-            <div class="view-toggle" role="group" aria-label="Modo de visualização">
-                <button type="button" class="view-toggle-btn active" data-view="grid" aria-label="Visualização em grade" title="Grade">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-                    </svg>
-                </button>
-                <button type="button" class="view-toggle-btn" data-view="compact" aria-label="Visualização compacta" title="Lista">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/>
-                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
-                        <line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                </button>
-                <button type="button" class="view-toggle-btn" data-view="gallery" aria-label="Mosaico visual" title="Mosaico (só imagens)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <rect x="3" y="3" width="5" height="5" rx="1"/>
-                        <rect x="10" y="3" width="5" height="5" rx="1"/>
-                        <rect x="17" y="3" width="4" height="5" rx="1"/>
-                        <rect x="3" y="10" width="5" height="5" rx="1"/>
-                        <rect x="10" y="10" width="5" height="5" rx="1"/>
-                        <rect x="17" y="10" width="4" height="5" rx="1"/>
-                        <rect x="3" y="17" width="5" height="4" rx="1"/>
-                        <rect x="10" y="17" width="5" height="4" rx="1"/>
-                        <rect x="17" y="17" width="4" height="4" rx="1"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- FILTROS (Fase 3) -->
-        <div class="produtos-filtros">
-            <select id="filtroTipo" aria-label="Filtrar por tipo">
-                <option value="">Todos os tipos</option>
-                <option value="Camiseta">Camiseta</option>
-                <option value="Regata">Regata</option>
-                <option value="Babylook">Babylook</option>
-                <option value="Moletom">Moletom</option>
-            </select>
-            <input type="text" id="filtroBanda" class="produtos-filtro-texto" placeholder="Filtrar por banda..." autocomplete="off">
-            <input type="text" id="filtroGenero" class="produtos-filtro-texto" placeholder="Filtrar por gênero..." autocomplete="off">
-            <button type="button" id="btnLimparFiltros" class="btn-limpar-filtros">Limpar filtros</button>
-        </div>
-
-        <div id="listaArea">
-            <div class="state-msg">
-                <span class="icon" aria-hidden="true">⏳</span>
-                <p>Carregando produtos...</p>
-            </div>
-        </div>
-    </main>
-
-    <!-- ADMIN BOTTOM NAV -->
-    
-    <script src="/admin-produtos.js"></script>
-
 
 <script src="/admin-shared.js"></script>
 </body>

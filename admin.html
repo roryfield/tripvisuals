@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trip Visuals | Upload de Produtos</title>
+    <!-- [VZ] Fase 16 — Upload virou a aba "Upload" dentro da Oficina.
+         Redireciona sozinho; funciona mesmo com JS desabilitado. -->
+    <meta http-equiv="refresh" content="0; url=/admin-oficina.html?tab=upload">
+    <link rel="canonical" href="/admin-oficina.html?tab=upload">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/admin.css">
@@ -11,165 +15,13 @@
 </head>
 <body>
 
-<datalist id="generosList">
-    <option value="Rock">
-    <option value="Metal">
-    <option value="Grunge">
-    <option value="Alternativo">
-    <option value="Punk">
-    <option value="Pop Rock">
-    <option value="Progressivo">
-    <option value="Black Metal">
-    <option value="Death Metal">
-    <option value="Hardcore">
-    <option value="Indie">
-    <option value="Doom">
-    <option value="Thrash">
-    <option value="Stoner">
-</datalist>
+    <p class="subtitle redirect-notice">
+        Essa tela virou a aba <strong>Upload</strong> dentro da
+        <a href="/admin-oficina.html?tab=upload">Oficina</a>. Redirecionando…
+    </p>
 
-<datalist id="coresList">
-    <option value="Preta">
-    <option value="Off-White">
-    <option value="Branca">
-    <option value="Preto">
-    <option value="Azul Royal">
-    <option value="Vermelho">
-    <option value="Amarelo Ouro">
-    <option value="Azul Marinho">
-    <option value="Laranja">
-    <option value="Verde Musgo">
-    <option value="Mescla">
-    <option value="Rosa Bebê">
-    <option value="Amarelo Mostarda">
-    <option value="Azul Claro">
-    <option value="Verde Limão">
-    <option value="Bege">
-    <option value="Vinho">
-    <option value="Pink">
-    <option value="Verde Bandeira">
-    <option value="Amarelo Canário">
-    <option value="Azul Turquesa">
-    <option value="Roxo">
-    <option value="Marrom">
-    <option value="Lilás">
-    <option value="Azul Petróleo">
-    <option value="Chumbo">
-    <option value="Caqui">
-    <option value="Cinza Claro">
-</datalist>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<main class="main">
-
-    <div class="page-header vz-page-hdr-flex">
-        <div>
-            <p class="page-eyebrow">Gestão de Produtos</p>
-            <h2 class="page-title">UPLOAD DE PRODUTOS</h2>
-        </div>
-        <div class="page-header-actions">
-            <a href="/admin-catalogador.html" class="btn-catalogador-ia" aria-label="Abrir Catalogador IA">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
-                </svg>
-                <span class="label">Catalogador IA</span>
-            </a>
-            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                <span class="label">Sair</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Drop zone -->
-    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Selecionar imagens de produtos">
-        <h3>+ ADICIONAR PRODUTOS</h3>
-        <p>Clique para selecionar imagens</p>
-        <p class="upload-help">JPG · PNG · WEBP · GIF &nbsp;·&nbsp; máx. 10MB por arquivo &nbsp;·&nbsp; máx. 50 por vez</p>
-    </div>
-    <!-- fileInput outside dropzone — prevents click bubbling loop -->
-    <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-
-    <!-- Batch panel — shown after file selection -->
-    <div id="batchPanel" hidden>
-
-        <!-- Batch config -->
-        <div class="batch-cfg">
-            <div class="batch-field">
-                <label class="batch-label" for="batchTipo">Tipo padrão</label>
-                <select id="batchTipo" class="batch-select">
-                    <option value="Camiseta">Camiseta</option>
-                    <option value="Regata">Regata</option>
-                    <option value="Babylook">Babylook</option>
-                    <option value="Moletom">Moletom</option>
-                </select>
-            </div>
-            <div class="batch-field">
-                <label class="batch-label" for="batchCor">Cor padrão</label>
-                <input id="batchCor" class="batch-input" type="text" list="coresList"
-                       value="Preta" maxlength="50" placeholder="Preta, Off-White, ou outra...">
-            </div>
-            <div class="batch-field">
-                <label class="batch-label" for="batchGenero">Gênero padrão</label>
-                <input id="batchGenero" class="batch-input" type="text" list="generosList"
-                       value="" maxlength="50" placeholder="Rock, Metal, Grunge...">
-            </div>
-            <div class="batch-field">
-                <label class="batch-label" for="batchPreco">Preço padrão (R$)</label>
-                <input id="batchPreco" class="batch-input" type="number"
-                       value="99.90" step="0.01" min="0" max="999999">
-            </div>
-        </div>
-
-        <!-- Collection name for unnamed files (WhatsApp etc.) -->
-        <div class="batch-colecao">
-            <label class="batch-label" for="batchColecao">
-                Coleção
-                <span class="batch-label-hint">— nome para arquivos sem identificação (fotos do WhatsApp, câmera, etc.)</span>
-            </label>
-            <input id="batchColecao" class="batch-input batch-input-wide" type="text"
-                   placeholder="Ex: PANTERA — vira CAMISETA PANTERA PRETA">
-            <p class="batch-preview" id="batchPreview"></p>
-        </div>
-
-        <!-- Summary + launch -->
-        <div class="batch-footer">
-            <p class="batch-summary" id="batchSummary"></p>
-            <button id="btnLancar" type="button" class="btn-launch btn-launch-full">
-                LANÇAR PRODUTOS
-            </button>
-        </div>
-
-        <!-- Collapsible review table -->
-        <details class="batch-details" id="revisaoDetails">
-            <summary class="batch-details-toggle">Revisar arquivos individualmente</summary>
-            <table class="vz-table">
-                <thead>
-                    <tr>
-                        <th class="vz-w-70">Foto</th>
-                        <th>Tipo</th>
-                        <th>Estampa / Nome</th>
-                        <th>Cor</th>
-                        <th>Gênero</th>
-                        <th>Preço (R$)</th>
-                        <th class="status-cell">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="lista"></tbody>
-            </table>
-        </details>
-
-    </div><!-- /batchPanel -->
-
-</main>
-
-
-<script src="/admin-upload.js"></script>
 <script src="/admin-shared.js"></script>
 </body>
 </html>
