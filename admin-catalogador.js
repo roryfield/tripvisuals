@@ -373,8 +373,8 @@
     }
 
     // ── Upload ────────────────────────────────────────────────────────────────
-    var dropzone  = $('dropzone');
-    var fileInput = $('fileInput');
+    var dropzone  = $('dropzoneCatalogador');
+    var fileInput = $('fileInputCatalogador');
 
     function onDragOver(e)  { e.preventDefault(); dropzone.classList.add('cat-dropzone-over'); }
     function onDragLeave()  { dropzone.classList.remove('cat-dropzone-over'); }
