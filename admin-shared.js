@@ -15,20 +15,12 @@
             icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
         },
         {
-            id: 'upload', href: '/admin.html', label: 'Upload',
-            icon: '<polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>',
-        },
-        {
-            id: 'produtos', href: '/admin-produtos.html', label: 'Produtos',
-            icon: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+            id: 'oficina', href: '/admin-oficina.html', label: 'Oficina',
+            icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
         },
         {
             id: 'aparencia', href: '/admin-landing.html', label: 'Marca & Vitrine',
             icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="8" y1="22" x2="16" y2="22"/><line x1="12" y1="18" x2="12" y2="22"/>',
-        },
-        {
-            id: 'catalogo', href: '/catalogo.html', label: 'Catálogo', external: true,
-            icon: '<path d="M1 6s1-1 4-1 5 2 8 2 4-1 4-1V22s-1 1-4 1-5-2-8-2-4 1-4 1V6z"/><line x1="1" y1="6" x2="1" y2="22"/>',
         },
         {
             id: 'pedidos', href: '/admin-pedidos.html', label: 'Pedidos',
@@ -39,12 +31,15 @@
     function currentNavId () {
         var path = window.location.pathname;
         if (path.indexOf('admin-hub') !== -1)      return 'hub';
-        if (path.indexOf('admin-produtos') !== -1) return 'produtos';
+        if (path.indexOf('admin-oficina') !== -1)  return 'oficina';
         if (path.indexOf('admin-landing') !== -1)  return 'aparencia';
         if (path.indexOf('admin-layout') !== -1)   return 'aparencia'; // redireciona pra landing
         if (path.indexOf('admin-pedidos') !== -1)  return 'pedidos';
-        if (path.indexOf('admin-catalogador') !== -1) return 'upload'; // ainda sob "Upload" até a Oficina existir
-        if (/\/admin\.html$/.test(path))           return 'upload';
+        // Páginas antigas (redirecionam sozinhas, mas o nav pode piscar
+        // brevemente antes do redirect concluir) — mantém coerência.
+        if (path.indexOf('admin-catalogador') !== -1) return 'oficina';
+        if (path.indexOf('admin-produtos') !== -1)    return 'oficina';
+        if (/\/admin\.html$/.test(path))              return 'oficina';
         return null; // páginas fora do fluxo principal (Ajuda, Sobre) — nenhum item marcado ativo
     }
 

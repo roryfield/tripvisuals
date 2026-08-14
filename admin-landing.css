@@ -628,31 +628,37 @@ html[data-init] body { visibility: visible !important; }
     border-radius: 4px;
 }
 
-/* ═══════════════════════════════════════════════════════
-   FASE 5 — Marca & Vitrine: abas Marca / Vitrine
-═══════════════════════════════════════════════════════ */
-.aparencia-tabs {
-    display: flex;
-    gap: 4px;
-    margin: 20px 0 28px;
-    border-bottom: 1px solid var(--border);
-}
-.aparencia-tab-btn {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.05rem;
-    letter-spacing: 0.5px;
-    padding: 10px 18px;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-}
-.aparencia-tab-btn:hover { color: var(--text); }
-.aparencia-tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
-
 /* [VZ] Fase 10 — substituem style inline (violava o CSP style-src) */
 .sobre-link-hint { margin-bottom: 16px; }
 .sobre-link-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .sobre-link-ver-ao-vivo { font-size: 0.8rem; }
+
+/* [VZ] Fase 16 — prévia ao vivo do catálogo, embutida (antes era link
+   externo separado no menu). */
+.catalogo-preview-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 28px;
+}
+.catalogo-preview-toolbar {
+    display: flex;
+    gap: 10px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+}
+.catalogo-preview-frame-wrap {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 70vh;
+    min-height: 420px;
+    max-height: 780px;
+}
+.catalogo-preview-frame-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+}

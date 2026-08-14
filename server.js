@@ -331,12 +331,22 @@ const CSP_ADMIN  = CSP_COMMON;
 
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=()');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+    // [VZ] Fase 16 — catalogo.html precisa ser embutível como prévia ao
+    // vivo dentro de Marca & Vitrine (admin). Relaxado só pro mesmo
+    // domínio (frame-ancestors 'self'), nunca pra terceiro — nenhum outro
+    // site consegue embutir o catálogo, só o próprio admin. Toda outra
+    // rota continua com a proteção original (DENY / 'none').
+    const ehCatalogoPublico = req.path === '/catalogo.html';
+    res.setHeader('X-Frame-Options', ehCatalogoPublico ? 'SAMEORIGIN' : 'DENY');
+
     const isAdmin = /^\/admin[-\w]*\.html$/i.test(req.path);
-    res.setHeader('Content-Security-Policy', isAdmin ? CSP_ADMIN : CSP_PUBLIC);
+    let csp = isAdmin ? CSP_ADMIN : CSP_PUBLIC;
+    if (ehCatalogoPublico) csp = csp.replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+    res.setHeader('Content-Security-Policy', csp);
     next();
 });
 

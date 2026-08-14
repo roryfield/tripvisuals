@@ -818,4 +818,28 @@
         irPara(abaInicial);
     })();
 
+    // [VZ] Fase 16 — prévia ao vivo do catálogo. Carrega o iframe só na
+    // primeira vez que o painel abre — antes disso, sem src, zero custo.
+    (function initCatalogoPreview() {
+        const painel = $('catalogoPreviewPanel');
+        const frame  = $('catalogoPreviewFrame');
+        const btnAtualizar = $('btnAtualizarPreview');
+        if (!painel || !frame) return;
+
+        function carregarPreview() {
+            frame.src = '/catalogo.html?preview=' + Date.now();
+        }
+
+        painel.addEventListener('toggle', function () {
+            if (painel.open && !frame.src) carregarPreview();
+        }, { once: false });
+
+        if (btnAtualizar) {
+            btnAtualizar.addEventListener('click', function (e) {
+                e.preventDefault();
+                carregarPreview();
+            });
+        }
+    })();
+
 })();
