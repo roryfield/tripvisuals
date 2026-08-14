@@ -121,7 +121,7 @@ const state = {
     pararPorErro: null,
 };
 
-const limiter     = new RateLimiter(25);
+const limiter     = new RateLimiter(10);
 let   groqClient  = null;
 const sleep       = ms => new Promise(r => setTimeout(r, ms));
 const emit        = data => emitter.emit('update', data);
@@ -239,7 +239,7 @@ async function identifyBand(cloudinaryUrl) {
 
     const res = await getGroq().chat.completions.create({
         model:       process.env.CATALOGADOR_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct',
-        max_tokens:  24,
+        max_completion_tokens: 300,
         temperature: 0,
         messages: [{
             role: 'user',
@@ -472,7 +472,7 @@ router.post('/start', async (req, res) => {
 
     try {
         const { linhas } = await listarItens();
-        const { concurrency = 2, ratePerMinute = 25 } = req.body || {};
+        const { concurrency = 2, ratePerMinute = 10 } = req.body || {};
 
         limiter.setRate(Math.min(Math.max(5, +ratePerMinute || 25), 40));
 
