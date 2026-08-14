@@ -391,14 +391,19 @@ const PRODUTOS_POR_PAGINA = 24;
         async function carregar() {
             try {
                 const res = await fetch('/api/produtos', { credentials: 'include' });
-                if (!res.ok) throw new Error();
+                if (!res.ok) {
+                    const corpo = await res.text().catch(() => '');
+                    throw new Error('HTTP ' + res.status + (corpo ? ' — ' + corpo.slice(0, 200) : ''));
+                }
                 produtos = await res.json();
                 renderProdutos(produtos);
             } catch (e) {
+                console.error('[Oficina/Produtos] Falha ao carregar produtos:', e.message);
                 document.getElementById('listaArea').innerHTML = `
                     <div class="state-msg">
                         <span class="icon" aria-hidden="true">⚠️</span>
                         <p>Erro ao carregar produtos. Verifique o servidor.</p>
+                        <p style="font-size:0.75rem;opacity:0.6;margin-top:6px;">${e.message ? String(e.message).replace(/[<>]/g, '') : ''}</p>
                     </div>`;
             }
         }
