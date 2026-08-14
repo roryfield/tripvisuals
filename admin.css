@@ -2754,6 +2754,27 @@ kbd {
 
 /* ── Produção por estágio ─────────────────────────────── */
 .producao-panel { margin-bottom: 36px; }
+
+.hub-charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 36px;
+}
+.chart-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+}
+.chart-canvas-wrap {
+    position: relative;
+    height: 220px;
+    margin-top: 16px;
+}
+@media (max-width: 900px) {
+    .hub-charts-row { grid-template-columns: 1fr; }
+}
 .producao-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

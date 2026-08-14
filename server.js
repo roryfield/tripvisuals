@@ -941,7 +941,13 @@ app.put('/api/frete/regioes/:uf', requireAuth, writeLimiter, async (req, res) =>
     if (!Number.isFinite(valor) || valor < 0 || valor > 9999) return res.status(400).json({ error: 'Valor de frete inválido.' });
     if (!Number.isInteger(prazoDias) || prazoDias < 1 || prazoDias > 90) return res.status(400).json({ error: 'Prazo inválido.' });
     try {
+        const anterior = await frete.listarRegioes(pool).then(rs => rs.find(r => r.uf === uf) || null);
         await frete.definirRegiao(pool, uf, valor, prazoDias);
+        registrarEvento(pool, {
+            modulo: 'frete', tipo: 'regiao_definida', severidade: 'info',
+            resumo: `Frete de ${uf} definido: R$ ${valor.toFixed(2)}, ${prazoDias} dia(s)`,
+            detalhes: { uf, valorNovo: valor, prazoDiasNovo: prazoDias, valorAnterior: anterior?.valor ?? null, prazoDiasAnterior: anterior?.prazo_dias ?? null },
+        });
         res.json({ success: true, uf, valor, prazoDias });
     } catch (e) {
         console.error('PUT /api/frete/regioes:', e.message);
@@ -952,7 +958,13 @@ app.put('/api/frete/regioes/:uf', requireAuth, writeLimiter, async (req, res) =>
 app.delete('/api/frete/regioes/:uf', requireAuth, writeLimiter, async (req, res) => {
     const uf = String(req.params.uf || '').toUpperCase();
     try {
+        const anterior = await frete.listarRegioes(pool).then(rs => rs.find(r => r.uf === uf) || null);
         await frete.removerRegiao(pool, uf);
+        registrarEvento(pool, {
+            modulo: 'frete', tipo: 'regiao_removida', severidade: 'info',
+            resumo: `Frete de ${uf} removido — volta a ser combinado pelo WhatsApp`,
+            detalhes: { uf, valorAnterior: anterior?.valor ?? null, prazoDiasAnterior: anterior?.prazo_dias ?? null },
+        });
         res.json({ success: true });
     } catch (e) {
         console.error('DELETE /api/frete/regioes:', e.message);
@@ -1105,6 +1117,37 @@ app.get('/api/eventos/export', requireAuth, exportLimiter, async (req, res) => {
     } catch (e) {
         console.error('GET /api/eventos/export:', e.message);
         res.status(500).json({ error: 'Erro ao exportar auditoria.' });
+    }
+});
+
+// [VZ] Fase 15 — estatísticas do Hub. Direto de system_events, a mesma
+// fonte da Atividade Recente — nenhuma métrica nova inventada, só
+// agregação do que já é registrado. generate_series preenche dias/semanas
+// sem atividade com zero, pra o gráfico não pular buraco (dia sem barra é
+// diferente de dia sem dado coletado).
+app.get('/api/hub/estatisticas', requireAuth, async (req, res) => {
+    try {
+        const [atividade, catalogador] = await Promise.all([
+            pool.query(`
+                SELECT to_char(d.dia, 'YYYY-MM-DD') AS dia, COALESCE(COUNT(e.id), 0)::int AS total
+                FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, INTERVAL '1 day') AS d(dia)
+                LEFT JOIN system_events e ON date_trunc('day', e.criado_em) = d.dia
+                GROUP BY d.dia ORDER BY d.dia
+            `),
+            pool.query(`
+                SELECT to_char(d.semana, 'YYYY-MM-DD') AS semana, COALESCE(COUNT(e.id), 0)::int AS total
+                FROM generate_series(date_trunc('week', CURRENT_DATE) - INTERVAL '7 weeks', date_trunc('week', CURRENT_DATE), INTERVAL '1 week') AS d(semana)
+                LEFT JOIN system_events e ON date_trunc('week', e.criado_em) = d.semana AND e.tipo = 'produto_criado_via_scanner'
+                GROUP BY d.semana ORDER BY d.semana
+            `),
+        ]);
+        res.json({
+            atividadePorDia: atividade.rows,
+            catalogadorPorSemana: catalogador.rows,
+        });
+    } catch (e) {
+        console.error('GET /api/hub/estatisticas:', e.message);
+        res.status(500).json({ error: 'Erro ao buscar estatísticas.' });
     }
 });
 
