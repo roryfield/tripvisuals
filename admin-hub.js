@@ -8,6 +8,7 @@
         if (btnClaro)  btnClaro.addEventListener('click',  function () { setTema('claro'); });
         if (btnEscuro) btnEscuro.addEventListener('click', function () { setTema('escuro'); });
         loadStats();
+        loadCharts();
     }
 
     if (document.readyState === 'loading') {
@@ -241,4 +242,61 @@
             mostrarToast('⚠️ Não foi possível salvar o tema. Tente novamente.', true);
         }
     }
+    function loadCharts() {
+        fetch('/api/hub/estatisticas', { credentials: 'include' })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function (d) {
+                renderChart('chartAtividade', 'line', d.atividadePorDia, 'dia', 'Eventos', 'cyan');
+                renderChart('chartCatalogador', 'bar', d.catalogadorPorSemana, 'semana', 'Produtos catalogados', 'purple');
+            })
+            .catch(function (e) { console.error('Erro ao carregar gráficos do Hub:', e.message); });
+    }
+
+    function chartColors() {
+        var s = getComputedStyle(document.documentElement);
+        return {
+            cyan:   (s.getPropertyValue('--cyan').trim())   || '#00e5ff',
+            purple: (s.getPropertyValue('--purple').trim()) || '#9d00ff',
+            muted:  (s.getPropertyValue('--text-muted').trim()) || '#888888',
+            border: (s.getPropertyValue('--border').trim())     || 'rgba(255,255,255,0.07)',
+        };
+    }
+
+    function fmtLabel(iso) {
+        var d = new Date(iso + 'T00:00:00');
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+
+    function renderChart(canvasId, tipo, rows, keyField, label, corNome) {
+        var el = document.getElementById(canvasId);
+        if (!el || typeof Chart === 'undefined' || !Array.isArray(rows)) return;
+        var c    = chartColors();
+        var cor  = c[corNome] || c.cyan;
+        var base = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: c.muted, font: { size: 10 } }, grid: { display: false } },
+                y: {
+                    ticks: { color: c.muted, font: { size: 10 }, precision: 0 },
+                    grid: { color: c.border },
+                    beginAtZero: true,
+                },
+            },
+        };
+        var dataset = tipo === 'line'
+            ? { label: label, data: rows.map(function (r) { return r.total; }), borderColor: cor, backgroundColor: cor + '22', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }
+            : { label: label, data: rows.map(function (r) { return r.total; }), backgroundColor: cor, borderRadius: 4 };
+        new Chart(el, {
+            type: tipo,
+            data: { labels: rows.map(function (r) { return fmtLabel(r[keyField]); }), datasets: [dataset] },
+            options: base,
+        });
+    }
+
 })();
