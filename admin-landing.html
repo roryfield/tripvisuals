@@ -43,6 +43,22 @@
             <button type="button" class="aparencia-tab-btn" id="btnTabVitrine" role="tab" aria-selected="false" aria-controls="tabVitrine">Vitrine</button>
         </div>
 
+        <!-- ═══════════════════════ PRÉVIA AO VIVO DO CATÁLOGO ═══════════════════════
+             Antes era o item "Catálogo" separado no menu (link externo, nova aba).
+             Agora vive aqui — mudou cor ou logo na Marca, layout na Vitrine, o
+             reflexo é a mesma tela que os clientes veem, sem sair daqui. Carrega
+             sob demanda (só quando aberto), não pesa a página à toa. -->
+        <details class="catalogo-preview-panel atividade-details" id="catalogoPreviewPanel">
+            <summary class="atividade-toggle">Prévia ao vivo do catálogo</summary>
+            <div class="catalogo-preview-toolbar">
+                <button type="button" class="vz-btn-ghost" id="btnAtualizarPreview">↻ Atualizar prévia</button>
+                <a href="/catalogo.html" target="_blank" rel="noopener" class="vz-btn-secondary">Abrir em nova aba ↗</a>
+            </div>
+            <div class="catalogo-preview-frame-wrap">
+                <iframe id="catalogoPreviewFrame" title="Prévia do catálogo público" loading="lazy"></iframe>
+            </div>
+        </details>
+
         <!-- ═══════════════════════ VITRINE (antigo Painel de Layout) ═══════════════════════ -->
         <div id="tabVitrine" role="tabpanel" aria-labelledby="btnTabVitrine" hidden>
             <section class="section" aria-labelledby="sec-vitrine">
