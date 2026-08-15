@@ -1064,6 +1064,12 @@ html[data-init] body { visibility: visible !important; }
             letter-spacing: 1.5px;
             color: var(--text-muted);
         }
+        .produtos-count-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
 
         .state-msg {
             display: flex;
