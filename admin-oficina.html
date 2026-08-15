@@ -207,49 +207,66 @@
     <!-- Painel de controle -->
     <div class="batch-cfg cat-controls" id="controlPanel">
 
-        <!-- Config de velocidade -->
-        <div class="cat-cfg-row">
-            <div class="batch-field">
-                <label class="batch-label" for="concRange">Concorrência: <span id="concVal">2</span> workers</label>
-                <input type="range" id="concRange" min="1" max="5" value="2" class="cat-range">
-            </div>
-            <div class="batch-field">
-                <label class="batch-label" for="rpmRange">Velocidade: <span id="rpmVal">10</span> req/min</label>
-                <input type="range" id="rpmRange" min="5" max="40" step="5" value="10" class="cat-range">
-                <p class="cat-range-hint">Padrão seguro pro plano gratuito da Groq (limite real é tokens/minuto, não requisições — sobe esse número com folga se tiver plano pago ou outra conta com mais limite).</p>
-            </div>
-        </div>
-
-        <!-- Fila e contadores -->
-        <div class="cat-queue-row">
-            <div class="cat-stat" id="statTotal">
-                <span class="cat-stat-n">0</span>
-                <span class="cat-stat-l">total</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-ok" id="statDone">0</span>
-                <span class="cat-stat-l">identificados</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-dim" id="statPend">0</span>
-                <span class="cat-stat-l">pendentes</span>
-            </div>
-            <div class="cat-stat">
-                <span class="cat-stat-n cat-err" id="statErr">0</span>
-                <span class="cat-stat-l">erros</span>
-            </div>
-            <div class="cat-stat cat-stat-eta">
-                <span class="cat-stat-n cat-dim" id="statEta">—</span>
-                <span class="cat-stat-l">estimativa</span>
+        <!-- Config de velocidade — trancada por padrão. Resumo sempre
+             visível de bate-olho; clique no cadeado destrava pra editar. -->
+        <div class="cat-lock-panel" id="catLockPanel" data-locked="true">
+            <button type="button" class="cat-lock-summary" id="btnCatLockToggle" aria-expanded="false" aria-controls="catLockBody">
+                <svg class="cat-lock-icon cat-lock-icon-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="10" rx="2"/>
+                    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                </svg>
+                <svg class="cat-lock-icon cat-lock-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+                    <rect x="5" y="11" width="14" height="10" rx="2"/>
+                    <path d="M8 11V7a4 4 0 0 1 7.75-1.5"/>
+                </svg>
+                <span class="cat-lock-summary-text">Configurações avançadas — <strong id="catLockSummaryVal">2 workers · 10 req/min</strong></span>
+                <span class="cat-lock-hint">clique para editar</span>
+            </button>
+            <div class="cat-lock-body" id="catLockBody" hidden>
+                <div class="cat-cfg-row">
+                    <div class="batch-field">
+                        <label class="batch-label" for="concRange">Concorrência: <span id="concVal">2</span> workers</label>
+                        <input type="range" id="concRange" min="1" max="5" value="2" class="cat-range">
+                    </div>
+                    <div class="batch-field">
+                        <label class="batch-label" for="rpmRange">Velocidade: <span id="rpmVal">10</span> req/min</label>
+                        <input type="range" id="rpmRange" min="5" max="40" step="5" value="10" class="cat-range">
+                        <p class="cat-range-hint">Padrão seguro pro plano gratuito da Groq (limite real é tokens/minuto, não requisições — sobe esse número com folga se tiver plano pago ou outra conta com mais limite).</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Barra de progresso -->
-        <div class="cat-pbar-wrap" id="pbarWrap" hidden>
-            <div class="cat-pbar-track">
-                <div class="cat-pbar-fill" id="pbar"></div>
+        <!-- Fila e contadores — anel de progresso central -->
+        <div class="cat-command-panel">
+            <div class="cat-ring-wrap">
+                <svg class="cat-ring" width="108" height="108" viewBox="0 0 108 108" aria-hidden="true">
+                    <circle class="cat-ring-track" cx="54" cy="54" r="46"/>
+                    <circle class="cat-ring-fill" id="pbar" cx="54" cy="54" r="46"/>
+                </svg>
+                <div class="cat-ring-center">
+                    <b id="pbarPct">0%</b>
+                    <span id="statEta">—</span>
+                </div>
             </div>
-            <span class="cat-pbar-pct" id="pbarPct">0%</span>
+            <div class="cat-command-stats">
+                <div class="cat-stat" id="statTotal">
+                    <span class="cat-stat-n">0</span>
+                    <span class="cat-stat-l">total</span>
+                </div>
+                <div class="cat-stat">
+                    <span class="cat-stat-n cat-ok" id="statDone">0</span>
+                    <span class="cat-stat-l">identificados</span>
+                </div>
+                <div class="cat-stat">
+                    <span class="cat-stat-n cat-dim" id="statPend">0</span>
+                    <span class="cat-stat-l">pendentes</span>
+                </div>
+                <div class="cat-stat">
+                    <span class="cat-stat-n cat-err" id="statErr">0</span>
+                    <span class="cat-stat-l">erros</span>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -285,27 +302,29 @@
         </div>
     </div>
 
-    <!-- Log de atividades -->
-    <details class="batch-details" id="logDetails">
-        <summary class="batch-details-toggle">Log de atividades</summary>
+    <!-- Log / Resultados — pílulas, não título de seção -->
+    <div class="cat-panel-toggles">
+        <button type="button" class="cat-toggle-pill active" id="btnToggleLog" data-panel="log" aria-expanded="true" aria-controls="logPanelBody">
+            Log de atividades
+        </button>
+        <button type="button" class="cat-toggle-pill" id="btnToggleResults" data-panel="results" aria-expanded="false" aria-controls="resultsPanelBody">
+            Resultados identificados
+            <span class="cat-results-badge" id="resBadge"></span>
+        </button>
+    </div>
+    <div class="cat-panel-body" id="logPanelBody">
         <div class="cat-log" id="log" aria-live="polite" aria-label="Log de atividades">
             <div class="cat-log-item cat-log-dim">Aguardando...</div>
         </div>
         <div class="cat-log-actions">
             <button type="button" class="cat-btn-ghost" id="btnClearLog">limpar log</button>
         </div>
-    </details>
-
-    <!-- Resultados -->
-    <details class="batch-details cat-results-details" id="resultsDetails">
-        <summary class="batch-details-toggle">
-            Resultados identificados
-            <span class="cat-results-badge" id="resBadge"></span>
-        </summary>
+    </div>
+    <div class="cat-panel-body" id="resultsPanelBody" hidden>
         <div id="tableWrap">
             <p class="cat-empty" id="emptyMsg">Nenhum resultado ainda.</p>
         </div>
-    </details>
+    </div>
     </div>
 
     <div id="tabProdutos" role="tabpanel" aria-labelledby="btnTabProdutos" hidden>

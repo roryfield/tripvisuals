@@ -33,7 +33,7 @@ let _adapter = null;
 let _uploadToCloudinary = null;   // (buffer, filename, folder?) => Promise<{url, public_id}>
 let _destroyCloudinary  = null;   // (public_id) => Promise<void>
 
-const IMAGE_RE = /\.(jpe?g|png|webp)$/i;
+const IMAGE_RE = /\.(jpe?g|png|webp|gif)$/i;
 const MAX_MB   = 20;
 const CLOUDINARY_FOLDER = 'tripvisuals/catalogador-staging';
 
@@ -96,6 +96,8 @@ function bufferPareceImagemValida(buf) {
     if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return true; // PNG
     if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
         b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return true; // WebP
+    if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38 &&
+        (b[4] === 0x37 || b[4] === 0x39) && b[5] === 0x61) return true; // GIF
     return false;
 }
 

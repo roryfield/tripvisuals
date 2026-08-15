@@ -27,7 +27,7 @@
     <ul>
         <li><strong>Nome completo</strong> — para identificar o pedido</li>
         <li><strong>Número de WhatsApp</strong> — para comunicação sobre o pedido, pagamento e envio</li>
-        <li><strong>CEP / endereço de entrega</strong> — fornecido voluntariamente na conversa pelo WhatsApp, para cálculo do frete</li>
+        <li><strong>CEP</strong> — usado de duas formas: (1) na calculadora de frete do catálogo, pra estimar o valor antes mesmo de você decidir comprar — nesse caso não fica salvo em nenhum banco de dados nosso, é usado só na hora, pra consultar cidade/UF; (2) o endereço de entrega de verdade, fornecido voluntariamente na conversa pelo WhatsApp ao fechar um pedido, esse sim fica registrado junto do pedido</li>
         <li><strong>Informações do pedido</strong> — produto escolhido, tamanho, cor e valor</li>
     </ul>
     <p>Não coletamos dados de pagamento (cartão de crédito, CPF ou dados bancários). Pagamentos são realizados via PIX ou outra forma combinada diretamente no WhatsApp.</p>
@@ -51,6 +51,7 @@
     <ul>
         <li><strong>Railway</strong> (EUA) — hospedagem do servidor e banco de dados</li>
         <li><strong>Cloudinary</strong> (EUA) — armazenamento das imagens dos produtos</li>
+        <li><strong>ViaCEP</strong> (Brasil) — consulta pública de CEP, usada só para estimar o frete a partir do CEP que você digita; não recebemos nem armazenamos nenhum outro dado seu nessa consulta</li>
     </ul>
     <p>Ambos adotam práticas de segurança reconhecidas internacionalmente. As transferências internacionais seguem o disposto no art. 33 da LGPD.</p>
 

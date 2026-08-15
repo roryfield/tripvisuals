@@ -53,13 +53,12 @@
                 running = d.running;
                 paused  = d.paused;
                 stats   = Object.assign({}, stats, d.stats);
+
+                var banner = $('noKeyBanner');
+                if (banner) banner.hidden = d.hasKey !== false;
+
                 updateButtons();
                 updateProgress();
-
-                if (d.hasKey === false) {
-                    var banner = $('noKeyBanner');
-                    if (banner) banner.hidden = false;
-                }
 
                 if (d.pararPorErro) {
                     var autoBanner = $('autoStopBanner');
@@ -72,7 +71,6 @@
                 }
 
                 if (!wasRunning && running) {
-                    $('pbarWrap').hidden = false;
                     log('Processamento iniciado \u2014 ' + (stats.total || 0) + ' arquivo(s)', 'ok');
                 }
                 if (wasRunning && !running) {
@@ -97,13 +95,37 @@
 
     // ── Atualiza contadores e botões ──────────────────────────────────────────
     function updateButtons() {
-        $('btnStart').disabled = running;
+        var semFila  = (stats.total || 0) === 0 && (stats.pending || 0) === 0;
+        var banner   = $('noKeyBanner');
+        var semChave = !!(banner && !banner.hidden);
+        var podeIniciar = !running && !semFila && !semChave;
+
+        var btnStart = $('btnStart');
+        btnStart.disabled = !podeIniciar;
+        if (running)       btnStart.title = 'J\u00e1 em execu\u00e7\u00e3o.';
+        else if (semChave) btnStart.title = 'GROQ_API_KEY n\u00e3o configurada \u2014 configure no Railway antes de iniciar.';
+        else if (semFila)  btnStart.title = 'Adicione imagens antes de iniciar.';
+        else                btnStart.title = '';
+
         $('btnPause').disabled = !running;
         $('btnStop').disabled  = !running;
-        $('btnStart').classList.toggle('btn-launch-running', running && !paused);
+        btnStart.classList.toggle('btn-launch-running', running && !paused);
         var p = $('btnPause');
         p.textContent = paused ? '\u25b6 Retomar' : '\u23f8 Pausar';
+
+        // "Pr\u00f3ximo passo" \u2014 brilho sutil, nunca mais de um lugar por vez,
+        // s\u00f3 aponta pra ação que faz sentido no estado atual. N\u00e3o bloqueia
+        // nenhuma outra a\u00e7\u00e3o, s\u00f3 chama aten\u00e7\u00e3o.
+        var dropzone = $('dropzoneCatalogador');
+        var concluidoSemErro = !running && (stats.total || 0) > 0 &&
+            stats.done === stats.total && (stats.errors || 0) === 0;
+        if (dropzone) dropzone.classList.toggle('cat-suggested', semFila && !running);
+        btnStart.classList.toggle('cat-suggested', podeIniciar && !concluidoSemErro);
+        var btnExport = $('btnExport');
+        if (btnExport) btnExport.classList.toggle('cat-suggested', concluidoSemErro);
     }
+
+    var RING_CIRC = 2 * Math.PI * 46; // r=46, mesmo raio do SVG no HTML
 
     function updateProgress() {
         var total  = stats.total   || 0;
@@ -115,8 +137,9 @@
         $('statPend').textContent  = stats.pending || 0;
         $('statErr').textContent   = stats.errors  || 0;
 
-        var bar = $('pbar');
-        bar.style.width = pct + '%';
+        var ring = $('pbar');
+        ring.style.strokeDasharray  = RING_CIRC;
+        ring.style.strokeDashoffset = RING_CIRC * (1 - pct / 100);
         $('pbarPct').textContent = pct + '%';
 
         if (stats.startedAt && done > 0 && (stats.pending || 0) > 0) {
@@ -172,8 +195,7 @@
         var tbody = document.getElementById('resultTbody');
         entries.forEach(function (e) { appendRowTo(e, tbody); });
 
-        var det = $('resultsDetails');
-        if (det && !det.open) det.open = true;
+        destacarPilulaSeInativa('results');
     }
 
     function appendRowTo(entry, tbody) {
@@ -281,11 +303,11 @@
     function fetchFileCount() {
         apiJSON(API + '/files')
             .then(function (d) {
-                $('pbarWrap').hidden = (d.done === 0 && !running);
                 stats.total   = d.total;
                 stats.done    = d.done;
                 stats.pending = d.pending;
                 updateProgress();
+                updateButtons();
             })
             .catch(function () {});
     }
@@ -301,7 +323,6 @@
                 running = true;
                 var autoBanner = $('autoStopBanner');
                 if (autoBanner) autoBanner.hidden = true;
-                $('pbarWrap').hidden = false;
                 updateButtons();
                 updateProgress();
                 log('Processamento iniciado \u2014 ' + d.queued + ' arquivo(s)', 'ok');
@@ -346,7 +367,6 @@
                 results = {};
                 stats   = { total: 0, pending: 0, done: 0, errors: 0, startedAt: null };
                 buildTable([]);
-                $('pbarWrap').hidden = true;
                 updateProgress();
                 log('Progresso e fila resetados', 'warn');
             })
@@ -364,7 +384,6 @@
                 var banner = $('autoStopBanner');
                 if (banner) banner.hidden = true;
                 buildTable([]);
-                $('pbarWrap').hidden = true;
                 updateButtons();
                 updateProgress();
                 log('Parada forçada — ' + (d.itensLimpos || 0) + ' item(ns) limpo(s) da fila', 'warn');
@@ -427,6 +446,30 @@
             .catch(function (e) { log('Erro no upload: ' + e.message, 'err'); });
     }
 
+    // ── Painéis Log / Resultados (pílulas, substituem <details>) ──────────────
+    function irParaPainel(nome) {
+        var paineis = { log: 'logPanelBody', results: 'resultsPanelBody' };
+        var pilulas = { log: 'btnToggleLog', results: 'btnToggleResults' };
+        Object.keys(paineis).forEach(function (n) {
+            var ativo = n === nome;
+            var corpo = $(paineis[n]);
+            var pilula = $(pilulas[n]);
+            if (corpo) corpo.hidden = !ativo;
+            if (pilula) {
+                pilula.classList.toggle('active', ativo);
+                pilula.setAttribute('aria-expanded', ativo ? 'true' : 'false');
+                if (ativo) pilula.classList.remove('cat-pulse');
+            }
+        });
+    }
+
+    function destacarPilulaSeInativa(nome) {
+        var pilula = $(nome === 'log' ? 'btnToggleLog' : 'btnToggleResults');
+        if (pilula && !pilula.classList.contains('active')) {
+            pilula.classList.add('cat-pulse');
+        }
+    }
+
     // ── Delegação de eventos (sem inline handlers) ────────────────────────────
     document.addEventListener('click', function (e) {
         var t = e.target;
@@ -437,6 +480,8 @@
         if (t.id === 'btnReset')    { resetAll();        return; }
         if (t.id === 'btnForceStop' || t.id === 'btnAutoStopReset') { forcarParada(); return; }
         if (t.id === 'btnExport')   { window.location.href = API + '/export/csv'; return; }
+        var pilulaClicada = t.closest && t.closest('[data-panel]');
+        if (pilulaClicada) { irParaPainel(pilulaClicada.dataset.panel); return; }
         if (t.id === 'btnClearLog') {
             $('log').innerHTML = '<div class="cat-log-item cat-log-dim">Log limpo.</div>';
             return;
@@ -467,8 +512,31 @@
     });
 
     // ── Sliders ───────────────────────────────────────────────────────────────
-    $('concRange').addEventListener('input', function () { $('concVal').textContent = this.value; });
-    $('rpmRange').addEventListener('input',  function () { $('rpmVal').textContent  = this.value; });
+    function atualizarResumoLock() {
+        var el = $('catLockSummaryVal');
+        if (el) el.textContent = $('concRange').value + ' workers · ' + $('rpmRange').value + ' req/min';
+    }
+    $('concRange').addEventListener('input', function () { $('concVal').textContent = this.value; atualizarResumoLock(); });
+    $('rpmRange').addEventListener('input',  function () { $('rpmVal').textContent  = this.value; atualizarResumoLock(); });
+
+    // Painel travado — clique no resumo abre/fecha e destrava/tranca.
+    // Não é segurança de verdade (login é único, compartilhado); é
+    // fricção deliberada pra não mexer sem querer.
+    var lockPanel = $('catLockPanel');
+    var lockBtn   = $('btnCatLockToggle');
+    if (lockPanel && lockBtn) {
+        lockBtn.addEventListener('click', function () {
+            var trancadoAgora = lockPanel.dataset.locked !== 'false';
+            var novoTrancado  = !trancadoAgora;
+            lockPanel.dataset.locked = novoTrancado ? 'true' : 'false';
+            $('catLockBody').hidden = novoTrancado;
+            lockBtn.setAttribute('aria-expanded', novoTrancado ? 'false' : 'true');
+            var iconClosed = lockBtn.querySelector('.cat-lock-icon-closed');
+            var iconOpen   = lockBtn.querySelector('.cat-lock-icon-open');
+            if (iconClosed) iconClosed.hidden = !novoTrancado;
+            if (iconOpen)   iconOpen.hidden   = novoTrancado;
+        });
+    }
 
     // ── Init ──────────────────────────────────────────────────────────────────
     startPolling();
