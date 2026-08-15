@@ -3,7 +3,7 @@
 /* ═══ admin-landing.html → extracted styles ═══ */
 html[data-init] body { visibility: visible !important; }
 
-.main { padding: 40px 32px; max-width: 1440px; margin: 0 auto; }
+.main { padding: 40px 32px; max-width: min(1760px, 94vw); margin: 0 auto; }
 
         /* ── SECTIONS — unified card style ───────────────── */
         .section {

@@ -476,9 +476,9 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         // First gate: trust the Content-Type header is at least claiming an image
-        const ok = ['image/jpeg', 'image/png', 'image/webp'];
+        const ok = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (ok.includes(file.mimetype)) cb(null, true);
-        else cb(new Error('Tipo de imagem não permitido. Use JPG, PNG ou WEBP.'));
+        else cb(new Error('Tipo de imagem não permitido. Use JPG, PNG, WEBP ou GIF.'));
     }
 });
 
@@ -495,6 +495,9 @@ function detectImageType(buffer) {
     // WebP: 'RIFF'....'WEBP'
     if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
         b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'webp';
+    // GIF: 'GIF87a' ou 'GIF89a'
+    if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38 &&
+        (b[4] === 0x37 || b[4] === 0x39) && b[5] === 0x61) return 'gif';
     return null;
 }
 
