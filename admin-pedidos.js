@@ -177,12 +177,18 @@
             if (pedido?.payment_status === 'pago') {
                 comprovanteResultado.textContent = '✓ Pagamento já confirmado.';
                 comprovanteResultado.className = 'comprovante-resultado ok';
+            } else if (pedido?.comprovante_valor_detectado != null) {
+                comprovanteResultado.textContent = '⚠ Comprovante já anexado — R$ ' +
+                    Number(pedido.comprovante_valor_detectado).toFixed(2) + ' detectado, aguardando confirmação.';
+                comprovanteResultado.className = 'comprovante-resultado alerta';
             } else {
                 comprovanteResultado.textContent = '';
                 comprovanteResultado.className = 'comprovante-resultado';
             }
         }
-        if (btnConfirmarPagamento) btnConfirmarPagamento.hidden = true;
+        if (btnConfirmarPagamento) {
+            btnConfirmarPagamento.hidden = !(pedido?.comprovante_valor_detectado != null && pedido?.payment_status !== 'pago');
+        }
         if (fComprovante) fComprovante.value = '';
     }
 
@@ -251,6 +257,7 @@
     function init() {
         initFreteConfig();
         initComprovantePagamento();
+        initNovoViaComprovante();
 
         // Filter chips
         document.querySelectorAll('.status-filter-chip').forEach(chip => {
@@ -476,6 +483,72 @@
                 }
             });
         }
+    }
+
+    // [VZ] Fase 17 — criar pedido a partir de comprovante, sem precisar de
+    // pedido já existente. Reaproveita abrirForm() e initComprovantePagamento()
+    // — depois de criado, o pedido novo se comporta como qualquer outro que já
+    // tem comprovante anexado aguardando confirmação.
+    function initNovoViaComprovante() {
+        const btn        = document.getElementById('btnNovoViaComprovante');
+        const dlg        = document.getElementById('dlgNovoComprovante');
+        const input      = document.getElementById('inputNovoComprovante');
+        const status     = document.getElementById('statusNovoComprovante');
+        const btnCancelar = document.getElementById('btnCancelarNovoComprovante');
+        if (!btn || !dlg || !input || !status) return;
+
+        btn.addEventListener('click', () => {
+            status.textContent = '';
+            status.className = 'comprovante-resultado';
+            input.value = '';
+            dlg.showModal();
+        });
+
+        if (btnCancelar) btnCancelar.addEventListener('click', () => dlg.close());
+
+        input.addEventListener('change', async () => {
+            const file = input.files[0];
+            if (!file) return;
+
+            status.textContent = 'Analisando comprovante…';
+            status.className = 'comprovante-resultado';
+
+            try {
+                const form = new FormData();
+                form.append('comprovante', file);
+                const res = await fetch('/api/pedidos/novo-via-comprovante', {
+                    method: 'POST', credentials: 'include', body: form,
+                });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || 'Erro ao processar comprovante.');
+
+                status.textContent = '✓ Pedido #' + d.pedidoId + ' criado' +
+                    (d.valor != null ? ' — R$ ' + d.valor.toFixed(2) + ' detectado' : ' — valor não identificado, confira manualmente') + '.';
+                status.className = 'comprovante-resultado ok';
+
+                setTimeout(async () => {
+                    dlg.close();
+                    await carregar();
+                    abrirForm({
+                        id:                          d.pedidoId,
+                        produto_nome:                '(preencher produto)',
+                        cliente_nome:                d.nomePagador || '',
+                        cliente_whatsapp:             '',
+                        tamanho:                      '',
+                        valor:                        d.valor,
+                        cep:                          '',
+                        status:                       'novo',
+                        notas:                        '',
+                        payment_status:               'manual',
+                        comprovante_valor_detectado:  d.valor,
+                        comprovante_url:              d.comprovanteUrl,
+                    });
+                }, 900);
+            } catch (err) {
+                status.textContent = '✗ ' + (err.message || 'Erro ao processar comprovante.');
+                status.className = 'comprovante-resultado erro';
+            }
+        });
     }
 
     if (document.readyState === 'loading') {

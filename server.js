@@ -1245,6 +1245,59 @@ app.delete('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
 // que já faz hoje, anexa o print aqui, e a IA só ajuda a conferir o
 // valor — quem confirma o pagamento continua sendo sempre a pessoa, num
 // clique à parte, nunca automático.
+// [VZ] Fase 17 — criar pedido a partir de um comprovante, sem precisar de
+// um pedido já existente. Reaproveita lerComprovante() e os mesmos campos
+// de comprovante que a tela de edição já exibe — a confirmação de
+// pagamento continua manual, mesmo padrão da Fase 8, nunca automática.
+app.post('/api/pedidos/novo-via-comprovante', requireAuth, writeLimiter, upload.single('comprovante'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+
+    try {
+        const tipo = detectImageType(req.file.buffer);
+        if (!tipo) return res.status(400).json({ error: 'Arquivo não é uma imagem válida (JPG, PNG ou WebP).' });
+
+        const leitura = await lerComprovante({
+            buffer:     req.file.buffer,
+            mimeType:   'image/' + tipo,
+            groqApiKey: process.env.GROQ_API_KEY,
+            model:      process.env.CATALOGADOR_MODEL,
+        });
+
+        if (leitura.naoEComprovante) {
+            return res.status(400).json({ error: 'Essa imagem não parece um comprovante de pagamento. Confira o arquivo antes de tentar de novo.' });
+        }
+
+        const baseName = 'comprovante_novo_' + Date.now();
+        const enviado  = await uploadToCloudinary(req.file.buffer, baseName, 'tripvisuals/comprovantes');
+
+        const nomeDetectado = leitura.nomePagador ? String(leitura.nomePagador).slice(0, 100) : '';
+
+        const r = await pool.query(
+            `INSERT INTO pedidos
+                (produto_nome, valor, cliente_nome, status,
+                 comprovante_url, comprovante_valor_detectado, comprovante_analisado_em)
+             VALUES ($1,$2,$3,'novo',$4,$5,NOW())
+             RETURNING id`,
+            ['(preencher produto)', leitura.valor, nomeDetectado, enviado.url, leitura.valor]
+        );
+        const pedidoId = r.rows[0].id;
+
+        await registrarEvento(pool, {
+            modulo:     'pedidos',
+            tipo:       'pedido_criado_via_comprovante',
+            severidade: 'info',
+            resumo:     `Pedido #${pedidoId} criado a partir de comprovante — falta revisar produto, tamanho e confirmar pagamento.`,
+            detalhes:   { pedidoId, ...leitura, comprovanteUrl: enviado.url },
+        });
+
+        res.status(201).json({ pedidoId, ...leitura, comprovanteUrl: enviado.url });
+    } catch (err) {
+        console.error('POST /pedidos/novo-via-comprovante:', err.message);
+        res.status(err.status || 500).json({ error: err.message || 'Erro ao processar comprovante.' });
+    }
+});
+
+
 app.post('/api/pedidos/:id/comprovante', requireAuth, writeLimiter, upload.single('comprovante'), async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
