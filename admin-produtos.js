@@ -51,10 +51,10 @@ const PRODUTOS_POR_PAGINA = 24;
                 const numEl   = document.getElementById('totalCount');
                 const labEl   = document.getElementById('totalLabel');
                 if (ocultos > 0) {
-                    numEl.innerText = ativos;
+                    if (numEl) numEl.innerText = ativos;
                     if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
                 } else {
-                    numEl.innerText = arr.length;
+                    if (numEl) numEl.innerText = arr.length;
                     if (labEl) labEl.innerText = 'produtos no acervo';
                 }
             })();
@@ -480,10 +480,10 @@ const PRODUTOS_POR_PAGINA = 24;
                 const numEl   = document.getElementById('totalCount');
                 const labEl   = document.getElementById('totalLabel');
                 if (ocultos > 0) {
-                    numEl.innerText = ativos;
+                    if (numEl) numEl.innerText = ativos;
                     if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
                 } else {
-                    numEl.innerText = arr.length;
+                    if (numEl) numEl.innerText = arr.length;
                     if (labEl) labEl.innerText = 'produtos no acervo';
                 }
             })();
