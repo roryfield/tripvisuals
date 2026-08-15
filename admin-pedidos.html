@@ -28,10 +28,36 @@
     </svg>
     <span class="label">Sair</span>
 </button>
+                <button type="button" class="btn-secondary" id="btnNovoViaComprovante" title="Criar pedido a partir de um comprovante de pagamento">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 2h6l1 3h4a1 1 0 0 1 1 1v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>Novo via comprovante</span>
+                </button>
                 <div class="produto-count" id="pedidosCount">—</div>
                 <div class="produto-count-label">abertos</div>
             </div>
         </header>
+
+        <!-- Novo pedido a partir de comprovante — rascunho, sem produto/endereço
+             ainda; a pessoa completa o resto e confirma o pagamento depois. -->
+        <dialog id="dlgNovoComprovante" class="vz-dialog">
+            <h3>Novo pedido a partir de comprovante</h3>
+            <p class="vz-dialog-hint">
+                Sobe a foto de um comprovante de pagamento. A IA lê o valor e quem pagou —
+                o pedido nasce como rascunho, sem produto nem endereço ainda. Você completa
+                o resto e confirma o pagamento na tela seguinte.
+            </p>
+            <label class="vz-btn-secondary" for="inputNovoComprovante" style="display:inline-flex; cursor:pointer;">
+                📎 Escolher imagem do comprovante
+            </label>
+            <input type="file" id="inputNovoComprovante" accept="image/jpeg,image/png,image/webp" hidden>
+            <p id="statusNovoComprovante" class="comprovante-resultado" aria-live="polite"></p>
+            <div class="vz-dialog-actions">
+                <button type="button" class="vz-btn-ghost" id="btnCancelarNovoComprovante">Cancelar</button>
+            </div>
+        </dialog>
 
         <!-- [VZ] Fase 7 — configuração de frete por região (UF). Nativo
              <details>/<summary>, sem JS pra abrir/fechar. -->

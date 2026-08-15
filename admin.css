@@ -3013,6 +3013,25 @@ kbd {
 /* ═══════════════════════════════════════════════════════
    FASE 7 — painel de frete por região (admin-pedidos.html)
 ═══════════════════════════════════════════════════════ */
+.vz-dialog {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 440px;
+    width: 90vw;
+    color: var(--text);
+}
+.vz-dialog::backdrop { background: rgba(0,0,0,0.6); }
+.vz-dialog h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+.vz-dialog-hint { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 18px; }
+.vz-dialog-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+
 .frete-config-panel {
     background: var(--panel);
     border: 1px solid var(--border);
