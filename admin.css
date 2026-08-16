@@ -731,6 +731,42 @@ input:focus, select:focus {
 .vz-help-drawer-close:hover { color: var(--text); border-color: var(--text-muted); }
 .vz-help-drawer-close:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
+.vz-help-drawer-search-wrap {
+    position: relative;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.vz-help-drawer-search-icon {
+    position: absolute;
+    left: 32px; top: 50%;
+    transform: translateY(-50%);
+    width: 14px; height: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+input.vz-help-drawer-search {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    padding: 8px 12px 8px 32px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+}
+input.vz-help-drawer-search:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+}
+.vz-help-drawer-empty {
+    padding: 16px 20px 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .vz-help-drawer-body {
     flex: 1;
     overflow-y: auto;
@@ -896,7 +932,6 @@ input:focus, select:focus {
 
 
 /* ═══ admin-hub.html → extracted styles ═══ */
-html[data-init] body { visibility: visible !important; }
 
 .hub-wrap {
             padding: 48px 40px 0;
@@ -1018,7 +1053,6 @@ html[data-init] body { visibility: visible !important; }
 
 
 /* ═══ admin.html → extracted styles ═══ */
-html[data-init] body { visibility: visible !important; }
 
 .main {
             padding: 40px;
@@ -1037,7 +1071,6 @@ html[data-init] body { visibility: visible !important; }
 
 
 /* ═══ admin-produtos.html → extracted styles ═══ */
-html[data-init] body { visibility: visible !important; }
 
 .main { padding: 40px; max-width: min(1760px, 94vw); margin: 0 auto; }
 
@@ -1242,7 +1275,6 @@ html[data-init] body { visibility: visible !important; }
 
 
 /* ═══ admin-layout.html → extracted styles ═══ */
-html[data-init] body { visibility: visible !important; }
 
 body {
             display: flex;

@@ -126,6 +126,13 @@
             '  <span class="vz-help-drawer-title">MANUAL</span>' +
             '  <button class="vz-help-drawer-close" id="vzHelpClose" aria-label="Fechar manual">✕</button>' +
             '</div>' +
+            '<div class="vz-help-drawer-search-wrap">' +
+            '  <svg class="vz-help-drawer-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+            '    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
+            '  </svg>' +
+            '  <input type="text" id="vzHelpDrawerSearch" class="vz-help-drawer-search" placeholder="Buscar no manual..." autocomplete="off" aria-label="Buscar no manual">' +
+            '</div>' +
+            '<p class="vz-help-drawer-empty" id="vzHelpDrawerEmpty" hidden>Nenhum resultado — tenta outro termo.</p>' +
             '<div class="vz-help-drawer-body" id="vzHelpBody">' +
             '  <div class="vz-help-loading">' +
             '    <div class="vz-help-spinner"></div>' +
@@ -141,6 +148,13 @@
 
         var closeBtn = document.getElementById('vzHelpClose');
         if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+
+        var searchInput = document.getElementById('vzHelpDrawerSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                filtrarManualDrawer(searchInput.value);
+            });
+        }
 
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeDrawer();
@@ -168,6 +182,21 @@
         document.body.style.overflow = '';
         var fab = document.getElementById('vzHelpFab');
         if (fab) fab.focus();
+    }
+
+    function filtrarManualDrawer (query) {
+        var body  = document.getElementById('vzHelpBody');
+        var vazio = document.getElementById('vzHelpDrawerEmpty');
+        if (!body) return;
+        var termo    = query.trim().toLowerCase();
+        var secoes   = body.querySelectorAll('.help-section');
+        var visiveis = 0;
+        secoes.forEach(function (sec) {
+            var bate = !termo || sec.textContent.toLowerCase().indexOf(termo) !== -1;
+            sec.hidden = !bate;
+            if (bate) visiveis++;
+        });
+        if (vazio) vazio.hidden = !(termo && visiveis === 0 && secoes.length > 0);
     }
 
     function loadHelpContent () {
