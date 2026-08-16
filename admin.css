@@ -2014,6 +2014,14 @@ input.produtos-search {
 }
 .btn-secondary:hover { border-color: #555; color: #ccc; }
 
+.btn-novo-comprovante {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+.btn-novo-comprovante svg { width: 15px; height: 15px; flex-shrink: 0; }
+
 @media (max-width: 600px) {
     .pedido-form-grid { grid-template-columns: 1fr; }
     .pedido-form-modal { padding: 0; }
