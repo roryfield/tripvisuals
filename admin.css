@@ -46,6 +46,16 @@ body.tema-claro {
     --input-border:   #cccccc;
     --nav-bg:         rgba(248,248,248,0.97);
     --table-border:   #e8e8e8;
+
+    /* [VZ] Fase 18 — as cores de destaque do tema escuro (neon, pensadas
+       pra fundo preto) nunca tinham sido redefinidas aqui. Contra fundo
+       branco, o cyan original tinha 1.54:1 de contraste (mínimo AA exige
+       4.5:1) — praticamente ilegível. Valores abaixo calculados e
+       confirmados, mesma família de cor, ajustados pra funcionar em
+       fundo claro. */
+    --cyan:    #006978;  /* 6.38:1 contra branco (era #00e5ff, 1.54:1) */
+    --danger:  #c62828;  /* 5.62:1 contra branco (era #ff4d4d, 3.27:1) */
+    --success: #188038;  /* 5.02:1 contra branco (era #25d366, 1.98:1) */
 }
 
 /* ── FOUC PREVENTION ───────────────────────────────── */
