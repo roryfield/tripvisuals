@@ -149,6 +149,7 @@ async function listarItens() {
             processedAt:  r.processado_em,
             aplicado:     r.aplicado,
             produtoId:    r.produto_id,
+            imagemUrl:    r.cloudinary_url,
         };
     }
     return { processed, linhas: rows };
@@ -256,7 +257,17 @@ async function identifyBand(cloudinaryUrl) {
         }]
     });
 
-    return toSlug(res.choices[0]?.message?.content) || 'sem-identificacao';
+    const conteudo = res.choices[0]?.message?.content;
+    if (!conteudo) {
+        // [VZ] Fase 21 — resposta vazia da Groq não é "a IA não sabia", é a
+        // API devolvendo literalmente nada. finish_reason diz o motivo real
+        // (filtro de conteúdo, corte por tamanho, etc.) — sem logar isso,
+        // toda causa diferente vira o mesmo "sem-identificacao" indistinguível.
+        console.warn('[catalogador] Groq devolveu conteúdo vazio.',
+            'finish_reason:', res.choices[0]?.finish_reason,
+            '| model:', res.model);
+    }
+    return toSlug(conteudo) || 'sem-identificacao';
 }
 
 // ── Processador por item ───────────────────────────────────────────────────────
@@ -278,6 +289,7 @@ async function processFile(item) {
             state.stats.done++;
             emit({ type: 'done', file: display, result: {
                 originalFile: chave, band, outputFile, processedAt: new Date().toISOString(),
+                imagemUrl: cloudinaryUrl,
             }});
             return;
 
@@ -424,7 +436,7 @@ router.get('/files', async (_, res) => {
                 name: r.chave,
                 result: r.processado_em ? {
                     originalFile: r.chave, band: r.banda, outputFile: r.output_file,
-                    processedAt: r.processado_em,
+                    processedAt: r.processado_em, imagemUrl: r.cloudinary_url,
                 } : null,
             })),
         });
@@ -520,6 +532,29 @@ router.get('/results', async (_, res) => {
     } catch (e) {
         console.error('[catalogador] GET /results:', e.message);
         res.status(500).json({ error: 'Erro ao buscar resultados.' });
+    }
+});
+
+// POST /api/catalogador/reidentificar/:file
+// Roda identifyBand() de novo pra um item já processado, contra a mesma
+// imagem já salva na Cloudinary — não sobe nada de novo. Usa o mesmo
+// limitador de taxa do processamento normal, não é uma via paralela sem
+// controle de limite.
+router.post('/reidentificar/:file', async (req, res) => {
+    try {
+        const chave = decodeURIComponent(req.params.file);
+        const item  = await buscarItem(chave);
+        if (!item || !item.processado_em) return res.status(404).json({ error: 'Item não encontrado ou ainda não processado.' });
+
+        await limiter.acquire();
+        const band = await identifyBand(item.cloudinary_url);
+        await marcarProcessado(chave, { banda: band, outputFile: item.output_file });
+
+        res.json({ updated: true, band, file: chave });
+    } catch (e) {
+        const classificacao = classificarErro(e);
+        console.error('[catalogador] POST /reidentificar:', e.message);
+        res.status(500).json({ error: classificacao.mensagem || 'Erro ao reprocessar imagem.' });
     }
 });
 

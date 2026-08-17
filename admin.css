@@ -2684,6 +2684,24 @@ kbd {
 .cat-log-dim  { color: var(--text-muted); }
 
 /* ── Tabela de resultados ────────────────────────────── */
+.cat-thumb-cell { width: 52px; }
+.cat-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    display: block;
+}
+.cat-thumb-vazio {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
 .cat-fname {
     font-family: 'Courier New', ui-monospace, monospace;
     font-size: 0.78rem;

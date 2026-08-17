@@ -196,6 +196,7 @@
 
         var html = '<table class="vz-table">' +
             '<thead><tr>' +
+            '<th>Imagem</th>' +
             '<th>Arquivo original</th>' +
             '<th>Banda identificada</th>' +
             '<th class="cat-th-hide">Arquivo de sa\u00edda</th>' +
@@ -214,12 +215,19 @@
     function appendRowTo(entry, tbody) {
         var tr = document.createElement('tr');
         tr.dataset.file = entry.originalFile;
+        var semIdentificacao = entry.band === 'sem-identificacao';
         var acoes = entry.aplicado
             ? '<span class="cat-badge-ok">no cat\u00e1logo #' + entry.produtoId + '</span>'
             : '<button class="cat-btn-ghost cat-save-btn" type="button" aria-label="Salvar corre\u00e7\u00e3o">salvar</button>' +
+              (semIdentificacao ? '<button class="cat-btn-ghost cat-retry-btn" type="button" aria-label="Tentar identificar novamente">tentar de novo</button>' : '') +
               '<button class="cat-btn-aplicar" type="button" aria-label="Aplicar ao cat\u00e1logo">aplicar</button>' +
               '<button class="cat-btn-descartar" type="button" aria-label="Descartar item">descartar</button>';
         tr.innerHTML =
+            '<td class="cat-thumb-cell">' +
+                (entry.imagemUrl
+                    ? '<img class="cat-thumb" src="' + esc(entry.imagemUrl) + '" alt="Refer\u00eancia de ' + esc(sh(entry.originalFile)) + '" loading="lazy">'
+                    : '<span class="cat-thumb-vazio">\u2014</span>') +
+            '</td>' +
             '<td class="cat-fname" title="' + esc(entry.originalFile) + '">' + esc(sh(entry.originalFile)) + '</td>' +
             '<td>' +
                 '<input class="batch-input cat-band-input" ' +
@@ -263,6 +271,25 @@
                 input.value = input.dataset.orig;
             })
             .finally(function () { input.disabled = false; });
+    }
+
+    function retryIdentify(tr) {
+        var file = tr.dataset.file;
+        tr.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+        var retryBtn = tr.querySelector('.cat-retry-btn');
+        if (retryBtn) retryBtn.textContent = 'tentando...';
+
+        post(API + '/reidentificar/' + encodeURIComponent(file), {})
+            .then(function (d) {
+                results[file] = Object.assign({}, results[file], { band: d.band });
+                appendRow(results[file]);
+                log('Reprocessado: ' + sh(file) + ' \u2192 ' + esc(d.band), d.band === 'sem-identificacao' ? 'warn' : 'ok');
+            })
+            .catch(function (e) {
+                log('Erro ao reprocessar: ' + e.message, 'err');
+                tr.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                if (retryBtn) retryBtn.textContent = 'tentar de novo';
+            });
     }
 
     function aplicarItem(tr) {
@@ -504,6 +531,11 @@
         if (t.classList.contains('cat-save-btn')) {
             var inp = t.closest('tr') && t.closest('tr').querySelector('.cat-band-input');
             if (inp) saveEdit(inp);
+            return;
+        }
+        if (t.classList.contains('cat-retry-btn')) {
+            var trR = t.closest('tr');
+            if (trR) retryIdentify(trR);
             return;
         }
         if (t.classList.contains('cat-btn-aplicar')) {
