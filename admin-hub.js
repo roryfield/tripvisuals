@@ -292,11 +292,18 @@
         var dataset = tipo === 'line'
             ? { label: label, data: rows.map(function (r) { return r.total; }), borderColor: cor, backgroundColor: cor + '22', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }
             : { label: label, data: rows.map(function (r) { return r.total; }), backgroundColor: cor, borderRadius: 4 };
-        new Chart(el, {
+        var chart = new Chart(el, {
             type: tipo,
             data: { labels: rows.map(function (r) { return fmtLabel(r[keyField]); }), datasets: [dataset] },
             options: base,
         });
+        // [VZ] Fase 19 — a primeira pintura automática do Chart.js podia
+        // não disparar se o layout do canvas ainda não tivesse
+        // estabilizado no momento exato da criação (corrida de
+        // inicialização). A instância nascia certa, com o dado certo,
+        // só nunca desenhava sozinha. requestAnimationFrame espera o
+        // navegador terminar o layout antes de forçar o redesenho.
+        requestAnimationFrame(function () { chart.update(); });
     }
 
 })();
