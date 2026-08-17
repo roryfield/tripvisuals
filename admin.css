@@ -3071,6 +3071,9 @@ kbd {
     max-width: 440px;
     width: 90vw;
     color: var(--text);
+    margin: auto; /* o reset global (margin:0 em tudo) anulava a
+                     centralização nativa do <dialog>, que depende
+                     dessa margem automática pra se posicionar. */
 }
 .vz-dialog::backdrop { background: rgba(0,0,0,0.6); }
 .vz-dialog h3 {
