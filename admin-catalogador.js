@@ -52,7 +52,20 @@
                 var wasRunning = running;
                 running = d.running;
                 paused  = d.paused;
-                stats   = Object.assign({}, stats, d.stats);
+
+                // [VZ] Fase 20 — state.stats no servidor só tem total/pending
+                // confiável DURANTE uma execução ativa; parado, fica zerado
+                // mesmo com fila real esperando. Sobrescrever sempre aqui
+                // apagava o valor real que fetchFileCount() tinha buscado da
+                // fila de verdade. Só aceita total/pending do /status quando
+                // running=true; parado, preserva o que já estava.
+                if (d.running) {
+                    stats = Object.assign({}, stats, d.stats);
+                } else {
+                    stats = Object.assign({}, stats, {
+                        done: d.stats.done, errors: d.stats.errors, startedAt: d.stats.startedAt,
+                    });
+                }
 
                 var banner = $('noKeyBanner');
                 if (banner) banner.hidden = d.hasKey !== false;
@@ -539,6 +552,7 @@
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
+    fetchFileCount();
     startPolling();
 
 })();
