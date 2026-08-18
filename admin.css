@@ -2886,6 +2886,36 @@ kbd {
 .bulk-btn-cancel:hover { border-color: var(--danger); color: var(--danger); }
 .bulk-btn-campo { background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.35); color: var(--cyan); }
 .bulk-campo-valor-wrap { display: flex; align-items: center; gap: 6px; }
+
+/* ── Painel lateral em telas largas ──────────────────────
+   Usa a margem que já sobra dos dois lados do conteúdo
+   centralizado, em vez de flutuar por cima do card sendo
+   editado. Telas menores continuam com a barra inferior de
+   sempre — lá o espaço lateral não existe pra aproveitar. */
+@media (min-width: 1900px) {
+    .bulk-bar {
+        left: auto;
+        right: 24px;
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        flex-direction: column;
+        align-items: stretch;
+        width: 200px;
+        max-height: 82vh;
+        overflow-y: auto;
+        gap: 8px;
+    }
+    .bulk-count {
+        text-align: center;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+    .bulk-sep { width: 100%; height: 1px; }
+    .bulk-campo-valor-wrap { flex-direction: column; align-items: stretch; }
+    .bulk-campo-valor-wrap > * { width: 100%; }
+}
+
 .bulk-campo-select,
 .bulk-campo-valor,
 .bulk-campo-valor-outro {
