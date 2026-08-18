@@ -471,13 +471,45 @@ input:focus, select:focus {
         overflow-y: auto;
     }
     .admin-sidebar-brand {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 1.4rem;
-        letter-spacing: 3px;
-        color: var(--cyan);
-        padding: 0 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 8px 20px;
         margin-bottom: 10px;
         border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+    .admin-sidebar-brand:hover { opacity: 0.8; }
+    .admin-sidebar-logo {
+        width: 100%;
+        max-width: 140px;
+        height: auto;
+        border-radius: 10px;
+        display: none;
+    }
+    .admin-sidebar-logo-escura { display: block; }
+    body.tema-claro .admin-sidebar-logo-escura { display: none; }
+    body.tema-claro .admin-sidebar-logo-clara  { display: block; }
+    .admin-sidebar-footer {
+        margin-top: auto;
+        padding: 14px 12px 0;
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .admin-sidebar-vdzn {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+        opacity: 0.6;
+    }
+    .admin-sidebar-vdzn-sub {
+        font-size: 0.62rem;
+        color: var(--text-muted);
+        opacity: 0.4;
     }
     .sidebar-tab {
         display: flex;
@@ -1062,14 +1094,10 @@ input.vz-help-drawer-search:focus {
         }
 
 
-/* ═══ admin.html → extracted styles ═══ */
+/* ═══ admin.html → extracted styles (regra de max-width morta,
+   nunca vencia o cascade contra a de baixo — removida) ═══ */
 
-.main {
-            padding: 40px;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-        .upload-help {
+.upload-help {
             color: var(--text-muted);
             font-size: 0.8rem;
             margin-top: 8px;
@@ -1082,7 +1110,12 @@ input.vz-help-drawer-search:focus {
 
 /* ═══ admin-produtos.html → extracted styles ═══ */
 
-.main { padding: 40px; max-width: min(1760px, 94vw); margin: 0 auto; }
+/* [VZ] Fase 23 — .main nunca esticava dentro do body flex (sidebar +
+   conteúdo lado a lado). Sem flex-grow, o elemento só se ajustava ao
+   próprio conteúdo, então max-width nunca chegava a importar — sobrava
+   margem enorme dos dois lados em qualquer tela larga, em toda página
+   do admin, não só na Oficina. */
+.main { padding: 40px; max-width: min(1760px, 94vw); margin: 0 auto; flex: 1 1 auto; min-width: 0; }
 
         .page-header-row {
             display: flex;

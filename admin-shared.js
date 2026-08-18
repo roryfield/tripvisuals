@@ -60,14 +60,29 @@
                '<span>' + item.label + '</span></a>';
     }
 
+    // [VZ] Fase 22 — marca do topo é por projeto (troca a cada cliente
+    // novo do vdzn-sm); a assinatura do rodapé é fixa, sempre a mesma,
+    // em todo projeto que usar esse sistema de admin.
+    var PROJETO_LOGO_ESCURA = '/defaults/logo-estatica-escura.jpeg';
+    var PROJETO_LOGO_CLARA  = '/defaults/logo-estatica-clara.jpeg';
+    var PROJETO_LOGO_ALT    = 'Trip Visuals';
+
     function createNav () {
         var activeId = currentNavId();
 
         var sidebar = document.createElement('nav');
         sidebar.className = 'admin-sidebar';
         sidebar.setAttribute('aria-label', 'Navegação admin (desktop)');
-        sidebar.innerHTML = '<div class="admin-sidebar-brand">VDZN</div>' +
-            NAV_ITEMS.map(function (item) { return renderTab(item, activeId, 'sidebar'); }).join('');
+        sidebar.innerHTML =
+            '<a href="/admin-hub.html" class="admin-sidebar-brand" aria-label="Ir para o Hub">' +
+                '<img src="' + PROJETO_LOGO_ESCURA + '" alt="' + PROJETO_LOGO_ALT + '" class="admin-sidebar-logo admin-sidebar-logo-escura">' +
+                '<img src="' + PROJETO_LOGO_CLARA + '" alt="' + PROJETO_LOGO_ALT + '" class="admin-sidebar-logo admin-sidebar-logo-clara">' +
+            '</a>' +
+            NAV_ITEMS.map(function (item) { return renderTab(item, activeId, 'sidebar'); }).join('') +
+            '<div class="admin-sidebar-footer">' +
+                '<span class="admin-sidebar-vdzn">VDZN·SM</span>' +
+                '<span class="admin-sidebar-vdzn-sub">by Rory</span>' +
+            '</div>';
         document.body.insertBefore(sidebar, document.body.firstChild);
 
         // Remove a nav inferior estática, se o arquivo ainda tiver uma
