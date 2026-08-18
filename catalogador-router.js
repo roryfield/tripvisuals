@@ -258,16 +258,18 @@ async function identifyBand(cloudinaryUrl) {
     });
 
     const conteudo = res.choices[0]?.message?.content;
-    if (!conteudo) {
-        // [VZ] Fase 21 — resposta vazia da Groq não é "a IA não sabia", é a
-        // API devolvendo literalmente nada. finish_reason diz o motivo real
-        // (filtro de conteúdo, corte por tamanho, etc.) — sem logar isso,
-        // toda causa diferente vira o mesmo "sem-identificacao" indistinguível.
-        console.warn('[catalogador] Groq devolveu conteúdo vazio.',
-            'finish_reason:', res.choices[0]?.finish_reason,
+    const slug = toSlug(conteudo);
+    if (!slug) {
+        // [VZ] Fase 21b — a checagem original (`if (!conteudo)`) não pegava
+        // resposta só com espaço/quebra de linha: essa string é "verdadeira"
+        // em JS (não vazia), mas vira slug vazio do mesmo jeito. Checar o
+        // slug final, não o conteúdo bruto isolado, cobre os dois casos.
+        console.error('[catalogador] Groq devolveu slug vazio.',
+            'conteudo_bruto:', JSON.stringify(conteudo),
+            '| finish_reason:', res.choices[0]?.finish_reason,
             '| model:', res.model);
     }
-    return toSlug(conteudo) || 'sem-identificacao';
+    return slug || 'sem-identificacao';
 }
 
 // ── Processador por item ───────────────────────────────────────────────────────
