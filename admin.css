@@ -2233,6 +2233,24 @@ input.help-topics-search:focus {
 .help-price-table tr:last-child td { border-bottom: none; }
 .help-note { font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-top: 4px; }
 
+.help-gif {
+    margin: 14px 0;
+    padding: 0;
+}
+.help-gif img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+}
+.help-gif figcaption {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-style: italic;
+}
+
 .contact-card {
     display: flex;
     align-items: center;
