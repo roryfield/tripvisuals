@@ -2718,6 +2718,74 @@ kbd {
 .cat-log-warn { color: #e6a020; }
 .cat-log-dim  { color: var(--text-muted); }
 
+/* ── Guia contextual (spotlight + balão de dica) ─────── */
+.vz-guia-destaque {
+    position: relative;
+    z-index: 900;
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+    border-radius: 8px;
+    animation: vzGuiaPulso 1.6s ease-in-out infinite;
+}
+@keyframes vzGuiaPulso {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,224,0.45); }
+    50%      { box-shadow: 0 0 0 8px rgba(45,212,224,0); }
+}
+.vz-guia-balao {
+    position: absolute;
+    z-index: 901;
+    max-width: 280px;
+    background: var(--cyan);
+    color: #052226;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.35;
+    padding: 12px 34px 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    animation: vzGuiaSurge 0.2s ease-out;
+}
+@keyframes vzGuiaSurge {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.vz-guia-balao-fechar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #052226;
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px;
+}
+.vz-guia-balao-fechar:hover { opacity: 1; }
+.vz-guia-check {
+    position: fixed;
+    z-index: 902;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transform: translateY(-50%);
+    animation: vzGuiaCheckPop 1.2s ease-out forwards;
+}
+@keyframes vzGuiaCheckPop {
+    0%   { opacity: 0; transform: translateY(-50%) scale(0.5); }
+    15%  { opacity: 1; transform: translateY(-50%) scale(1.15); }
+    30%  { transform: translateY(-50%) scale(1); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
 /* ── Tabela de resultados ────────────────────────────── */
 .cat-thumb-cell { width: 52px; }
 .cat-thumb {
