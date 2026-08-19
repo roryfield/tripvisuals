@@ -103,7 +103,18 @@ function bufferPareceImagemValida(buf) {
 
 // ── Slug sanitizer ────────────────────────────────────────────────────────────
 function toSlug(raw) {
-    return (raw ?? '').split('\n')[0].trim().toLowerCase()
+    // [VZ] Fase 25 — modelos de raciocínio (Qwen e outros) sempre expõem o
+    // processo de pensar dentro de <think>...</think> antes da resposta
+    // real. A resposta certa vem DEPOIS desse bloco, não na primeira linha
+    // literal do texto (que muitas vezes é só a quebra de linha antes do
+    // <think> começar). Confirmado com dado real: a IA identificava a
+    // banda corretamente, a extração é que nunca chegava até a resposta.
+    var semRaciocinio = (raw ?? '').replace(/<think>[\s\S]*?<\/think>/gi, '');
+    var primeiraLinhaUtil = semRaciocinio
+        .split('\n')
+        .map(function (l) { return l.trim(); })
+        .filter(Boolean)[0] || '';
+    return primeiraLinhaUtil.toLowerCase()
         .replace(/[^a-z0-9-]/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
 }
 
