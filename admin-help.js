@@ -151,4 +151,43 @@ const links    = document.querySelectorAll('.help-topics .topic-chip');
             history.replaceState(null, '', a.getAttribute('href'));
         });
     });
+
+    // [VZ] Fase 27 — modal de imagem pros GIFs/screenshots do manual.
+    // Clique em qualquer imagem dentro de .help-gif abre ela em tamanho
+    // grande, com a legenda real (puxada do figcaption ao lado, não
+    // duplicada à mão). Reaproveita o <dialog> nativo já corrigido antes
+    // pra centralização — mesmo padrão do resto do site.
+    (function () {
+        const dlg      = document.getElementById('dlgMediaViewer');
+        const imgGrande = document.getElementById('mediaViewerImg');
+        const legenda   = document.getElementById('mediaViewerLegenda');
+        const btnFechar = document.getElementById('btnFecharMediaViewer');
+        if (!dlg || !imgGrande) return;
+
+        document.querySelectorAll('.help-gif img').forEach(function (img) {
+            img.style.cursor = 'zoom-in';
+            img.setAttribute('tabindex', '0');
+            img.setAttribute('role', 'button');
+            img.setAttribute('aria-label', 'Ampliar imagem: ' + (img.alt || ''));
+
+            function abrir() {
+                imgGrande.src = img.src;
+                imgGrande.alt = img.alt;
+                const fig = img.closest('figure');
+                const cap = fig ? fig.querySelector('figcaption') : null;
+                legenda.textContent = cap ? cap.textContent : '';
+                dlg.showModal();
+            }
+            img.addEventListener('click', abrir);
+            img.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); }
+            });
+        });
+
+        function fechar() { dlg.close(); }
+        btnFechar.addEventListener('click', fechar);
+        dlg.addEventListener('click', function (e) {
+            if (e.target === dlg) fechar(); // clique fora da imagem, no fundo do dialog
+        });
+    })();
 })();
