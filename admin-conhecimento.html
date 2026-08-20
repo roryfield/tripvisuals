@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Visuals | Base de Conhecimento</title>
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="/admin-auth-init.js"></script>
+</head>
+<body>
+
+<main class="main">
+
+    <header class="page-header">
+        <div>
+            <p class="page-eyebrow">Base de Conhecimento</p>
+            <h2 class="page-title">MÉTODO, ARQUITETURA E ESTADO REAL</h2>
+        </div>
+        <div class="vz-flex-actions">
+            <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span class="label">Sair</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Página inicial: busca + categorias ── -->
+    <div id="kbHome">
+
+        <div class="kb-search-wrap">
+            <svg class="kb-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="kbSearch" class="kb-search" placeholder="Buscar na base de conhecimento..." autocomplete="off" aria-label="Buscar artigo">
+        </div>
+
+        <p class="kb-legenda">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span> vale pra qualquer projeto futuro.
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span> é específico dessa loja.
+        </p>
+
+        <div id="kbSemResultado" class="kb-sem-resultado" hidden>Nenhum artigo encontrado pra essa busca.</div>
+
+        
+    <section class="kb-categoria">
+        <h2>Método</h2>
+        <p class="kb-categoria-desc">Os princípios que guiam toda decisão de trabalho.</p>
+        <div class="kb-cards-grid">
+        <a href="#metodo-vdzn-sm" class="kb-card" data-artigo="metodo-vdzn-sm" data-titulo="método vdzn-sm" data-resumo="os seis princípios extraídos do trabalho real, generalizados pra qualquer projeto futuro — não &quot;o que fizemos&quot;, mas &quot;por que funcionou&quot;.">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h3>Método VDZN-SM</h3>
+            <p>Os seis princípios extraídos do trabalho real, generalizados pra qualquer projeto futuro — não &quot;o que fizemos&quot;, mas &quot;por que funcionou&quot;.</p>
+        </a>
+        </div>
+    </section>
+    <section class="kb-categoria">
+        <h2>Protocolos</h2>
+        <p class="kb-categoria-desc">Procedimentos passo a passo pra situações que se repetem.</p>
+        <div class="kb-cards-grid">
+        <a href="#protocolo-refresh" class="kb-card" data-artigo="protocolo-refresh" data-titulo="protocolo refresh" data-resumo="como investigar um bug sem assumir a causa — testar fora do navegador antes de qualquer segundo patch.">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h3>Protocolo Refresh</h3>
+            <p>Como investigar um bug sem assumir a causa — testar fora do navegador antes de qualquer segundo patch.</p>
+        </a>
+        </div>
+    </section>
+    <section class="kb-categoria">
+        <h2>Arquitetura</h2>
+        <p class="kb-categoria-desc">Como as peças do sistema se encaixam por baixo do capô.</p>
+        <div class="kb-cards-grid">
+        <a href="#estrutura-guia" class="kb-card" data-artigo="estrutura-guia" data-titulo="estrutura do guia contextual" data-resumo="a lógica completa do motor de dicas que aponta o próximo passo sozinho — e como estender pra qualquer novo fluxo.">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h3>Estrutura do Guia Contextual</h3>
+            <p>A lógica completa do motor de dicas que aponta o próximo passo sozinho — e como estender pra qualquer novo fluxo.</p>
+        </a>
+        </div>
+    </section>
+    <section class="kb-categoria">
+        <h2>Estado do Projeto</h2>
+        <p class="kb-categoria-desc">O que já está pronto, o que falta, o que é limitação real.</p>
+        <div class="kb-cards-grid">
+        <a href="#limitacoes-tecnicas" class="kb-card" data-artigo="limitacoes-tecnicas" data-titulo="limitações técnicas" data-resumo="o que o sistema genuinamente não faz ainda, e por quê — sem prometer o que não está pronto.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Limitações Técnicas</h3>
+            <p>O que o sistema genuinamente não faz ainda, e por quê — sem prometer o que não está pronto.</p>
+        </a>
+        <a href="#ajustes-pendentes" class="kb-card" data-artigo="ajustes-pendentes" data-titulo="ajustes pendentes" data-resumo="estado real do projeto agora — o que já foi resolvido e o que ainda está na fila.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Ajustes Pendentes</h3>
+            <p>Estado real do projeto agora — o que já foi resolvido e o que ainda está na fila.</p>
+        </a>
+        </div>
+    </section>
+
+    </div>
+
+    <!-- ── Artigos individuais (um por vez, mostrado via JS) ── -->
+    <div id="kbArtigos">
+        
+    <article class="kb-artigo" id="artigo-metodo-vdzn-sm" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h1>Método VDZN-SM</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Este documento não fala sobre o Tripvisuals. Fala sobre <em>como</em> o trabalho no Tripvisuals foi feito — os princípios por trás de cada acerto e cada erro, generalizados pra funcionar em qualquer projeto que o VDZN-SM tocar depois. Os 3-4 projetos que estão esperando o método amadurecer são o teste real: se esses princípios só fizeram sentido pro Tripvisuals, o método não generalizou. Se fizerem sentido em qualquer stack, generalizou.</p>
+<hr />
+<h2 id="1-confirmar-com-dado-real-nunca-com-aparencia">1. Confirmar com dado real, nunca com aparência</h2>
+<p><strong>O padrão que se repetiu mais vezes nesta sessão inteira.</strong> Toda vez que alguma coisa "parecia" estar funcionando — visualmente, na tela — e a suposição foi trocada por uma checagem de dado real, o resultado foi diferente do esperado. Quatro exemplos concretos, cada um generalizável:</p>
+<ul>
+<li>Um gráfico "existia" (instância JavaScript criada, dado correto) mas não tinha um único pixel desenhado na tela. Só apareceu ao contar pixel real do canvas, não ao olhar a captura.</li>
+<li>Um "deploy aplicado" foi confirmado errado até cruzar a mensagem exata do commit no Git com o que o código realmente continha.</li>
+<li>Um botão "quebrado" tinha causa raiz num CSS com quatro cópias de uma regra que se contradiziam — só apareceu ao ler o CSS de verdade, não ao adivinhar pela sintoma visual.</li>
+<li>Uma correção "funcionando" só foi confirmada depois de 5 recarregamentos seguidos com checagem de pixel, porque o bug original era intermitente — uma confirmação só não bastava.</li>
+</ul>
+<p><strong>Regra prática pro método:</strong> sempre que uma alegação de "está funcionando" puder ser verificada por um número, um valor computado, ou um log — verifica. "Parece" não é evidência.</p>
+<h2 id="2-verificacao-sistematica-antes-de-qualquer-remocao-estrutural">2. Verificação sistemática antes de qualquer remoção estrutural</h2>
+<p>Ao fundir três telas numa só (a Oficina), um elemento funcional foi removido sem querer, escondido dentro de um bloco de cabeçalho que parecia só decorativo. A correção não foi só "devolver o elemento" — foi construir um script que cruza <em>todo</em> id referenciado pelo JavaScript contra <em>todo</em> id presente no HTML, sistematicamente, antes de qualquer remoção estrutural futura.</p>
+<p><strong>Regra prática pro método:</strong> antes de remover qualquer bloco de HTML/estrutura numa refatoração, roda essa checagem cruzada. Não confia em leitura visual do código pra saber o que está "só decorativo" — confia em busca sistemática.</p>
+<h2 id="3-relaxar-protecao-sempre-no-escopo-mais-estreito-possivel">3. Relaxar proteção sempre no escopo mais estreito possível</h2>
+<p>Duas decisões de segurança nesta sessão seguiram o mesmo princípio: quando uma política de segurança (CSP) precisou ser relaxada pra permitir uma funcionalidade nova, a exceção foi escrita pra <strong>uma rota específica</strong>, não pro site inteiro — e quando uma biblioteca de terceiro (Chart.js) foi bloqueada por essa mesma política, a solução não foi abrir uma exceção nova, foi hospedar a biblioteca localmente, mantendo a política original intacta.</p>
+<p><strong>Regra prática pro método:</strong> toda vez que uma proteção existente parecer "atrapalhar" uma funcionalidade nova, a primeira pergunta é "dá pra manter a proteção e resolver de outro jeito?", não "como eu abro uma exceção".</p>
+<h2 id="4-separar-decisao-de-design-de-decisao-tecnica">4. Separar decisão de design de decisão técnica</h2>
+<p>Antes de programar o painel de comando do Catalogador, três esboços visuais foram construídos e comparados — só depois de uma escolha explícita é que o código começou. Isso evitou programar duas vezes a mesma coisa por causa de gosto não alinhado antes da implementação.</p>
+<p><strong>Regra prática pro método:</strong> qualquer decisão de interface com peso visual real (não um ajuste pequeno) merece uma etapa de esboço/comparação antes do código, mesmo que pareça "perder tempo" no primeiro momento. É mais barato que reescrever depois.</p>
+<h2 id="5-pacote-fechado-manifesto-unico-nunca-entrega-fragmentada">5. Pacote fechado, manifesto único — nunca entrega fragmentada</h2>
+<p>O padrão de "aplicar só uma parte do pacote" se repetiu pelo menos três vezes nesta conversa, sempre causando o mesmo tipo de confusão (funcionalidade pela metade, sem saber o que realmente estava no ar). A solução que funcionou não foi "ser mais cuidadoso" — foi mudar o processo: nunca entregar arquivo solto quando existe um pacote maior em andamento, sempre fechar com uma lista explícita e completa antes de considerar pronto.</p>
+<p><strong>Regra prática pro método:</strong> toda entrega de mais de um arquivo termina com uma lista explícita e numerada de tudo que precisa ser aplicado junto, nunca assumindo que "os arquivos anteriores já foram aplicados".</p>
+<h2 id="6-protocolo-de-verificacao-em-duas-camadas-automatizada-visual">6. Protocolo de verificação em duas camadas: automatizada + visual</h2>
+<p>Documentos que já funcionam bem no Tripvisuals e valem virar padrão do método:</p>
+<ul>
+<li><strong>Protocolo Refresh</strong> (<code>PROTOCOLO-REFRESH.md</code>): testar fora do navegador (terminal, dado bruto) antes de propor um segundo patch de código. Evita gastar uma tentativa de correção em cima de um diagnóstico ainda não confirmado.</li>
+<li><strong>Checklist de aplicação + verificação ao vivo</strong>: depois de qualquer pacote de mudança, existe uma lista concreta do que testar, na ordem que revela problema de interação entre partes, não só cada peça isolada.</li>
+</ul>
+<hr />
+<h2 id="o-que-nao-generalizar">O que NÃO generalizar</h2>
+<p>Importante registrar isso também — nem tudo que funcionou aqui é método, parte é só contexto específico do Tripvisuals:</p>
+<ul>
+<li>O uso de Cloudinary, Groq, Railway são escolhas de fornecedor deste projeto, não parte do método.</li>
+<li>A estética VDZN Signature (cyan/roxo neon) é identidade visual da marca do cliente, não um padrão de design a impor em outro projeto.</li>
+<li>O fato de o admin ter login único, sem papéis de usuário, foi uma decisão de escopo deste projeto específico — outro projeto pode genuinamente precisar de multi-usuário desde o início.</li>
+</ul>
+<hr />
+<h2 id="como-usar-este-documento">Como usar este documento</h2>
+<p>Não é pra ler uma vez e arquivar. É pra abrir no início de cada novo projeto do VDZN-SM e perguntar, item por item: "esse princípio já está sendo seguido aqui, ou preciso lembrar de aplicá-lo?". Se um princípio genuinamente não se aplicar a um projeto (ex: um projeto sem interface visual não precisa do item 4), tudo bem — o teste é se ele <em>generalizou em conceito</em>, não se toda linha se aplica literalmente em todo lugar.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#1-confirmar-com-dado-real-nunca-com-aparencia">1. Confirmar com dado real, nunca com aparência</a></li><li><a href="#2-verificacao-sistematica-antes-de-qualquer-remocao-estrutural">2. Verificação sistemática antes de qualquer remoção estrutural</a></li><li><a href="#3-relaxar-protecao-sempre-no-escopo-mais-estreito-possivel">3. Relaxar proteção sempre no escopo mais estreito possível</a></li><li><a href="#4-separar-decisao-de-design-de-decisao-tecnica">4. Separar decisão de design de decisão técnica</a></li><li><a href="#5-pacote-fechado-manifesto-unico-nunca-entrega-fragmentada">5. Pacote fechado, manifesto único — nunca entrega fragmentada</a></li><li><a href="#6-protocolo-de-verificacao-em-duas-camadas-automatizada-visual">6. Protocolo de verificação em duas camadas: automatizada + visual</a></li><li><a href="#o-que-nao-generalizar">O que NÃO generalizar</a></li><li><a href="#como-usar-este-documento">Como usar este documento</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-protocolo-refresh" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h1>Protocolo Refresh</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Este documento existe porque um incidente real (Catalogador travado, SSE quebrado em produção) tomou tempo demais pra resolver, com ciclos de teste que podiam ter sido cortados pela metade. Não é teoria. Cada etapa abaixo nasceu de um ponto específico onde a investigação real perdeu tempo, e existe pra cortar esse tempo da próxima vez.</p>
+<p>Sete camadas de pensamento, cada uma resolvendo um tipo diferente de perda de tempo. No fim, viram uma seção própria do vdzn-sm — o "botão Refresh" — descrito por último.</p>
+<hr />
+<h2 id="1-criativo-existe-caminho-mais-simples-pro-mesmo-resultado">1. Criativo — "Existe caminho mais simples pro mesmo resultado?"</h2>
+<p>Antes de implementar o pedido literalmente, pergunta: <strong>essa é a forma mais simples de resolver isso, ou é só a primeira que veio à cabeça?</strong></p>
+<p>Regra prática: entre duas formas de entregar a mesma funcionalidade, prefira sempre a que já tem uso comprovado no projeto sobre a que introduz um mecanismo novo — mesmo que a nova pareça "mais correta" ou "mais moderna" no papel.</p>
+<p><strong>Aplicado ao incidente real:</strong> o Catalogador usava SSE (conexão aberta e contínua) pra mostrar progresso em tempo real. Toda outra tela do admin já resolve isso com polling ou atualização sob demanda — nenhuma outra tela do projeto depende de conexão longa. SSE era a peça nova, nunca testada contra o Railway em produção, resolvendo um problema (ver progresso ao vivo) que polling já resolve com 90% da qualidade e uma fração do risco. Isso devia ter sido sinalizado no momento em que o SSE foi construído, não descoberto quebrado meses depois.</p>
+<p><strong>Pergunta de bolso pra qualquer feature nova:</strong> "se essa peça específica falhar em produção, sobra alguma coisa funcionando, ou trava tudo?" Se a resposta for "trava tudo", já é sinal de escolher algo mais robusto.</p>
+<hr />
+<h2 id="2-operacional-onde-pode-estar-o-problema-e-qual-e-o-teste-mais-barato-pra-cada-lugar">2. Operacional — "Onde pode estar o problema, e qual é o teste mais barato pra cada lugar?"</h2>
+<p>Antes de mexer em qualquer código, mapeia as camadas possíveis, <strong>na ordem do teste mais barato pro mais caro</strong>:</p>
+<ol>
+<li><strong>Código do navegador</strong> (JS quebrado, elemento errado) — testável em segundos, DevTools Console.</li>
+<li><strong>Código do servidor</strong> (lógica errada, rota errada) — testável lendo o código-fonte real.</li>
+<li><strong>Infraestrutura entre os dois</strong> (proxy, CDN, plano de hospedagem) — só testável com uma chamada que <strong>não passa pelo navegador</strong>, tipo <code>curl</code> puro.</li>
+</ol>
+<p><strong>A regra que faltou no incidente real:</strong> "clique não faz nada, sem nenhum erro em lugar nenhum" é uma assinatura específica. Não é bug de lógica (bug de lógica geralmente produz <em>algum</em> erro, em algum lugar). Silêncio total, em todas as camadas visíveis, aponta pra camada 3 — infraestrutura — quase sempre. Essa camada devia ter sido testada com <code>curl</code> direto <strong>na primeira rodada de investigação</strong>, não na quinta. Cada rodada de "aplica isso e testa nas telas" custou um ciclo de deploy inteiro; um <code>curl</code> custa 20 segundos.</p>
+<p><strong>Checklist antes de sugerir "aplica esse patch e testa":</strong>
+- [ ] Esse patch resolve uma causa confirmada, ou é uma hipótese?
+- [ ] Se for hipótese, existe um teste mais barato que confirma ou descarta ela <strong>antes</strong> de pedir um novo deploy?
+- [ ] Depois de 2 tentativas sem sucesso no mesmo sintoma, a pergunta muda de "qual é o bug" pra "essa abordagem inteira é a errada" — trocar de estratégia é uma opção válida, não é desistir.</p>
+<hr />
+<h2 id="3-logico-isso-ja-e-um-problema-conhecido-documentado-por-outra-pessoa">3. Lógico — "Isso já é um problema conhecido, documentado por outra pessoa?"</h2>
+<p>Antes de tratar um sintoma como mistério exclusivo deste projeto, busca se é um <strong>padrão já documentado</strong> pra essa combinação específica de tecnologia + hospedagem.</p>
+<p><strong>Aplicado ao incidente real:</strong> <code>SSE</code> + <code>HTTP/2</code> + proxy de plataforma (Railway, Vercel, Render, etc.) é uma combinação com problemas conhecidos e documentados publicamente — não é exclusividade do Tripvisuals. Isso devia ter sido pesquisado explicitamente ("Railway server-sent events not working", "SSE HTTP/2 proxy buffering") antes da segunda tentativa de patch, não só resolvido por dedução a partir da especificação do HTTP/2.</p>
+<p><strong>Regra prática:</strong> qualquer sintoma envolvendo conexão longa, streaming, WebSocket, ou comportamento que muda entre local e produção, merece uma busca explícita por "[tecnologia] + [nome da plataforma de hospedagem] + known issues" antes de qualquer segunda tentativa de correção. Primeira tentativa pode ser dedução; segunda tentativa em diante, sem confirmar contra o que já é sabido publicamente, é perda de tempo evitável.</p>
+<hr />
+<h2 id="4-critico-pos-morte-de-toda-decisao-de-risco">4. Crítico — pós-morte de toda decisão de risco</h2>
+<p>Depois que uma correção é aplicada e confirmada funcionando, <strong>reavaliar depois de um tempo</strong>, com essas três perguntas:</p>
+<ol>
+<li>Quantos ciclos de teste foram necessários até a causa real ser confirmada?</li>
+<li>Em que ciclo específico a causa real já estava disponível, mas não foi reconhecida?</li>
+<li>O que precisa mudar no processo (não no código) pra esse mesmo tipo de sintoma ser resolvido mais rápido da próxima vez?</li>
+</ol>
+<p><strong>Pós-morte do incidente real, aplicado agora:</strong>
+1. Cinco ciclos de teste (print → patch → print → patch → curl decisivo) até a causa raiz completa ficar clara.
+2. A resposta certa já estava disponível no ciclo 3 — a saída vazia de <code>curl -N</code> provava definitivamente que era infraestrutura, não código. Achado só no ciclo 5 porque o teste com <code>curl</code> só foi sugerido depois de duas tentativas de patch no código.
+3. Mudança de processo: qualquer sintoma "nada acontece, sem erro nenhum, em produção" pula direto pra teste com <code>curl</code>/linha de comando, <strong>antes</strong> de qualquer segunda hipótese de código. Isso vira regra fixa, não sugestão pontual — ver seção 7.</p>
+<hr />
+<h2 id="5-analitico-documentacional-registrar-pra-nao-redescobrir">5. Analítico / documentacional — registrar pra não redescobrir</h2>
+<p>Todo diagnóstico não-trivial (mais de uma tentativa até acertar) devia virar uma entrada permanente, não só histórico de conversa. Documento vivo, curto, por sintoma:</p>
+<table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>Causa real</th>
+<th>Como confirmar rápido</th>
+<th>Correção aplicada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clique não faz nada, sem erro no console, request confirmado 200 no servidor</td>
+<td>Conexão de streaming (SSE) descartada por infraestrutura entre Railway e navegador</td>
+<td><code>curl -N</code> direto, sem navegador, contando bytes recebidos em 15s</td>
+<td>Trocado SSE por polling a cada 1.5s nas mesmas rotas já comprovadas (<code>/status</code>, <code>/results</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Esse formato de tabela é o que deve crescer no projeto, arquivo próprio (proponho <code>PROBLEMAS-CONHECIDOS.md</code>, no mesmo nível de <code>CONTINGENCIA.md</code>). Da próxima vez que "clique não faz nada" aparecer, a primeira ação é consultar essa tabela antes de reabrir investigação do zero.</p>
+<hr />
+<h2 id="6-oportunidades-riscos-antecipar-antes-de-precisar-apagar-incendio">6. Oportunidades / riscos — antecipar antes de precisar apagar incêndio</h2>
+<p>Pra toda peça nova que depende de comportamento de infraestrutura não testável localmente (conexão longa, webhook, fila assíncrona, qualquer coisa que só se comporta "de verdade" depois do deploy), perguntar <strong>no momento de construir</strong>, não depois de quebrar:</p>
+<ul>
+<li>Isso tem como ser testado localmente de verdade, ou só vai ser validado ao vivo, em produção, na frente do cliente?</li>
+<li>Se isso falhar silenciosamente (sem erro, sem exceção), como alguém vai descobrir que falhou?</li>
+<li>Existe uma versão mais simples e menos arriscada que entrega 80% do valor com 20% do risco?</li>
+</ul>
+<p>Isso não é burocracia — é a pergunta que, se feita quando o SSE foi construído, teria trocado ele por polling antes de qualquer cliente ver a tela travada.</p>
+<hr />
+<h2 id="7-consultoria-auditoria-o-modulo-refresh">7. Consultoria / auditoria — o módulo "Refresh"</h2>
+<p>Esta é a seção que vira funcionalidade de verdade dentro do vdzn-sm, não só texto de referência.</p>
+<p><strong>O que é:</strong> um botão/comando único que roda as seções 2, 3 e 5 acima automaticamente contra qualquer sintoma reportado, antes de qualquer patch novo ser proposto. Na prática, um checklist disparável, não um botão literal (ainda) — mas desenhado pra virar um se fizer sentido num painel de administração futuro do vdzn-sm.</p>
+<p><strong>Sequência fixa que o Refresh roda, nessa ordem, sem pular etapa:</strong></p>
+<ol>
+<li><strong>Mapa de camadas</strong> (seção 2) — onde pode estar, do teste mais barato pro mais caro.</li>
+<li><strong>Busca por padrão conhecido</strong> (seção 3) — isso já foi documentado por alguém fora deste projeto?</li>
+<li><strong>Consulta a <code>PROBLEMAS-CONHECIDOS.md</code></strong> (seção 5) — isso já aconteceu aqui antes?</li>
+<li>Só depois dessas três, uma hipótese de correção é proposta — e vem etiquetada como <strong>confirmada</strong> (testada e comprovada) ou <strong>hipótese</strong> (ainda não comprovada), nunca misturado, pra quem está lendo saber o nível de certeza antes de gastar um ciclo de deploy nela.</li>
+<li>Depois de aplicada e confirmada: uma entrada nova em <code>PROBLEMAS-CONHECIDOS.md</code>, sem exceção — é isso que faz o próximo Refresh ser mais rápido que este.</li>
+</ol>
+<p><strong>Nome de trabalho:</strong> Protocolo Refresh. Fica valendo pra qualquer investigação de bug daqui pra frente neste projeto, não só pra este incidente.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#1-criativo-existe-caminho-mais-simples-pro-mesmo-resultado">1. Criativo — &quot;Existe caminho mais simples pro mesmo resultado?&quot;</a></li><li><a href="#2-operacional-onde-pode-estar-o-problema-e-qual-e-o-teste-mais-barato-pra-cada-lugar">2. Operacional — &quot;Onde pode estar o problema, e qual é o teste mais barato pra cada lugar?&quot;</a></li><li><a href="#3-logico-isso-ja-e-um-problema-conhecido-documentado-por-outra-pessoa">3. Lógico — &quot;Isso já é um problema conhecido, documentado por outra pessoa?&quot;</a></li><li><a href="#4-critico-pos-morte-de-toda-decisao-de-risco">4. Crítico — pós-morte de toda decisão de risco</a></li><li><a href="#5-analitico-documentacional-registrar-pra-nao-redescobrir">5. Analítico / documentacional — registrar pra não redescobrir</a></li><li><a href="#6-oportunidades-riscos-antecipar-antes-de-precisar-apagar-incendio">6. Oportunidades / riscos — antecipar antes de precisar apagar incêndio</a></li><li><a href="#7-consultoria-auditoria-o-modulo-refresh">7. Consultoria / auditoria — o módulo &quot;Refresh&quot;</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-estrutura-guia" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h1>Estrutura do Guia Contextual</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Este documento é a "lógica e estrutura" que você pediu — o motor (<code>admin-guia.js</code>) já existe e já está provado funcionando no Catalogador IA. O resto do sistema segue exatamente o mesmo padrão, é questão de escrever a lista de passos de cada fluxo, não reinventar o mecanismo.</p>
+<hr />
+<h2 id="o-padrao-resumido">O padrão, resumido</h2>
+<p>Inspirado no MTG Arena, mas mais simples de propósito: <strong>nunca bloqueia a tela inteira</strong>. Se o usuário ficar parado depois de começar um processo, aparece um destaque sutil (contorno pulsante) no elemento certo, com um balão de dica ao lado explicando o que fazer. Quando a ação certa acontece, uma confirmação rápida (✓ verde) aparece e o guia avança sozinho pro próximo passo. Se o usuário já sabe o que fazer e age antes da dica aparecer, ela nunca chega a aparecer — não atrapalha quem já é fluente no sistema.</p>
+<h2 id="por-que-nao-bloquear-outras-acoes-diferente-do-mtga-puro">Por que não bloquear outras ações (diferente do MTGA "puro")</h2>
+<p>O MTG Arena pode travar ações irrelevantes porque é um jogo com regras fixas — só existe um próximo movimento válido por vez. Um painel administrativo não é assim: a dona da loja pode legitimamente querer fazer outra coisa no meio de um processo (checar um pedido, por exemplo) sem isso ser "errado". Por isso o guia <strong>aponta, não impede</strong> — decisão de design, não limitação técnica.</p>
+<h2 id="como-cada-novo-fluxo-se-registra-3-passos-sempre-os-mesmos">Como cada novo fluxo se registra (3 passos, sempre os mesmos)</h2>
+<ol>
+<li><strong>Lista de passos</strong>, cada um com: qual elemento apontar (seletor CSS), qual mensagem mostrar, e como saber que aquele passo foi cumprido (<code>condicaoAvanco</code>, uma função que olha o estado já visível na tela — nunca precisa inventar chamada de rede nova, os contadores já existem).</li>
+<li><strong>Gatilho de início</strong> — geralmente o evento de troca de aba que já existe (<code>vz-oficina-tab</code> na Oficina; Marca &amp; Vitrine e Pedidos precisariam de um evento equivalente, mesmo padrão).</li>
+<li><strong>Um arquivo <code>.js</code> pequeno</strong>, só com essa lista — nunca precisa tocar no motor (<code>admin-guia.js</code>) nem na lógica de negócio da tela em si.</li>
+</ol>
+<h2 id="mapa-de-onde-aplicar-em-seguida-pendencia-estruturada-nao-vaga">Mapa de onde aplicar em seguida — pendência estruturada, não vaga</h2>
+<h3 id="marca-vitrine">Marca &amp; Vitrine</h3>
+<ul>
+<li>Passo 1: aponta pros 5 cards de estilo. Avança quando um estilo é selecionado (evento de clique já existe).</li>
+<li>Passo 2: aponta pro botão "Prévia ao vivo do catálogo". Avança quando o painel abre.</li>
+<li>Passo 3: aponta pra "VER AO VIVO". Sem condição de avanço (é o fim do fluxo, só uma sugestão final).</li>
+</ul>
+<h3 id="pedidos">Pedidos</h3>
+<ul>
+<li>Passo 1: aponta pro botão "+ Novo Pedido" (ou "Novo via comprovante", dependendo de qual a loja usa mais). Avança quando um pedido é criado.</li>
+<li>Passo 2, condicional: se o pedido criado tiver <code>status: novo</code>, aponta pro card do pedido, sugerindo mudar pra "Confirmado" quando o pagamento cair.</li>
+<li>Passo 3: aponta pra "Configurar frete por região" <strong>só na primeira visita</strong> (não repetir depois que já configurou pelo menos uma região — isso vira uma condição extra de nem sequer iniciar o fluxo, não só de avançar).</li>
+</ul>
+<h3 id="hub">Hub</h3>
+<p>Só faz sentido um passo único: na primeira visita de todas (conta nova), aponta pra sidebar, mensagem tipo "Essa barra lateral leva pra tudo — Oficina cadastra produto, Marca &amp; Vitrine cuida da loja, Pedidos organiza venda." Não é um fluxo de várias etapas, é uma apresentação de uma vez só.</p>
+<h2 id="extensao-natural-primeira-vez-vs-sempre">Extensão natural — "primeira vez" vs "sempre"</h2>
+<p>Faz sentido guardar (<code>localStorage</code>, por navegador, sem precisar de tabela nova no banco) quais fluxos o usuário já completou uma vez, e não repetir o guia automático depois disso — só reaparece se a pessoa pedir explicitamente ("relembrar como funciona", um botão pequeno, mesma ideia do "Replay Tutorial" que aparece no seu vídeo de referência do MTGA). Isso não está implementado ainda no motor atual (que sempre reativa a cada visita à aba) — é o próximo incremento natural, registrado como pendência abaixo.</p>
+<h2 id="a-parte-que-voce-disse-pra-nao-construir-agora-so-deixando-a-logica-escrita">A parte que você disse pra não construir agora — só deixando a lógica escrita</h2>
+<p>A "tela de tutoriais com todos os tópicos", linkando pra um site futuro (fórum, base de conhecimento, suporte, comercial) — a peça que falta pra isso se conectar ao que já existe é só um <strong>índice central</strong>: uma tela (poderia viver dentro do próprio Manual que já existe) listando todos os fluxos que têm guia contextual, com um botão "relembrar esse fluxo" em cada um — que simplesmente chama <code>VZGuia.iniciarFluxo(nome, passos)</code> de novo, manualmente. O link pro site externo é só isso mesmo, um link — não precisa de nada especial de lógica, só existir quando o site existir.</p>
+<hr />
+<h2 id="pendencias-registradas-desta-rodada">Pendências registradas desta rodada</h2>
+<ul>
+<li>[ ] Aplicar o mesmo padrão de guia em Marca &amp; Vitrine e Pedidos (specs acima já prontas, só falta escrever os arquivos <code>.js</code> de cada fluxo)</li>
+<li>[ ] Guardar "já vi esse fluxo" por navegador (<code>localStorage</code>), pra não repetir toda visita</li>
+<li>[ ] Índice central de fluxos guiados, com "relembrar" manual por fluxo</li>
+<li>[ ] Tela de tutoriais/tópicos + link pro site futuro — só depois que o site existir</li>
+</ul></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#o-padrao-resumido">O padrão, resumido</a></li><li><a href="#por-que-nao-bloquear-outras-acoes-diferente-do-mtga-puro">Por que não bloquear outras ações (diferente do MTGA &quot;puro&quot;)</a></li><li><a href="#como-cada-novo-fluxo-se-registra-3-passos-sempre-os-mesmos">Como cada novo fluxo se registra (3 passos, sempre os mesmos)</a></li><li><a href="#mapa-de-onde-aplicar-em-seguida-pendencia-estruturada-nao-vaga">Mapa de onde aplicar em seguida — pendência estruturada, não vaga</a></li><li><a href="#extensao-natural-primeira-vez-vs-sempre">Extensão natural — &quot;primeira vez&quot; vs &quot;sempre&quot;</a></li><li><a href="#a-parte-que-voce-disse-pra-nao-construir-agora-so-deixando-a-logica-escrita">A parte que você disse pra não construir agora — só deixando a lógica escrita</a></li><li><a href="#pendencias-registradas-desta-rodada">Pendências registradas desta rodada</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-limitacoes-tecnicas" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Limitações Técnicas</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Diferente de <code>AJUSTES-PENDENTES.md</code>: isso não é lista de bug ou trabalho faltando. É fronteira real de arquitetura — coisas que o sistema deliberadamente não faz hoje, o motivo técnico ou de negócio por trás, e o que precisaria mudar pra resolver. Útil pra conversa com cliente ("por que não X") e pra decisão de prioridade.</p>
+<hr />
+<h2 id="acesso-e-permissao">Acesso e permissão</h2>
+<p><strong>Login único, compartilhado.</strong> Não existe conceito de "usuário" — quem tem a senha (ou o hash dela) vê e faz tudo. Não dá pra dar acesso limitado pra um funcionário, nem saber quem fez o quê além do que já fica registrado em <code>system_events</code> (que loga a ação, não quem a fez, porque não existe "quem" separado de "a conta").</p>
+<p><strong>Por quê:</strong> decisão consciente de escopo, não limitação técnica de fundo. Construir usuários/papéis de verdade é a "Fase 13", registrada como pendência de design desde o <code>VERSIONING.md</code> original — precisa de decisão sua sobre quantos níveis de acesso fazem sentido antes de eu construir.</p>
+<h2 id="pagamento-e-frete">Pagamento e frete</h2>
+<p><strong>PIX automático existe no código, mas está desligado.</strong> A integração com Asaas (gerar cobrança, confirmar pagamento automaticamente) está pronta, testada em sandbox, mas trancada atrás de duas condições que precisam estar certas ao mesmo tempo: <code>ASAAS_API_KEY</code> configurada e a flag <code>checkout_automatico_enabled</code> ligada. As duas dependem do CNPJ da loja ser aprovado — sem isso, tecnicamente não tem como ativar de verdade.</p>
+<p><strong>Frete é estimativa manual por estado, não frete real de transportadora.</strong> Você cadastra um valor fixo por UF; o sistema calcula automaticamente a partir do CEP do cliente, mas não é o valor real dos Correios/transportadora — é o que você decidiu cobrar. Automação de frete real (cotação via API de transportadora) também depende do CNPJ.</p>
+<p><strong>Por quê:</strong> sem CNPJ, não existe conta empresarial pra contratar API de pagamento nem de transportadora — a chave pessoal recebe PIX manual, e frete combinado é a alternativa que não depende disso.</p>
+<h2 id="catalogador-ia-e-comprovante">Catalogador IA e comprovante</h2>
+<p><strong>A IA não cria pedido completo a partir de um comprovante sozinha, e não pode.</strong> Um comprovante de PIX carrega valor, data e nome de quem pagou — nada sobre o que foi comprado, tamanho, cor ou endereço. Isso não é limitação de engenharia, é limitação do próprio dado: essa informação não existe na imagem. O sistema cria um rascunho com o que dá pra extrair e para aí, esperando confirmação humana.</p>
+<p><strong>Modelo da Groq pode ficar desatualizado sem aviso.</strong> Já aconteceu uma vez nesta mesma sessão — um modelo que funcionava parou de existir no catálogo da Groq, sem aviso prévio. O nome do modelo vive numa variável de ambiente (<code>CATALOGADOR_MODEL</code>) exatamente por causa disso, mas ainda exige alguém notar o problema e trocar manualmente quando acontecer de novo.</p>
+<p><strong>Plano gratuito da Groq tem teto real de token por minuto</strong>, não só de requisição — o sistema já usa um limitador conservador (10 req/min por padrão) pensado pra isso, mas em volume muito alto (milhares de imagens de uma vez), ainda esbarra no limite do plano. Resolve com upgrade de plano na Groq, não com mudança de código.</p>
+<h2 id="infraestrutura">Infraestrutura</h2>
+<p><strong>Um servidor, uma região (Railway, <code>us-west2</code>), plano Hobby.</strong> Sem failover automático — se o Railway tiver uma interrupção regional, o site fica fora do ar até eles resolverem, não tem servidor backup assumindo sozinho. Pro volume atual de uma loja, isso é proporcional ao risco real; não é dimensionado pra tráfego de grande escala sem revisão.</p>
+<p><strong>Suíte de testes automatizados existe no código, mas nunca rodou de verdade.</strong> 45 verificações escritas, prontas, nunca executadas contra um Postgres real — porque isso exige decidir onde rodar esse banco de teste (Docker é o caminho mais simples), e essa decisão ainda está em aberto.</p>
+<p><strong><code>server.js</code> é um arquivo único, grande.</strong> Funciona, mas é dívida de manutenção — mexer em qualquer rota exige entender o arquivo inteiro, não um módulo isolado. Não é vulnerabilidade, é o tipo de coisa que fica mais custosa de manter conforme o sistema cresce.</p>
+<h2 id="navegacao-e-interface-pos-v20">Navegação e interface (pós v2.0)</h2>
+<p><strong>Botão de trocar tema (claro/escuro) só existe na tela do Hub.</strong> Nas outras telas, pra trocar de tema é preciso voltar pro Hub primeiro. Não é bug, é ausência — o botão nunca foi replicado nas outras telas quando foi construído.</p>
+<hr />
+<h2 id="como-usar-isso-numa-conversa-com-a-cliente">Como usar isso numa conversa com a cliente</h2>
+<p>Cada item acima tem a mesma estrutura: o que não existe, por que não existe (técnico ou aguardando CNPJ), e o que resolveria. Isso separa "o sistema não faz X porque ainda não tive tempo" (frágil, parece desculpa) de "o sistema não faz X porque a informação não existe, ou porque depende de uma aprovação que não é minha" (sólido, mostra que a decisão foi pensada, não esquecida).</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#acesso-e-permissao">Acesso e permissão</a></li><li><a href="#pagamento-e-frete">Pagamento e frete</a></li><li><a href="#catalogador-ia-e-comprovante">Catalogador IA e comprovante</a></li><li><a href="#infraestrutura">Infraestrutura</a></li><li><a href="#navegacao-e-interface-pos-v20">Navegação e interface (pós v2.0)</a></li><li><a href="#como-usar-isso-numa-conversa-com-a-cliente">Como usar isso numa conversa com a cliente</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-ajustes-pendentes" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Ajustes Pendentes</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Regra de entrada nesta lista: só cosmético, não estrutural, não trava nenhum pacote, não mexe em dado nem em segurança. Qualquer coisa que não se encaixe nesses critérios eu aviso na hora, não guardo pra depois.</p>
+<hr />
+<h2 id="guia-contextual-fase-26-atualizacao">Guia contextual — Fase 26, atualização</h2>
+<ul>
+<li>[x] ~~Estender o guia contextual pra Marca &amp; Vitrine e Pedidos~~ — pronto, seletores confirmados contra o código real, sintaxe validada. Falta só aplicar e testar ao vivo.</li>
+<li>[ ] <strong>"Já vi esse fluxo" por navegador</strong>, pra não repetir a dica toda vez que a pessoa volta na mesma aba.</li>
+<li>[ ] <strong>Índice central de fluxos guiados</strong> com botão "relembrar" manual — mesmo espírito do "Replay Tutorial" do MTG Arena.</li>
+<li>[ ] <strong>Tela de tutoriais + link pro site futuro</strong> (fórum, base de conhecimento, suporte) — só depois que esse site existir.</li>
+</ul>
+<hr />
+<h2 id="pendencias-novas-desta-rodada-fase-26-guia-contextual">Pendências novas desta rodada (Fase 26 — guia contextual)</h2>
+<hr />
+<h2 id="pendencias-novas-desta-rodada-fase-23-layout-fluido-marca">Pendências novas desta rodada (Fase 23 — layout fluido + marca)</h2>
+<ul>
+<li>[ ] <strong>Conteúdo pro espaço lateral, próxima versão.</strong> O espaço em si já foi resolvido (<code>.main</code> agora estica de verdade em tela larga) — o que falta é decidir o que colocar ali de propósito: filtros ativos, estatísticas rápidas, atalhos. Isso é design de informação, merece sessão própria, não encaixar rápido numa rodada de bug fix.</li>
+<li>[ ] <strong>Ideia de agenda/CRM pessoal (contatos, reuniões, ficha do dono do projeto)</strong> — nasceu numa conversa sobre a Oficina do Tripvisuals, mas <strong>não é escopo deste projeto</strong>. Registrado aqui só como rastro de onde a ideia surgiu; o desenvolvimento real e a lógica por trás disso pertencem ao roadmap do <strong>VDZN-SM</strong>, não a nenhum projeto de cliente.</li>
+</ul>
+<hr />
+<h2 id="resolvido-nesta-rodada-fase-23">Resolvido nesta rodada (Fase 23)</h2>
+<ul>
+<li><strong>Bug real de tema claro/escuro</strong> — quatro cópias de uma regra CSS quebrada (<code>html[data-init] body { visibility: visible !important; }</code>) anulavam a proteção contra "flash" de tema errado em toda troca de página. Removidas as quatro, sobrou só a regra original correta. Achado a partir de vídeo real gravado no celular, não suposição.</li>
+<li><strong>Busca no painel flutuante de ajuda</strong> — antes só tinha barra de rolagem pra 13 seções; agora tem campo de busca que filtra ao vivo, mesmo padrão visual do resto do admin.</li>
+<li><strong>Botão "Novo via comprovante" corrigido</strong> — tinha renderizado gigante (ícone SVG sem tamanho travado), corrigido e confirmado ao vivo.</li>
+</ul>
+<p><strong>Ainda não testado ao vivo:</strong> os itens acima foram corrigidos e testados isoladamente (sintaxe, lógica), mas não confirmados em produção depois do último deploy. Ver <code>RETOMAR-AQUI.md</code>.</p>
+<h2 id="pendencia-nova-aguardando-teste-real">Pendência nova, aguardando teste real</h2>
+<ul>
+<li>[ ] <strong>Fluxo completo de "criar pedido via comprovante"</strong> — construído, corrigido o bug visual do botão, mas nunca testado com Groq de verdade nem Cloudinary de verdade. Precisa: subir uma foto de comprovante real, confirmar que cria o pedido, confirmar que "Confirmar pagamento" funciona.</li>
+</ul>
+<hr />
+<h2 id="resolvido-na-v20-ver-versioningmd-pra-detalhe-tecnico-completo">Resolvido na v2.0 (ver <code>VERSIONING.md</code> pra detalhe técnico completo)</h2>
+<p>Tudo isso já foi construído, testado (sintaxe verificada, lógica testada isolada, e boa parte confirmada ao vivo em produção nesta mesma sessão) e entregue nos 25 arquivos do pacote v2.0:</p>
+<ul>
+<li>Sidebar em telas largas, unificada numa fonte só (<code>admin-shared.js</code>)</li>
+<li>Hub com gráficos reais + largura fluida</li>
+<li>Oficina (Upload + Catalogador + Produtos fundidos, 3 abas)</li>
+<li>Painel de comando com anel de progresso, pílulas de Log/Resultados, botão travado com motivo, indicador de próximo passo</li>
+<li>Configurações de velocidade/concorrência trancadas por padrão</li>
+<li>Prévia embutida do catálogo em Marca &amp; Vitrine</li>
+<li>Suporte real a GIF no upload (dois validadores)</li>
+<li>Botão de auditoria discreto</li>
+</ul>
+<hr />
+<h2 id="pendencias-reais-sem-relacao-com-a-v20-continuam-do-jeito-que-estavam">Pendências reais, sem relação com a v2.0 — continuam do jeito que estavam</h2>
+<p>Nenhuma dessas trava as outras. Ordem sugerida, não obrigatória.</p>
+<ul>
+<li>[ ] <strong>Testar desfazer em edição em massa.</strong> Nunca foi confirmado ao vivo em nenhuma sessão desta conversa. Edição em massa em Produtos (agora dentro da Oficina) → Hub → Atividade Recente → desfazer.</li>
+<li>[ ] <strong>Suíte de testes (<code>npm test</code>).</strong> Decisão em aberto sobre Postgres local (Docker é o caminho mais simples). Não é urgente, é "sessão dedicada", como o próprio projeto já rotulou desde a Fase 9.</li>
+<li>[ ] <strong>Cadastrar mais regiões de frete</strong>, se fizer sentido pro volume de vendas — hoje só o que você já configurou manualmente existe. Tela em Pedidos, não mudou de lugar em nenhuma versão.</li>
+</ul>
+<h2 id="resolvido-em-rodadas-anteriores-so-formalizando-o-registro">Resolvido em rodadas anteriores, só formalizando o registro</h2>
+<ul>
+<li>~~GROQ_API_KEY ausente~~ — configurada, confirmada via <code>verificar-instalacao.mjs</code>.</li>
+<li>~~Modelo da Groq desatualizado~~ — trocado pra <code>qwen/qwen3.6-27b</code>, testado ao vivo com identificação real de produto.</li>
+<li>~~Senha em texto plano~~ — migrada pra hash bcrypt, <code>ADMIN_PASSWORD</code> removida do Railway.</li>
+<li>~~SSE quebrado no Catalogador~~ — trocado por polling, confirmado funcionando.</li>
+<li>~~Auditoria de frete sem registro~~ — <code>PUT</code>/<code>DELETE</code> de região de frete agora logam em <code>system_events</code>.</li>
+<li>~~FAQ e política de privacidade desatualizadas sobre frete~~ — corrigidas.</li>
+<li>~~Gráficos do Hub não carregavam~~ — CDN externo bloqueado pela própria CSP; Chart.js agora hospedado localmente.</li>
+</ul>
+<hr />
+<h2 id="itens-mencionados-em-conversa-nunca-confirmados-como-dor-real-nao-viraram-trabalho">Itens mencionados em conversa, nunca confirmados como dor real — não viraram trabalho</h2>
+<p>Nada pendente aqui no momento.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#guia-contextual-fase-26-atualizacao">Guia contextual — Fase 26, atualização</a></li><li><a href="#pendencias-novas-desta-rodada-fase-26-guia-contextual">Pendências novas desta rodada (Fase 26 — guia contextual)</a></li><li><a href="#pendencias-novas-desta-rodada-fase-23-layout-fluido-marca">Pendências novas desta rodada (Fase 23 — layout fluido + marca)</a></li><li><a href="#resolvido-nesta-rodada-fase-23">Resolvido nesta rodada (Fase 23)</a></li><li><a href="#pendencia-nova-aguardando-teste-real">Pendência nova, aguardando teste real</a></li><li><a href="#resolvido-na-v20-ver-versioningmd-pra-detalhe-tecnico-completo">Resolvido na v2.0 (ver VERSIONING.md pra detalhe técnico completo)</a></li><li><a href="#pendencias-reais-sem-relacao-com-a-v20-continuam-do-jeito-que-estavam">Pendências reais, sem relação com a v2.0 — continuam do jeito que estavam</a></li><li><a href="#resolvido-em-rodadas-anteriores-so-formalizando-o-registro">Resolvido em rodadas anteriores, só formalizando o registro</a></li><li><a href="#itens-mencionados-em-conversa-nunca-confirmados-como-dor-real-nao-viraram-trabalho">Itens mencionados em conversa, nunca confirmados como dor real — não viraram trabalho</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    </div>
+
+</main>
+
+<script src="/admin-shared.js"></script>
+<script>
+(function () {
+    'use strict';
+    var home = document.getElementById('kbHome');
+    var artigosWrap = document.getElementById('kbArtigos');
+    var todosArtigos = Array.prototype.slice.call(document.querySelectorAll('.kb-artigo'));
+
+    function mostrarArtigo(id) {
+        var alvo = document.getElementById('artigo-' + id);
+        if (!alvo) return false;
+        home.hidden = true;
+        todosArtigos.forEach(function (a) { a.hidden = true; });
+        alvo.hidden = false;
+        window.scrollTo(0, 0);
+        return true;
+    }
+
+    function mostrarHome() {
+        todosArtigos.forEach(function (a) { a.hidden = true; });
+        home.hidden = false;
+        window.scrollTo(0, 0);
+    }
+
+    function tratarHash() {
+        var id = location.hash.replace('#', '');
+        if (id && mostrarArtigo(id)) return;
+        mostrarHome();
+    }
+
+    window.addEventListener('hashchange', tratarHash);
+    tratarHash();
+
+    artigosWrap.addEventListener('click', function (e) {
+        var voltar = e.target.closest('[data-voltar]');
+        if (voltar) {
+            e.preventDefault();
+            location.hash = '';
+        }
+    });
+
+    // ── Busca — filtra os cards visíveis, esconde categoria inteira se vazia ──
+    var busca = document.getElementById('kbSearch');
+    var semResultado = document.getElementById('kbSemResultado');
+    busca.addEventListener('input', function () {
+        var termo = busca.value.trim().toLowerCase();
+        var totalVisivel = 0;
+        document.querySelectorAll('.kb-categoria').forEach(function (cat) {
+            var algumVisivelNaCategoria = false;
+            cat.querySelectorAll('.kb-card').forEach(function (card) {
+                var bate = !termo ||
+                    card.dataset.titulo.indexOf(termo) !== -1 ||
+                    card.dataset.resumo.indexOf(termo) !== -1;
+                card.hidden = !bate;
+                if (bate) { algumVisivelNaCategoria = true; totalVisivel++; }
+            });
+            cat.hidden = !algumVisivelNaCategoria;
+        });
+        semResultado.hidden = totalVisivel > 0;
+    });
+})();
+</script>
+
+</body>
+</html>
