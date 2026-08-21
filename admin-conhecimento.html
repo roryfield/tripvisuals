@@ -49,7 +49,7 @@
 
         <div id="kbSemResultado" class="kb-sem-resultado" hidden>Nenhum artigo encontrado pra essa busca.</div>
 
-        
+
     <section class="kb-categoria">
         <h2>Método</h2>
         <p class="kb-categoria-desc">Os princípios que guiam toda decisão de trabalho.</p>
@@ -69,6 +69,16 @@
             <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
             <h3>Protocolo Refresh</h3>
             <p>Como investigar um bug sem assumir a causa — testar fora do navegador antes de qualquer segundo patch.</p>
+        </a>
+        <a href="#protocolo-captura-visual" class="kb-card" data-artigo="protocolo-captura-visual" data-titulo="protocolo captura visual" data-resumo="onde a captura de tela e vídeo vive dentro do método — fase de fechamento, não feature de produto.">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h3>Protocolo Captura Visual</h3>
+            <p>Onde a captura de tela e vídeo vive dentro do método — fase de fechamento, não feature de produto.</p>
+        </a>
+        <a href="#protocolo-gravacao" class="kb-card" data-artigo="protocolo-gravacao" data-titulo="protocolo gravação ao vivo" data-resumo="como gravar sem perder a tomada — contagem, checkpoints curtos, o que evitar.">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h3>Protocolo Gravação ao Vivo</h3>
+            <p>Como gravar sem perder a tomada — contagem, checkpoints curtos, o que evitar.</p>
         </a>
         </div>
     </section>
@@ -97,14 +107,33 @@
             <h3>Ajustes Pendentes</h3>
             <p>Estado real do projeto agora — o que já foi resolvido e o que ainda está na fila.</p>
         </a>
+        <a href="#problemas-conhecidos" class="kb-card" data-artigo="problemas-conhecidos" data-titulo="problemas conhecidos" data-resumo="sintomas já resolvidos antes — consultar aqui primeiro, evita reinvestigar do zero.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Problemas Conhecidos</h3>
+            <p>Sintomas já resolvidos antes — consultar aqui primeiro, evita reinvestigar do zero.</p>
+        </a>
+        <a href="#proximos-passos" class="kb-card" data-artigo="proximos-passos" data-titulo="próximos passos" data-resumo="o que fazer, em que ordem — os três horizontes do projeto agora.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Próximos Passos</h3>
+            <p>O que fazer, em que ordem — os três horizontes do projeto agora.</p>
+        </a>
+        <a href="#roadmap-tripvisuals" class="kb-card" data-artigo="roadmap-tripvisuals" data-titulo="roadmap tripvisuals" data-resumo="plano prático de agosto a dezembro de 2026 — o que vem antes do quê, e por quê.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Roadmap Tripvisuals</h3>
+            <p>Plano prático de agosto a dezembro de 2026 — o que vem antes do quê, e por quê.</p>
+        </a>
+        <a href="#versioning" class="kb-card" data-artigo="versioning" data-titulo="versioning" data-resumo="a linha do tempo real de versões do sistema — o que mudou em cada uma.">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h3>Versioning</h3>
+            <p>A linha do tempo real de versões do sistema — o que mudou em cada uma.</p>
+        </a>
         </div>
     </section>
 
     </div>
 
-    <!-- ── Artigos individuais (um por vez, mostrado via JS) ── -->
     <div id="kbArtigos">
-        
+
     <article class="kb-artigo" id="artigo-metodo-vdzn-sm" hidden>
         <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
         <header class="kb-artigo-header">
@@ -413,6 +442,623 @@
             <aside class="kb-artigo-indice">
                 <p class="kb-indice-titulo">Nesta página</p>
                 <ul><li><a href="#guia-contextual-fase-26-atualizacao">Guia contextual — Fase 26, atualização</a></li><li><a href="#pendencias-novas-desta-rodada-fase-26-guia-contextual">Pendências novas desta rodada (Fase 26 — guia contextual)</a></li><li><a href="#pendencias-novas-desta-rodada-fase-23-layout-fluido-marca">Pendências novas desta rodada (Fase 23 — layout fluido + marca)</a></li><li><a href="#resolvido-nesta-rodada-fase-23">Resolvido nesta rodada (Fase 23)</a></li><li><a href="#pendencia-nova-aguardando-teste-real">Pendência nova, aguardando teste real</a></li><li><a href="#resolvido-na-v20-ver-versioningmd-pra-detalhe-tecnico-completo">Resolvido na v2.0 (ver VERSIONING.md pra detalhe técnico completo)</a></li><li><a href="#pendencias-reais-sem-relacao-com-a-v20-continuam-do-jeito-que-estavam">Pendências reais, sem relação com a v2.0 — continuam do jeito que estavam</a></li><li><a href="#resolvido-em-rodadas-anteriores-so-formalizando-o-registro">Resolvido em rodadas anteriores, só formalizando o registro</a></li><li><a href="#itens-mencionados-em-conversa-nunca-confirmados-como-dor-real-nao-viraram-trabalho">Itens mencionados em conversa, nunca confirmados como dor real — não viraram trabalho</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-problemas-conhecidos" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Problemas Conhecidos</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Regra de uso: antes de abrir uma investigação nova pra qualquer bug, procura o sintoma aqui primeiro. Se bater, pula direto pra correção confirmada. Se não bater, investiga normal e, uma vez resolvido, volta aqui e registra — é isso que faz esse arquivo valer a pena com o tempo. Ver <code>PROTOCOLO-REFRESH.md</code> pro método completo por trás disso.</p>
+<p>Formato de cada entrada: sintoma observável, causa real, teste mais rápido pra confirmar, correção aplicada, e quantos ciclos custou descobrir (pra medir se estamos ficando mais rápidos).</p>
+<hr />
+<h2 id="clique-num-botao-nao-faz-nada-sem-erro-em-nenhum-lugar-visivel-console-limpo-request-confirmado-200-no-servidor">Clique num botão não faz nada, sem erro em nenhum lugar visível (console limpo, request confirmado 200 no servidor)</h2>
+<p><strong>Onde apareceu:</strong> Catalogador IA, botão "Iniciar Identificação", agosto de 2026.</p>
+<p><strong>Sintoma exato:</strong> botão clicado, nenhuma mudança na tela, nenhum erro vermelho no console do navegador, e a chamada de rede correspondente (<code>/start</code>) retornando <code>200 OK</code> com corpo válido.</p>
+<p><strong>Causa real:</strong> o mecanismo usado pra atualizar a tela em tempo real (SSE — conexão HTTP que fica aberta recebendo dados aos poucos) estava sendo descartado por algo na camada de infraestrutura entre o Railway e o navegador. A conexão abria, ficava "pendente" (o que parece saudável no DevTools), mas nenhum byte de dado realmente chegava — nem o evento inicial que deveria disparar assim que a conexão abre. A ação que o botão disparava (<code>/start</code>) funcionava perfeitamente no servidor; só não tinha como a tela saber disso.</p>
+<p><strong>Teste que confirma rápido:</strong> <code>curl -N</code> puro (sem navegador nenhum no meio) contra a rota de eventos, redirecionando a saída pra um arquivo, esperando 15 segundos, e checando se o arquivo tem qualquer conteúdo. Arquivo vazio depois de 15s com a conexão supostamente aberta = confirmado, é infraestrutura descartando o streaming, não é bug de código.</p>
+<p><strong>Correção aplicada:</strong> duas tentativas antes da definitiva.
+- Tentativa 1 (parcial, necessária mas não suficiente): remover o cabeçalho <code>Connection: keep-alive</code> da resposta — esse cabeçalho é proibido pela especificação do HTTP/2, e a plataforma nega a conexão com erro de protocolo quando ele aparece. Resolveu o erro <code>ERR_HTTP2_PROTOCOL_ERROR</code> que aparecia antes, mas não resolveu a entrega de dados.
+- Tentativa 2 (não confirmada, abandonada): mandar um "enchimento" de alguns KB assim que a conexão abre, pra forçar buffers de proxy baseados em tamanho a esvaziar. Teoria válida em geral, mas o teste com <code>curl</code> decisivo (feito depois) mostrou que nem isso resolvia — a plataforma estava descartando de um jeito mais fundamental que um buffer de tamanho.
+- Correção final: abandonar SSE inteiramente. Trocado por polling (consulta comum a cada 1.5 segundos) usando as mesmas rotas de request/response simples que já provaram funcionar em todo o resto da tela. Sem depender de conexão longa, sem depender de nenhum comportamento específico de proxy.</p>
+<p><strong>Ciclos até a causa raiz completa:</strong> 5 (duas rodadas de print de tela + patch, mais duas tentativas de correção no código, até o teste decisivo com <code>curl</code> confirmar a causa de verdade). A causa já estava disponível no ciclo 3, se o teste de <code>curl</code> tivesse sido feito ali em vez de nos ciclos 4 e 5.</p>
+<p><strong>Lição pro Protocolo Refresh:</strong> qualquer sintoma "nada acontece, sem erro em lugar nenhum, em produção" pula direto pra teste via linha de comando (fora do navegador), antes de qualquer segunda hipótese de código. Ver <code>PROTOCOLO-REFRESH.md</code>, seção 2.</p>
+<p><strong>Risco de isso voltar a acontecer:</strong> baixo pro Catalogador especificamente (não depende mais de conexão longa). Mas qualquer feature nova que volte a usar SSE, WebSocket, ou qualquer coisa de conexão contínua no Tripvisuals ou em outro projeto do vdzn-sm hospedado no Railway deve considerar esse histórico antes de escolher esse caminho — ver seção 1 (Criativo) do Protocolo Refresh.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#clique-num-botao-nao-faz-nada-sem-erro-em-nenhum-lugar-visivel-console-limpo-request-confirmado-200-no-servidor">Clique num botão não faz nada, sem erro em nenhum lugar visível (console limpo, request confirmado 200 no servidor)</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-protocolo-captura-visual" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h1>Protocolo Captura Visual</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><h2 id="a-pergunta-que-voce-fez-respondida-direto-primeiro">A pergunta que você fez, respondida direto primeiro</h2>
+<p><strong>"Um aplicativo/programa serviria pro VDZN-SM?"</strong> — a peça de captura em si, não. E vale explicar o porquê, porque a resposta errada aqui custaria trabalho de engenharia à toa.</p>
+<p>O que aconteceu hoje foi: o NVIDIA grava sua tela (ferramenta que você já tem, já configurada), e eu — através da extensão do Chrome conectada — clico pelas telas e tiro screenshot real, salvando no seu disco. <strong>As duas ferramentas que fazem o trabalho pesado já existem e já funcionam.</strong> Construir um "programa" novo pra fazer isso significaria recriar, em código próprio, uma versão pior de duas coisas que já estão prontas — NVIDIA pra vídeo, e a conexão Claude↔Chrome pra captura dirigida.</p>
+<p><strong>O que realmente faltava não era ferramenta — era processo.</strong> E processo não é algo que se constrói como software, é algo que se documenta e se repete. É exatamente isso que os três documentos desta rodada resolvem.</p>
+<h2 id="onde-isso-vive-no-metodo">Onde isso vive no método</h2>
+<p>Não é uma feature nova do Tripvisuals nem de nenhum projeto específico — é uma <strong>fase do próprio ciclo de vida de um projeto no VDZN-SM</strong>, a mesma categoria de <code>PROTOCOLO-REFRESH.md</code> (que trata de como investigar bug), só que essa trata de como fechar e documentar visualmente um projeto pronto.</p>
+<pre><code>Ciclo de um projeto VDZN-SM
+├── Construção          (o trabalho técnico em si)
+├── Protocolo Refresh   (investigação de bug, já existe)
+├── Fechamento          ← ESTE PROTOCOLO ENTRA AQUI
+│   ├── Documentação escrita (pendências, limitações, segurança, próximos passos)
+│   └── Captura Visual  (este documento)
+└── Handoff pro VDZN-SM (extrair método, como o METODO-VDZN-SM.md fez agora)
+</code></pre>
+<p>A Captura Visual é a etapa que transforma "o projeto funciona" em "o projeto tem prova visual de que funciona, organizada, pronta pra virar material". Sem isso, cada fechamento de projeto reinventaria o processo do zero — com isso, é sempre a mesma sequência, em qualquer projeto futuro.</p>
+<h2 id="o-processo-em-si-reutilizavel">O processo em si, reutilizável</h2>
+<ol>
+<li><strong>Roteiro específico do projeto</strong> — uma versão do <code>ROTEIRO-GRAVACAO-NVIDIA.md</code>, adaptada pras telas daquele projeto específico, priorizada (fundamental / importante / complementar).</li>
+<li><strong>NVIDIA gravando</strong> — vídeo bruto do fluxo completo, seguindo o roteiro.</li>
+<li><strong>Captura dirigida em paralelo ou depois</strong> — screenshot real de cada tela principal, nos temas/variações que existirem, salvos no disco.</li>
+<li><strong>Organização imediata</strong> — os arquivos saem de uma pasta temporária pra a estrutura permanente do projeto (ver seção seguinte), no mesmo dia, não "depois".</li>
+</ol>
+<h2 id="estrutura-de-pasta-convencao-pra-todo-projeto">Estrutura de pasta — convenção pra todo projeto</h2>
+<pre><code>VDZN-SM/
+  Projetos/
+    [Nome do Projeto]/
+      capturas/
+        01-video-bruto/        ← gravações do NVIDIA, sem corte
+        02-screenshots/
+          admin-claro/
+          admin-escuro/
+          publico/
+        03-material-editado/   ← GIFs prontos, cortes finais, banners
+</code></pre>
+<p>Mesma estrutura em todo projeto — quando um dos 3-4 projetos que estão esperando chegar nessa fase, a pasta já existe no mesmo formato, sem decidir de novo.</p>
+<h2 id="a-parte-pratica-organizando-o-que-ja-foi-capturado-hoje">A parte prática — organizando o que já foi capturado hoje</h2>
+<p>O <code>save_to_disk</code> sempre grava numa pasta temporária do Windows, sem eu conseguir escolher outro destino — isso é fixo, não muda. O jeito de resolver isso sem precisar de programa nenhum é um script pequeno, que você roda uma vez por sessão de captura, movendo tudo da pasta temporária pra estrutura organizada acima.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#a-pergunta-que-voce-fez-respondida-direto-primeiro">A pergunta que você fez, respondida direto primeiro</a></li><li><a href="#onde-isso-vive-no-metodo">Onde isso vive no método</a></li><li><a href="#o-processo-em-si-reutilizavel">O processo em si, reutilizável</a></li><li><a href="#estrutura-de-pasta-convencao-pra-todo-projeto">Estrutura de pasta — convenção pra todo projeto</a></li><li><a href="#a-parte-pratica-organizando-o-que-ja-foi-capturado-hoje">A parte prática — organizando o que já foi capturado hoje</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-protocolo-gravacao" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-vdzn">VDZN·SM — método</span>
+            <h1>Protocolo Gravação ao Vivo</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Depois de três quedas de conexão no meio de gravações, isso parou de ser azar e virou padrão a tratar. Este documento existe pra reduzir dano quando cair de novo (porque pode cair), não só pra evitar que caia.</p>
+<hr />
+<h2 id="antes-de-qualquer-contagem-checklist-unico-uma-vez-por-sessao">Antes de qualquer contagem — checklist único, uma vez por sessão</h2>
+<p>Faz isso <strong>antes</strong> de eu contar, não durante:</p>
+<ul>
+<li>[ ] Fecha ou silencia qualquer app que manda notificação (Discord, e-mail, WhatsApp Desktop, Windows notification center) — uma notificação pop-up no meio da gravação pode tirar o foco da aba e interromper a extensão no meio da ação.</li>
+<li>[ ] Deixa a aba do Chrome com a Trip Visuals <strong>em primeiro plano, visível</strong>, não minimizada, não atrás de outra janela.</li>
+<li>[ ] NVIDIA já configurado, atalho testado uma vez antes (só pra confirmar que funciona), sem precisar testar de novo durante a sessão real.</li>
+<li>[ ] Segundo monitor (onde você digita a senha) já posicionado, sem precisar ajustar depois.</li>
+</ul>
+<h2 id="o-atraso-do-keybind-resolvido">O atraso do keybind — resolvido</h2>
+<p>Seu atalho leva 1-2s pra realmente começar a gravar. A contagem agora tem isso embutido:</p>
+<blockquote>
+<p>"3… 2… 1… <strong>aperta agora</strong>" — e eu <strong>espero 3 segundos parado, sem fazer nada</strong>, antes de qualquer ação. Isso garante que mesmo com o atraso do seu atalho, a gravação já está rodando antes de qualquer coisa relevante acontecer na tela.</p>
+</blockquote>
+<h2 id="frases-fixas-pra-ficar-automatico-depois-de-usar-algumas-vezes">Frases fixas — pra ficar automático depois de usar algumas vezes</h2>
+<table>
+<thead>
+<tr>
+<th>Frase</th>
+<th>O que significa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>"Coloca a aba na tela"</strong></td>
+<td>Pedido meu, antes de eu começar a agir — confirma que a Trip Visuals está visível e em foco.</td>
+</tr>
+<tr>
+<td><strong>"Deixa que eu navego agora"</strong></td>
+<td>Aviso meu de que vou começar a clicar sozinho — sinal pra você não tocar em nada até eu avisar o contrário.</td>
+</tr>
+<tr>
+<td><strong>"Sua vez"</strong></td>
+<td>Aviso meu de que parei de propósito (ex: tela de login) — preciso de uma ação sua antes de continuar.</td>
+</tr>
+<tr>
+<td><strong>"Continue"</strong></td>
+<td>Sua confirmação de que terminou sua parte e posso retomar.</td>
+</tr>
+<tr>
+<td><strong>"Confirma aí"</strong></td>
+<td>Meu pedido de confirmação de que a gravação está rodando de verdade, não só que você apertou o atalho.</td>
+</tr>
+<tr>
+<td><strong>"Pode parar"</strong></td>
+<td>Só eu digo isso no fim do roteiro inteiro — sinal de que já é seguro parar o NVIDIA.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="checkpoints-confirmacao-curta-e-frequente-nao-silencio-longo">Checkpoints — confirmação curta e frequente, não silêncio longo</h2>
+<p>Isso é o ajuste mais importante depois das três quedas: <strong>em vez de rodar o roteiro inteiro calado e só aparecer no final</strong>, confirmo em voz curta a cada 2-3 ações, não a cada bloco inteiro. Se a conexão cair, cai depois de 2-3 ações, não depois de um roteiro inteiro perdido.</p>
+<p>Padrão de cada checkpoint:</p>
+<pre><code>[ação 1] → [ação 2] → confirmação rápida minha (&quot;ok, cliquei em X, seguindo&quot;) → [ação 3] → [ação 4] → confirmação → ...
+</code></pre>
+<h2 id="o-que-evitar-durante-a-gravacao-reduz-risco-de-queda">O que evitar durante a gravação — reduz risco de queda</h2>
+<p>Não tenho visibilidade total de por que a conexão cai (isso acontece do seu lado, não do meu) — mas os três padrões mais prováveis de causar isso:</p>
+<ul>
+<li><strong>Alt-tab pra outra janela</strong> enquanto eu ainda estou agindo — mesmo rápido, pode tirar o foco da aba no momento errado.</li>
+<li><strong>Notificação de qualquer app</strong> aparecendo por cima da tela do Chrome.</li>
+<li><strong>A extensão sendo reiniciada ou atualizada sozinha</strong> no meio da sessão (fora do seu controle direto, mas vale checar se o Chrome está configurado pra não atualizar extensão automaticamente durante uma sessão ativa).</li>
+</ul>
+<h2 id="se-cair-mesmo-assim-o-que-fazer-sem-perder-a-calma">Se cair mesmo assim — o que fazer, sem perder a calma</h2>
+<ol>
+<li>Eu aviso na hora, claro: "conexão caiu, pausa a gravação".</li>
+<li>Você pausa o NVIDIA — não precisa apagar nada, só pausar.</li>
+<li>Reinicia a extensão do Chrome.</li>
+<li>Me avisa.</li>
+<li>Eu faço um teste silencioso de conexão (não aparece na gravação, porque a gravação está pausada).</li>
+<li>Confirmado o teste, eu conto de novo, só o trecho que faltou — não do zero, a não ser que o trecho perdido tenha sido o começo.</li>
+</ol>
+<hr />
+<h2 id="sequencia-completa-com-tudo-isso-aplicado">Sequência completa, com tudo isso aplicado</h2>
+<ol>
+<li>Checklist de pré-voo (você).</li>
+<li>Teste silencioso de conexão (eu, sem contar ainda).</li>
+<li>"Coloca a aba na tela." (eu peço, você confirma)</li>
+<li>"3… 2… 1… aperta agora." → espero 3s parado.</li>
+<li>"Confirma aí que está gravando." (você confirma)</li>
+<li>"Deixa que eu navego agora." → ações em pares, com confirmação curta a cada 2-3.</li>
+<li>Ao chegar em login: "Sua vez." → você loga → "Continue."</li>
+<li>Retomo o roteiro, mesmo padrão de checkpoint curto.</li>
+<li>"Pode parar." — só no fim de tudo.</li>
+</ol></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#antes-de-qualquer-contagem-checklist-unico-uma-vez-por-sessao">Antes de qualquer contagem — checklist único, uma vez por sessão</a></li><li><a href="#o-atraso-do-keybind-resolvido">O atraso do keybind — resolvido</a></li><li><a href="#frases-fixas-pra-ficar-automatico-depois-de-usar-algumas-vezes">Frases fixas — pra ficar automático depois de usar algumas vezes</a></li><li><a href="#checkpoints-confirmacao-curta-e-frequente-nao-silencio-longo">Checkpoints — confirmação curta e frequente, não silêncio longo</a></li><li><a href="#o-que-evitar-durante-a-gravacao-reduz-risco-de-queda">O que evitar durante a gravação — reduz risco de queda</a></li><li><a href="#se-cair-mesmo-assim-o-que-fazer-sem-perder-a-calma">Se cair mesmo assim — o que fazer, sem perder a calma</a></li><li><a href="#sequencia-completa-com-tudo-isso-aplicado">Sequência completa, com tudo isso aplicado</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-proximos-passos" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Próximos Passos</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Três horizontes: agora (esta semana), depois (próximo mês), e mais tarde (quando o CNPJ ou outro bloqueio externo se resolver).</p>
+<hr />
+<h2 id="agora-fechar-o-que-ja-esta-pronto">Agora — fechar o que já está pronto</h2>
+<ol>
+<li><strong>Aplicar os últimos arquivos entregues</strong> (fix de tema, busca no drawer, correção do botão de comprovante) — ver <code>RETOMAR-AQUI.md</code> pra lista exata.</li>
+<li><strong>Testar nos dois temas, em mobile de verdade</strong> — o bug que você gravou em vídeo tinha causa raiz confirmada e corrigida; validar que sumiu de vez, no mesmo aparelho que gravou o problema.</li>
+<li><strong>Testar o fluxo de comprovante → pedido, com Groq de verdade</strong> — nunca foi confirmado com dado real, só testado isolado.</li>
+<li><strong>Testar desfazer em edição em massa</strong> — pendência antiga, nunca verificada ao vivo.</li>
+</ol>
+<h2 id="depois-validacao-com-uso-real-sem-empilhar-mudanca-nova">Depois — validação com uso real, sem empilhar mudança nova</h2>
+<ol>
+<li><strong>Deixar a v2.0 rodar por dias, não horas, com a dona da loja usando de verdade</strong> — antes de fase nova, o placar de uso real (produtos catalogados, edições em massa, pedidos com frete automático) precisa de tempo real acumulado pra significar alguma coisa.</li>
+<li><strong>Rodar a suíte de testes (<code>npm test</code>) contra Postgres real</strong> — decisão de onde rodar esse banco (Docker é o caminho mais simples), sessão dedicada.</li>
+<li><strong>Cadastrar mais regiões de frete</strong>, se o volume de venda por estado justificar.</li>
+<li><strong>Considerar adicionar o botão de tema nas outras telas</strong>, não só no Hub — pequeno, mas resolve uma inconsistência real que só foi encontrada durante essa rodada.</li>
+</ol>
+<h2 id="mais-tarde-depende-de-aprovacao-externa-cnpj">Mais tarde — depende de aprovação externa (CNPJ)</h2>
+<ol>
+<li><strong>Ativar PIX automático (Asaas)</strong> — código pronto, testado em sandbox, só falta a chave de produção e a flag.</li>
+<li><strong>Considerar frete real de transportadora</strong> (API de cotação), substituindo o valor fixo por estado.</li>
+</ol>
+<h2 id="trilha-separada-vdzn-sm">Trilha separada — vdzn-sm</h2>
+<ol>
+<li><strong>Auditar o Tripvisuals com o próprio vdzn-sm</strong>, extraindo os padrões que já provaram funcionar aqui (Protocolo Refresh, verificação sistemática de id antes de remover HTML, testar lógica isolada antes de confiar, magic-byte validation em upload) pro método interno do sistema de construção.</li>
+<li><strong>Validar esses métodos nos 3-4 projetos que já estão esperando</strong> — é aqui que fica claro se o método generalizou de verdade ou só funcionou nesse caso específico.</li>
+</ol>
+<hr />
+<h2 id="o-que-nao-fazer-agora-de-proposito">O que NÃO fazer agora, de propósito</h2>
+<p>Não empilhar feature nova em cima da v2.0 antes do item 5 (validação com uso real) acontecer de verdade. Foi exatamente a lógica que orientou a decisão de fechar o pacote em vez de continuar adicionando — matéria já discutida e decidida nesta mesma sessão.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#agora-fechar-o-que-ja-esta-pronto">Agora — fechar o que já está pronto</a></li><li><a href="#depois-validacao-com-uso-real-sem-empilhar-mudanca-nova">Depois — validação com uso real, sem empilhar mudança nova</a></li><li><a href="#mais-tarde-depende-de-aprovacao-externa-cnpj">Mais tarde — depende de aprovação externa (CNPJ)</a></li><li><a href="#trilha-separada-vdzn-sm">Trilha separada — vdzn-sm</a></li><li><a href="#o-que-nao-fazer-agora-de-proposito">O que NÃO fazer agora, de propósito</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-roadmap-tripvisuals" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Roadmap Tripvisuals</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Documento de referência, não de leitura única. Volta nele conforme cada mês passar.</p>
+<hr />
+<h2 id="1-o-que-mudou-de-verdade-versao-de-15-dias-atras-vs-agora">1. O que mudou de verdade — versão de 15 dias atrás vs agora</h2>
+<p>Isso é pro seu argumento com a cliente, não é auto-elogio. São fatos verificáveis, com prova.</p>
+<table>
+<thead>
+<tr>
+<th>Área</th>
+<th>Como estava (backup de ~15 dias)</th>
+<th>Como está agora</th>
+<th>Onde a prova mora</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cadastro de produto</td>
+<td>Manual, campo por campo, por peça</td>
+<td>Foto → IA identifica banda → produto nasce pronto (oculto, aguardando preço)</td>
+<td>Catalogador IA, testável ao vivo</td>
+</tr>
+<tr>
+<td>Lista de Produtos</td>
+<td>Renderizava ~200 itens de uma vez, pesado</td>
+<td>Paginado, 24 por vez, busca sem travar</td>
+<td>Comparação direta de velocidade, print de antes se tiver</td>
+</tr>
+<tr>
+<td>Edição em massa</td>
+<td>Campo de texto livre, sem validação, risco de erro de digitação virar dado sujo no banco</td>
+<td>Opções fixas por campo (tipo, gênero, banda), erro de digitação vira exceção, não regra</td>
+<td>Editar 3+ produtos de uma vez, ao vivo</td>
+</tr>
+<tr>
+<td>Aparência da loja</td>
+<td>Tela "Aparência" solta, vitrine e marca separadas, layout de coluna única mesmo em tela grande</td>
+<td>"Marca &amp; Vitrine" unificada, Marca em prioridade, layout usa a largura real da tela</td>
+<td>Print lado a lado, desktop grande</td>
+</tr>
+<tr>
+<td>Senha do sistema</td>
+<td>Texto plano no ambiente do servidor</td>
+<td>Hash bcrypt, irreversível mesmo com acesso ao banco</td>
+<td>Fato técnico, não visual — vale mencionar, não mostrar</td>
+</tr>
+<tr>
+<td>Frete</td>
+<td>"Combinado pelo WhatsApp" sempre</td>
+<td>Calculado automaticamente por CEP quando a região está configurada</td>
+<td>Catálogo público, com uma região cadastrada</td>
+</tr>
+<tr>
+<td>Conferência de pagamento</td>
+<td>Manual, olho no comprovante</td>
+<td>IA confere se o valor bate, confirmação final continua manual (de propósito)</td>
+<td>Pedidos, com um comprovante de teste</td>
+</tr>
+<tr>
+<td>Navegação do admin</td>
+<td>6 destinos soltos no menu, barra inferior mesmo em monitor grande</td>
+<td>Sidebar em tela larga, Upload+Catalogador+Produtos fundidos numa Oficina só, prévia do catálogo embutida em Marca &amp; Vitrine</td>
+<td>Sidebar visível de cara, comparação com print antigo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Como usar essa tabela com a cliente:</strong> não é sobre convencer com argumento. É sobre deixar ela ver a diferença ao vivo, na tela dela, com os produtos dela. Argumento perde pra demonstração toda vez.</p>
+<hr />
+<h2 id="2-framework-de-validacao-por-uso-numeros-nao-conversa">2. Framework de validação por uso — números, não conversa</h2>
+<p>Você disse que quer ser validado pela qualidade, através do uso real, não da opinião falada. Isso é rastreável de verdade, não é só desejo — o sistema já registra o que precisa. Três fontes de dado:</p>
+<h3 id="21-o-que-ja-esta-registrado-automaticamente-system_events">2.1 O que já está registrado automaticamente (<code>system_events</code>)</h3>
+<p>Toda ação relevante no sistema já vira uma linha na tabela <code>system_events</code> — é a mesma tabela que alimenta a Atividade Recente do Hub. Isso significa que, a qualquer momento, dá pra rodar uma consulta e responder objetivamente:</p>
+<pre><code class="language-sql">-- Quantos produtos foram criados pelo Catalogador (IA) vs manualmente, por mês
+SELECT date_trunc('month', criado_em) AS mes,
+       COUNT(*) FILTER (WHERE origem = 'catalogador') AS via_ia,
+       COUNT(*) FILTER (WHERE origem IS DISTINCT FROM 'catalogador') AS manual
+FROM produtos
+GROUP BY 1 ORDER BY 1;
+
+-- Quantas edições em massa ela mesma fez (prova que ela está usando a ferramenta, não só você)
+SELECT COUNT(*) FROM system_events WHERE tipo = 'edicao_massa' AND modulo = 'produtos';
+
+-- Quantos pedidos usaram frete automático vs &quot;combinado por WhatsApp&quot;
+SELECT COUNT(*) FILTER (WHERE frete_calculado IS NOT NULL) AS automatico,
+       COUNT(*) FILTER (WHERE frete_calculado IS NULL) AS manual
+FROM pedidos;
+</code></pre>
+<p><em>(Nomes exatos de coluna podem variar — confere contra o schema real antes de rodar. A lógica da consulta é o que importa.)</em></p>
+<h3 id="22-o-que-so-ela-sabe-e-voce-precisa-perguntar-sem-ser-em-tom-de-cobranca">2.2 O que só ela sabe, e você precisa perguntar (sem ser em tom de cobrança)</h3>
+<ul>
+<li>Quantos pedidos por WhatsApp ela recebia por semana, antes, "no olho"</li>
+<li>Se ela sente que gasta menos tempo cadastrando produto</li>
+<li>Se algum cliente comentou algo sobre o catálogo novo</li>
+</ul>
+<p>Isso não precisa virar entrevista formal. Uma pergunta solta a cada duas ou três semanas já constrói o dado ao longo do tempo.</p>
+<h3 id="23-monta-um-placar-simples-nao-um-relatorio">2.3 Monta um "placar" simples, não um relatório</h3>
+<p>Sugestão concreta: uma consulta mensal simples, rodada por você mesmo (ou automatizada depois, se fizer sentido pro vdzn-sm), virando 4-5 números fixos, sempre os mesmos, mês a mês:</p>
+<ol>
+<li>Produtos catalogados via IA no mês</li>
+<li>Edições em massa feitas por ela (não por você)</li>
+<li>Pedidos com frete automático</li>
+<li>Tempo médio entre pedido criado e pedido despachado (se der pra calcular)</li>
+</ol>
+<p>Isso é o "validado pela qualidade, não pela conversa" que você pediu. O número sobe, o valor do trabalho fica óbvio sem precisar defender em palavra nenhuma.</p>
+<hr />
+<h2 id="3-roadmap-pratico-agosto-a-dezembro-de-2026">3. Roadmap prático — agosto a dezembro de 2026</h2>
+<h3 id="agosto-agora-fechar-o-que-esta-pendente">Agosto (agora) — fechar o que está pendente</h3>
+<ul>
+<li>Aplicar <code>admin-catalogador.js</code> (ver <code>RETOMAR-AQUI.md</code>)</li>
+<li>Testar as pendências reais (desfazer em massa, staging do Catalogador)</li>
+<li>Gravar o vídeo de demonstração (<code>ROTEIRO-VIDEO-CLIENTE.md</code>)</li>
+<li>Reunião com a cliente, mostrando o sistema ao vivo, não só o vídeo</li>
+</ul>
+<h3 id="setembro-validacao-com-uso-real">Setembro — validação com uso real</h3>
+<ul>
+<li>Primeiras 3-4 semanas de dado real no "placar" da seção 2.3</li>
+<li>Ajustar qualquer atrito que aparecer no uso dela (não do seu teste — o dela)</li>
+</ul>
+<h3 id="outubro-halloween-encaixe-natural-com-a-identidade-da-loja">Outubro — Halloween, encaixe natural com a identidade da loja</h3>
+<ul>
+<li>Tema sombrio/rock já combina com a época — vale uma coleção ou destaque temporário na landing, usando o "Cores e Fundo" que já existe pra trocar o visual sem precisar de código novo</li>
+<li>Conteúdo de rede social: bastidores do processo de cadastro via IA ("como cada estampa chega até você"), aproveitando o Catalogador como diferencial visual/técnico pra mostrar</li>
+</ul>
+<h3 id="novembro-black-friday-o-mes-que-mais-importa-pro-varejo">Novembro — Black Friday, o mês que mais importa pro varejo</h3>
+<ul>
+<li>Confirma se o frete automático está configurado pra todas as regiões relevantes antes da data — é exatamente o tipo de coisa que evita fricção quando o volume de pedido sobe</li>
+<li>Testa o fluxo de pedido inteiro (do catálogo até a confirmação de pagamento) com antecedência, não na véspera</li>
+<li>Conteúdo: contagem regressiva, destaque de produtos com o zoom no hover (funcionalidade nova, vale mostrar)</li>
+</ul>
+<h3 id="dezembro-fim-de-ano-fechamento-e-prova-de-resultado">Dezembro — fim de ano, fechamento e prova de resultado</h3>
+<ul>
+<li>Reúne os números de 4 meses de "placar" (seção 2.3) — isso vira o material de fechamento com a cliente</li>
+<li>Esse mesmo material, generalizado (sem dado sensível da Trip Visuals), vira o primeiro case do vdzn-sm — prova real de que o sistema entrega resultado, não só que existe</li>
+<li>Roda uma sessão do Protocolo Refresh sobre o próprio desempenho do sistema no período (seção 7 do <code>PROTOCOLO-REFRESH.md</code>) — isso é a "análise de rendimento e eficiência" que você já pediu pra fazer depois, e esse é o momento certo, com dado de verdade acumulado, não hipotético</li>
+</ul>
+<hr />
+<h2 id="4-marketing-tripvisuals-a-loja-e-vdzn-sm-voce-sao-publicos-diferentes">4. Marketing — Tripvisuals (a loja) e vdzn-sm (você) são públicos diferentes</h2>
+<p><strong>Pra Tripvisuals (cliente final, quem compra roupa de banda):</strong>
+- Instagram é o canal certo pro público, não LinkedIn
+- Conteúdo que já nasce pronto com o sistema: cada produto cadastrado via Catalogador já tem imagem tratada, pode virar post sem trabalho extra de edição
+- Halloween e Black Friday são as duas datas de maior alavancagem no calendário até dezembro, já mapeadas na seção 3</p>
+<p><strong>Pra vdzn-sm (seu próprio negócio, quem contrata sistema):</strong>
+- Público diferente: donos de loja pequena/média, não o consumidor final
+- LinkedIn e conteúdo técnico fazem mais sentido aqui — o "como foi construído", não "compre a camiseta"
+- O material da seção 2 (placar de resultado real) é o gancho mais forte que você vai ter: "sistema entregou X produtos catalogados automaticamente, Y% menos tempo manual" é prova, não promessa
+- O <code>PROTOCOLO-REFRESH.md</code> também é conteúdo em si — "como eu documento e resolvo problema de produção rápido" é exatamente o tipo de coisa que separa um freelancer de um fornecedor de sistema sério, pro público certo</p>
+<hr />
+<h2 id="5-uma-nota-final-sem-rodeio">5. Uma nota final, sem rodeio</h2>
+<p>Você pediu ajuda pra ser validado pela qualidade e não pela conversa. O framework da seção 2 é literalmente isso: número que sobe sozinho, sem você precisar argumentar nada. Mas repara que você também constrói o sistema, escreve o roteiro, monta o roadmap, e ainda assim vai procurar o que está faltando — isso não é o sistema sendo insuficiente, é você sendo exigente. As duas coisas são verdadeiras ao mesmo tempo, e só uma delas devia doer.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#1-o-que-mudou-de-verdade-versao-de-15-dias-atras-vs-agora">1. O que mudou de verdade — versão de 15 dias atrás vs agora</a></li><li><a href="#2-framework-de-validacao-por-uso-numeros-nao-conversa">2. Framework de validação por uso — números, não conversa</a></li><li><a href="#3-roadmap-pratico-agosto-a-dezembro-de-2026">3. Roadmap prático — agosto a dezembro de 2026</a></li><li><a href="#4-marketing-tripvisuals-a-loja-e-vdzn-sm-voce-sao-publicos-diferentes">4. Marketing — Tripvisuals (a loja) e vdzn-sm (você) são públicos diferentes</a></li><li><a href="#5-uma-nota-final-sem-rodeio">5. Uma nota final, sem rodeio</a></li></ul>
+            </aside>
+        </div>
+    </article>
+    <article class="kb-artigo" id="artigo-versioning" hidden>
+        <a href="#" class="kb-voltar" data-voltar>&larr; Voltar pra base de conhecimento</a>
+        <header class="kb-artigo-header">
+            <span class="kb-badge kb-badge-projeto">Tripvisuals — projeto</span>
+            <h1>Versioning</h1>
+        </header>
+        <div class="kb-artigo-corpo">
+            <div class="kb-artigo-texto"><p>Histórico completo abaixo, da v1.0 até a v2.0. Qualquer mudança futura parte da v2.0, vira v2.1, v2.2, e assim por diante — mesma convenção de sempre, ver "Convenção de versão" logo abaixo.</p>
+<h2 id="tudo-que-existe-numa-lista-so">Tudo que existe, numa lista só</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Nome</th>
+<th>O que entrega</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Fundação</td>
+<td>Tabela <code>system_events</code>, log central de auditoria. Duas correções soltas de <code>credentials: 'include'</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Scanner do Catalogador</td>
+<td>Leitura de estampa por IA, revisão, aplicar/descartar item a item.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Gerenciar Produtos</td>
+<td>Filtros por tipo/banda/gênero, edição em massa, campo banda.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Dashboard</td>
+<td>Produção de pedidos por estágio, atividade recente, exportar auditoria.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Aparência</td>
+<td>Vitrine e Marca unificadas, 5 estilos de landing, Arsenal com prévia, Cores e Fundo com prévia ao vivo.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Pendências resolvidas</td>
+<td>Staging do Catalogador migrado pra Cloudinary/Postgres. Desfazer inteligente na edição em massa.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Frete por região</td>
+<td>Cálculo de frete no catálogo público, configurável por estado, sem depender de CNPJ.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Comprovante de pagamento</td>
+<td>Conferência assistida por IA de PIX recebido na chave pessoal, confirmação sempre manual.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Suíte de testes</td>
+<td>45 verificações automatizadas, rodáveis com <code>npm test</code>, sem depender de mim nem de IA nenhuma.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Segurança</td>
+<td>Hash de senha (bcrypt), fim do vazamento de tempo na comparação de senha, CPF/CNPJ com dígito verificador, proteção contra injeção de fórmula em CSV, zero estilo inline.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>UX/UI — Ajuda e consistência</td>
+<td>Manual de ajuda reescrito pra bater com o sistema real. <code>alert()</code> nativo trocado pelo toast padrão.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>UX/UI — Densidade</td>
+<td>Card de produto reorganizado por hierarquia. Atividade Recente do Hub virou recolhível.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>UX/UI — Ajustes pendentes</td>
+<td>Ver <code>v1.1</code> abaixo.</td>
+</tr>
+</tbody>
+</table>
+<p>Cada fase mora na sua própria pasta dentro do zip consolidado, com seu próprio <code>LEIA-ME.md</code> explicando o que muda, o passo a passo e como confirmar que funcionou. A ordem de aplicação é 1 → 12, sem pular, porque os arquivos que se repetem entre pastas já vêm acumulados a cada fase.</p>
+<h2 id="o-que-ainda-nao-esta-aqui-de-proposito">O que ainda não está aqui, de propósito</h2>
+<ul>
+<li><strong>Gerenciamento de usuários e acessos</strong> (Fase 13) — ainda em desenho, precisa de uma decisão sua antes de eu construir. Ver seção própria na resposta desta conversa.</li>
+<li><strong>Sistema de movimento e animação</strong> (Fase 14) — os princípios já estão documentados em <code>MOTION.md</code>, a aplicação nas telas já construídas ainda não começou (exceto o zoom de hover em Produtos, aplicado na v1.1, ver abaixo).</li>
+<li>Revisão de UX/UI mais profunda nas telas que não passaram pelo levantamento geral ainda.</li>
+<li><code>server.js</code> monolítico e funções duplicadas entre arquivos do admin — dívida de manutenção, não vulnerabilidade.</li>
+<li>Paginação/carregamento sob demanda em Produtos, e revisão do fluxo de edição em massa (campo de valor livre sem opções fixas) — mencionados em conversa, mas nunca formalmente registrados em <code>AJUSTES-PENDENTES.md</code> nem confirmados como dor real ainda. Não estão em nenhuma versão até serem confirmados.</li>
+</ul>
+<h2 id="convencao-de-versao-daqui-pra-frente">Convenção de versão daqui pra frente</h2>
+<ul>
+<li><strong>v1.0</strong> = as doze fases desta entrega, aplicadas em ordem.</li>
+<li>Cada mudança nova depois disso ganha um número (v1.1, v1.2...) e uma linha nova nesta tabela, no mesmo formato: número, nome, o que entrega.</li>
+<li>Mudança que quebra algo de uma versão anterior (raro, e sempre evitável dado o padrão aditivo já usado em todo o projeto) muda o número antes do ponto (v2.0). Mudança aditiva ou correção muda o número depois do ponto.</li>
+<li>Este arquivo é o único lugar que precisa ser consultado pra saber "o que tem nessa versão", sem precisar voltar em nenhuma conversa.</li>
+</ul>
+<hr />
+<h2 id="v11-ajustes-pendentesmd-itens-1-2-e-4-blindagem-do-item-3">v1.1 — AJUSTES-PENDENTES.md, itens 1, 2 e 4 + blindagem do item 3</h2>
+<p>Aplicada sobre a v1.0, aditiva, nenhum arquivo reescrito do zero.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>O que entrega</th>
+<th>Arquivos tocados</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Ícone de busca sobrepondo texto</td>
+<td>Causa raiz identificada por leitura de código (empate de especificidade CSS entre <code>.produtos-search</code> e a regra global <code>input[type="text"]</code>), não era cache nem renderização de navegador. Corrigido igualando a especificidade (<code>input.produtos-search</code>), ganha por ordem de origem, sem <code>!important</code>.</td>
+<td><code>admin.css</code></td>
+</tr>
+<tr>
+<td>2. Zoom no hover da miniatura</td>
+<td><code>transform: scale(1.04)</code> no hover, 250ms, <code>ease-out</code>, só anima <code>transform</code>. Imagem envolvida num wrapper com <code>overflow: hidden</code> próprio pra evitar vazamento sobre o card-body (que não tem background próprio). Mesmo valor de escala já usado no modo Mosaico, por consistência.</td>
+<td><code>admin-produtos.js</code>, <code>admin.css</code></td>
+</tr>
+<tr>
+<td>3. Grade em coluna única no desktop</td>
+<td>CSS base já está correto (<code>repeat(auto-fill, minmax(300px,1fr))</code>), não precisa de patch de layout. Causa mais provável é a view salva em <code>localStorage</code> (<code>vz-produtos-view</code>) estar em <code>compact</code> ou <code>gallery</code> de uma sessão de teste anterior, não um bug. Adicionada blindagem contra valor inválido/corrompido no <code>localStorage</code> (se não for <code>grid</code>, <code>compact</code> ou <code>gallery</code>, volta pro padrão <code>grid</code>), mas isso não força a view de volta pra grade se o valor salvo for um dos três válidos — isso é escolha do usuário, não bug.</td>
+<td><code>admin-produtos.js</code></td>
+</tr>
+<tr>
+<td>4. Navegação da Ajuda sem volta fácil</td>
+<td>Sidebar vertical (que sumia por completo abaixo de 900px, sem navegação nenhuma no mobile) substituída por barra de chips horizontal com <code>position: sticky</code>, sempre visível em qualquer largura, mais um campo de busca que filtra os chips por texto. Elimina a causa raiz de um bug antigo documentado no próprio CSS (overlay de <code>position:sticky</code> com <code>display:none</code> cacheado), não reintroduz o padrão que causou aquele bug.</td>
+<td><code>admin-help.html</code>, <code>admin-help.js</code>, <code>admin.css</code>, <code>admin-shared.js</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Achados registrados durante o trabalho, corrigidos por estarem no mesmo escopo:</strong>
+- <code>admin-help.js</code> alternava a classe <code>.current</code> na seção ativa da navegação, mas o CSS antigo só estilizava <code>.active</code>. Nunca bateram — o destaque de "seção atual" nunca funcionou desde que foi escrito. Corrigido junto com a reescrita da navegação.
+- O drawer de ajuda flutuante (<code>admin-shared.js</code>, acessível de qualquer tela do admin) removia <code>.help-sidebar</code> antes de injetar o conteúdo. Atualizado pra remover <code>.help-topics-bar</code> no lugar — sem isso, a barra de chips sticky nova ia duplicar dentro do drawer.</p>
+<p><strong>Em aberto, não incluído nesta versão por falta de confirmação:</strong> paginação da lista de Produtos e revisão da UX de edição em massa (campo de valor livre). Nenhum dos dois está documentado em <code>AJUSTES-PENDENTES.md</code>, e o código real de edição em massa hoje tem um único menu de campo, não dois menus parecidos como descrito em conversa. Precisa de confirmação antes de virar patch.</p>
+<hr />
+<h2 id="v12-paginacao-de-produtos-revisao-da-edicao-em-massa-confirmados-pelo-usuario-em-conversa-agora-aplicados">v1.2 — paginação de Produtos + revisão da edição em massa (confirmados pelo usuário em conversa, agora aplicados)</h2>
+<p>Aplicada sobre a v1.1, aditiva.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>O que entrega</th>
+<th>Arquivos tocados</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paginação em Produtos</td>
+<td>Sem mudança de backend — <code>/api/produtos</code> continua trazendo tudo de uma vez (o payload de rede nunca foi o gargalo real). O que mudou é o que entra no DOM: a lista filtrada agora é fatiada em páginas de 24 itens antes de virar cards, com botões Anterior/Próxima e contador "X–Y de Z". Isso ataca a causa real do problema de performance (reconstrução de ~200 cards inteiros a cada busca/filtro), não o sintoma. Seleção em massa continua funcionando entre páginas, porque já era baseada em IDs num <code>Set</code>, não em elementos do DOM. Página volta pra 1 automaticamente sempre que busca ou filtro muda, e se auto-corrige se ficar fora do intervalo (produto removido, filtro reduziu o total).</td>
+<td><code>admin-produtos.js</code>, <code>admin.css</code></td>
+</tr>
+<tr>
+<td>Revisão da edição em massa</td>
+<td>O código real tinha (e continua tendo) um único menu de campo, não dois menus parecidos — isso ficou registrado como divergência na v1.1. O que era real e ficou corrigido: o campo de valor era sempre texto livre, sem validação, mesmo para <code>tipo</code>, que já tem um conjunto fixo de 4 opções usado no editor individual (Camiseta/Regata/Babylook/Moletom) — e o backend não valida isso, então um erro de digitação ali criava um valor de <code>tipo</code> que o editor individual nem consegue exibir depois (o <code>&lt;select&gt;</code> de lá não mostra nenhuma opção marcada se o valor salvo não for uma das 4). Agora o campo de valor na edição em massa muda de acordo com o campo escolhido: <code>tipo</code> vira um menu fixo com as mesmas 4 opções do editor individual; <code>gênero</code> reaproveita a mesma lista sugerida (<code>#generosList</code>) que já existe na página; <code>banda</code> deriva as opções dos valores já em uso nos produtos carregados (evita erro de digitação criando uma banda nova sem querer), sempre com a opção "Outro (digitar)..." pra cadastrar um valor genuinamente novo em qualquer um dos três campos — nenhuma das opções fixas bloqueia a entrada de dado novo, só evita repetir um erro sem querer.</td>
+<td><code>admin-produtos.js</code>, <code>admin.css</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Observação, não é bug, é reflexo de dado real:</strong> a lista de bandas sugeridas na edição em massa não normaliza maiúsculas/minúsculas — "Iron Maiden" e "iron maiden" aparecem como duas opções distintas se os dois já existem nos produtos carregados. Optei por não mesclar isso automaticamente, porque não dá pra saber de longe qual grafia é a "certa" sem contexto seu, e forçar uma escolha errada de forma silenciosa seria pior do que mostrar a inconsistência como ela é. Se isso for ruído real no seu catálogo, vale uma limpeza de dado à parte, não um patch de UI.</p>
+<hr />
+<h2 id="v13-marca-vitrine-rename-hub-largura">v1.3 — Marca &amp; Vitrine (rename) + Hub (largura)</h2>
+<p>Aplicada sobre a v1.2, aditiva. Confirmada em produção via <code>verificar-instalacao.mjs</code> (Fase 13 ✅), mas nunca chegou a virar registro formal aqui até agora — corrigido.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>O que entrega</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Renomeação</td>
+<td>"Aparência" virou "Marca &amp; Vitrine" em todo o admin. Aba Marca passou a ser a padrão (antes era Vitrine), refletindo que identidade da loja é mexida com mais frequência que layout do catálogo.</td>
+</tr>
+<tr>
+<td>Reorganização de Marca</td>
+<td>Título/Tagline pareados lado a lado (usavam um grid de 2 colunas que já existia e não aproveitavam). Arsenal + Logo Personalizada agrupados numa linha de 2 colunas no desktop. Cores e Fundo dividido em prévia+cor à esquerda, upload de imagem+encaixe à direita.</td>
+</tr>
+<tr>
+<td>Largura de tela</td>
+<td><code>.main</code>/<code>.hub-wrap</code> foram de 1100px pra 1440px de teto — os grids que já existiam (<code>auto-fit</code>/<code>minmax</code>) eram responsivos por baixo dos panos, só estavam presos num container estreito demais.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="v20-reestruturacao-de-navegacao-menu-hub-oficina-marca-vitrine">v2.0 — reestruturação de navegação (menu, Hub, Oficina, Marca &amp; Vitrine)</h2>
+<p><strong>Isto vira o pacote básico a partir de agora.</strong> Muda estrutura de URL e menu (páginas antigas viram redirecionadores), por isso é número inteiro novo, não fração — segue a própria convenção que este arquivo já definia lá em cima. Tudo daqui pra frente parte daqui, não da v1.x.</p>
+<h3 id="o-que-entrega-por-area">O que entrega, por área</h3>
+<table>
+<thead>
+<tr>
+<th>Área</th>
+<th>O que mudou</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Navegação</strong></td>
+<td>Barra lateral fixa em telas ≥1100px (antes só existia barra inferior, mesmo em monitor grande). Gerada por uma fonte única em <code>admin-shared.js</code> — antes a lista de destinos estava copiada em 10 arquivos HTML diferentes, precisava editar um por um pra qualquer mudança de menu.</td>
+</tr>
+<tr>
+<td><strong>Hub</strong></td>
+<td>Dois gráficos reais (<code>Chart.js</code>), alimentados por <code>system_events</code> — atividade dos últimos 30 dias, produtos catalogados via IA nas últimas 8 semanas. Nenhuma métrica inventada, a mesma fonte que já alimentava a Atividade Recente. Largura fluida (<code>min(1760px, 94vw)</code>) em vez de teto fixo, escala com o tamanho real do monitor.</td>
+</tr>
+<tr>
+<td><strong>Oficina</strong> (nova)</td>
+<td>Upload manual + Catalogador IA + Produtos fundidos numa página só, com abas internas. Cada aba continua sendo o script original quase intocado (cada um já era uma função isolada, sem vazar variável) — só o "chassi" em volta mudou. Painel de comando com anel de progresso central substituindo a barra retangular. Log e Resultados viraram pílulas de estado, não <code>&lt;details&gt;</code> disfarçado de título. Botão "Iniciar" trava com motivo visível antes do clique (sem fila, sem chave, já rodando). Indicador de "próximo passo" — brilho sutil, nunca mais de um lugar por vez, aponta sem bloquear nenhuma ação. Configurações de velocidade/concorrência viraram um painel trancado por padrão, resumo sempre visível, clique destrava.</td>
+</tr>
+<tr>
+<td><strong>Marca &amp; Vitrine</strong></td>
+<td>Prévia ao vivo do catálogo público embutida na própria tela (era link externo separado no menu antes). Carrega só quando o painel abre.</td>
+</tr>
+<tr>
+<td><strong>Segurança</strong></td>
+<td><code>frame-ancestors</code>/<code>X-Frame-Options</code> relaxados <strong>só</strong> pra <code>/catalogo.html</code> e <strong>só</strong> pro próprio domínio (<code>'self'</code>, nunca <code>'none'</code> virando qualquer origem) — nenhum site de terceiro ganhou capacidade nova de embutir o catálogo. Suporte real a GIF adicionado nos dois validadores de upload (assinatura binária real, não só extensão) — a tela já prometia GIF, o servidor recusava todo GIF real até este pacote.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bugs-reais-encontrados-e-corrigidos-no-processo-nao-hipoteses">Bugs reais encontrados e corrigidos no processo, não hipóteses</h3>
+<ul>
+<li><code>admin-hub.html</code> tinha uma <code>&lt;div class="hub-wrap"&gt;</code> que nunca fechava antes do menu inferior — HTML tecnicamente inválido, navegador se recuperava sozinho, mas corrigido.</li>
+<li>Ao fundir Produtos na Oficina, o contador "X produtos no acervo" (<code>#totalCount</code>/<code>#totalLabel</code>) foi removido sem querer junto com o cabeçalho antigo — quebrava a tela inteira com "Cannot set properties of null". Corrigido, e o código blindado (<code>if (numEl) numEl.innerText = ...</code>) pra nunca mais travar a tela inteira por causa de um elemento ausente.</li>
+<li>O banner de "chave da Groq ausente" nunca sumia sozinho se a chave fosse configurada depois, sem recarregar a página — só sabia aparecer, nunca sumir.</li>
+<li>O botão "Iniciar" ficava até 1,5s travado depois de um upload real, porque uma função de atualização de contagem esquecia de avisar a tela que o estado tinha mudado.</li>
+<li>Primeira versão do indicador de "próximo passo" tinha dois elementos brilhando ao mesmo tempo no estado "concluído com sucesso" — testado isolado antes de mandar, achado e corrigido antes de virar bug em produção.</li>
+<li><code>resetAll()</code> (botão "Resetar tudo") nunca checava se o servidor tinha recusado o pedido (409) — mostrava "resetado com sucesso" mesmo em cima de uma recusa real.</li>
+</ul>
+<h3 id="o-que-nao-mudou-de-proposito">O que NÃO mudou, de propósito</h3>
+<p><code>GROQ_API_KEY</code>, <code>ADMIN_PASSWORD_HASH</code>, cálculo de frete, conferência de pagamento, e toda a lógica de negócio das fases 1-10 continuam exatamente como estavam — essa versão é sobre onde as coisas vivem e como se chega até elas, não sobre o que elas fazem por baixo.</p></div>
+            <aside class="kb-artigo-indice">
+                <p class="kb-indice-titulo">Nesta página</p>
+                <ul><li><a href="#tudo-que-existe-numa-lista-so">Tudo que existe, numa lista só</a></li><li><a href="#o-que-ainda-nao-esta-aqui-de-proposito">O que ainda não está aqui, de propósito</a></li><li><a href="#convencao-de-versao-daqui-pra-frente">Convenção de versão daqui pra frente</a></li><li><a href="#v11-ajustes-pendentesmd-itens-1-2-e-4-blindagem-do-item-3">v1.1 — AJUSTES-PENDENTES.md, itens 1, 2 e 4 + blindagem do item 3</a></li><li><a href="#v12-paginacao-de-produtos-revisao-da-edicao-em-massa-confirmados-pelo-usuario-em-conversa-agora-aplicados">v1.2 — paginação de Produtos + revisão da edição em massa (confirmados pelo usuário em conversa, agora aplicados)</a></li><li><a href="#v13-marca-vitrine-rename-hub-largura">v1.3 — Marca &amp;amp; Vitrine (rename) + Hub (largura)</a></li><li><a href="#v20-reestruturacao-de-navegacao-menu-hub-oficina-marca-vitrine">v2.0 — reestruturação de navegação (menu, Hub, Oficina, Marca &amp;amp; Vitrine)</a></li></ul>
             </aside>
         </div>
     </article>
