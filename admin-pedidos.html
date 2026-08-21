@@ -84,6 +84,8 @@
             <div class="frete-config-lista" id="freteConfigLista"></div>
         </details>
 
+        <div class="vz-main-split">
+        <div class="vz-main-col">
         <!-- Filter + actions bar -->
         <div class="pedidos-controls">
             <div class="pedidos-filter-chips" role="group" aria-label="Filtrar por status">
@@ -102,6 +104,34 @@
         <div id="pedidosList" class="pedidos-list">
             <div class="vz-empty-state">Carregando pedidos...</div>
         </div>
+        </div><!-- /vz-main-col -->
+
+        <!-- [VZ] Fase 24 — mesmos contadores de status do topo (Hub tem a
+             versão "Produção de Pedidos"; aqui é a versão local, calculada
+             do array já carregado, sem chamada extra), fixos ao lado pra não
+             precisar rolar de volta pro topo numa lista longa. Reaproveita
+             a classe .status-filter-chip — clique aqui filtra exatamente
+             como clicar no pill do topo (mesmo listener, mesmo comportamento,
+             nenhuma lógica duplicada). -->
+        <aside class="vz-side-panel" aria-label="Status dos pedidos">
+            <p class="vz-side-title">Status</p>
+            <button class="status-filter-chip" data-status="novo" type="button">
+                <span>Novo</span><span class="vz-side-chip-count-sm" data-status-count="novo">0</span>
+            </button>
+            <button class="status-filter-chip" data-status="confirmado" type="button">
+                <span>Confirmado</span><span class="vz-side-chip-count-sm" data-status-count="confirmado">0</span>
+            </button>
+            <button class="status-filter-chip" data-status="producao" type="button">
+                <span>Em Produção</span><span class="vz-side-chip-count-sm" data-status-count="producao">0</span>
+            </button>
+            <button class="status-filter-chip" data-status="enviado" type="button">
+                <span>Enviado</span><span class="vz-side-chip-count-sm" data-status-count="enviado">0</span>
+            </button>
+            <button class="status-filter-chip" data-status="entregue" type="button">
+                <span>Entregue</span><span class="vz-side-chip-count-sm" data-status-count="entregue">0</span>
+            </button>
+        </aside>
+        </div><!-- /vz-main-split -->
 
     </main>
 

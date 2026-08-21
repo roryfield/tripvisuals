@@ -12,7 +12,7 @@ let currentView = (function(){
     } catch (_) { return 'grid'; }
 }());
 let currentFilter = '';
-let currentFilters = { tipo: '', banda: '', genero: '' };
+let currentFilters = { tipo: '', banda: '', genero: '', rapido: '' }; // rapido: '' | 'semBanda' | 'ocultos' | 'precoZero'
 let currentPage = 1;
 const PRODUTOS_POR_PAGINA = 24;
 
@@ -32,6 +32,37 @@ const PRODUTOS_POR_PAGINA = 24;
             setTimeout(() => t.classList.remove('show'), 2500);
         }
 
+        // [VZ] Fase 24 — fonte única pros contadores do topo (ativos/ocultos)
+        // e pros três contadores clicáveis do painel lateral (sem banda,
+        // ocultos, preço zero). Antes existiam duas cópias quase idênticas
+        // deste cálculo (uma em renderProdutos, outra em remover()) — unificado
+        // aqui, chamado dos dois lugares. Sempre calcula sobre o acervo
+        // completo (não filtrado), porque o ponto do painel lateral é servir
+        // de atalho pra filtro, não de resumo do que já está sendo mostrado.
+        function atualizarContadores(arr) {
+            const ocultos   = arr.filter(p => p.oculto).length;
+            const semBanda  = arr.filter(p => !(p.banda || '').trim()).length;
+            const precoZero = arr.filter(p => !(Number(p.preco) > 0)).length;
+            const ativos    = arr.length - ocultos;
+
+            const numEl = document.getElementById('totalCount');
+            const labEl = document.getElementById('totalLabel');
+            if (ocultos > 0) {
+                if (numEl) numEl.innerText = ativos;
+                if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
+            } else {
+                if (numEl) numEl.innerText = arr.length;
+                if (labEl) labEl.innerText = 'produtos no acervo';
+            }
+
+            [['semBanda', semBanda], ['ocultos', ocultos], ['precoZero', precoZero]].forEach(function (par) {
+                const el = document.getElementById('sideCount-' + par[0]);
+                if (el) el.textContent = par[1];
+                const btn = document.getElementById('sideChip-' + par[0]);
+                if (btn) btn.classList.toggle('active', currentFilters.rapido === par[0]);
+            });
+        }
+
         function renderPaginacaoHTML(totalPaginas, totalFiltrado, inicio, qtdNaPagina) {
             const de = totalFiltrado === 0 ? 0 : inicio + 1;
             const ate = inicio + qtdNaPagina;
@@ -44,20 +75,7 @@ const PRODUTOS_POR_PAGINA = 24;
 
         function renderProdutos(lista) {
             const area = document.getElementById('listaArea');
-            (function(){
-                const arr = lista;
-                const ocultos = arr.filter(p => p.oculto).length;
-                const ativos  = arr.length - ocultos;
-                const numEl   = document.getElementById('totalCount');
-                const labEl   = document.getElementById('totalLabel');
-                if (ocultos > 0) {
-                    if (numEl) numEl.innerText = ativos;
-                    if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
-                } else {
-                    if (numEl) numEl.innerText = arr.length;
-                    if (labEl) labEl.innerText = 'produtos no acervo';
-                }
-            })();
+            atualizarContadores(lista);
 
             if (lista.length === 0) {
                 area.innerHTML = `
@@ -80,6 +98,9 @@ const PRODUTOS_POR_PAGINA = 24;
                 if (currentFilters.tipo && p.tipo !== currentFilters.tipo) return false;
                 if (currentFilters.banda && !(p.banda || '').toLowerCase().includes(currentFilters.banda.toLowerCase())) return false;
                 if (currentFilters.genero && !(p.genero || '').toLowerCase().includes(currentFilters.genero.toLowerCase())) return false;
+                if (currentFilters.rapido === 'semBanda'  && (p.banda || '').trim())   return false;
+                if (currentFilters.rapido === 'ocultos'   && !p.oculto)                return false;
+                if (currentFilters.rapido === 'precoZero' && Number(p.preco) > 0)      return false;
                 return true;
             });
 
@@ -473,20 +494,7 @@ const PRODUTOS_POR_PAGINA = 24;
                     setTimeout(() => {
                         card.remove();
                         produtos = produtos.filter(p => p.id !== id);
-                        (function(){
-                const arr = produtos;
-                const ocultos = arr.filter(p => p.oculto).length;
-                const ativos  = arr.length - ocultos;
-                const numEl   = document.getElementById('totalCount');
-                const labEl   = document.getElementById('totalLabel');
-                if (ocultos > 0) {
-                    if (numEl) numEl.innerText = ativos;
-                    if (labEl) labEl.innerText = 'ativos · ' + ocultos + ' ocultos';
-                } else {
-                    if (numEl) numEl.innerText = arr.length;
-                    if (labEl) labEl.innerText = 'produtos no acervo';
-                }
-            })();
+                        atualizarContadores(produtos);
                     }, 300);
                     mostrarToast(`✓ "${nome}" removido`);
                 } else if (res.status === 401) {
@@ -565,7 +573,7 @@ const PRODUTOS_POR_PAGINA = 24;
             aplicarFiltrosDebounced();
         });
         if (btnLimpar) btnLimpar.addEventListener('click', () => {
-            currentFilters = { tipo: '', banda: '', genero: '' };
+            currentFilters = { tipo: '', banda: '', genero: '', rapido: '' };
             currentFilter  = '';
             currentPage    = 1;
             if (searchInput)  searchInput.value  = '';
@@ -573,5 +581,20 @@ const PRODUTOS_POR_PAGINA = 24;
             if (filtroBanda)  filtroBanda.value   = '';
             if (filtroGenero) filtroGenero.value  = '';
             renderProdutos(produtos);
+        });
+
+        // Painel lateral (Fase 24) — três contadores clicáveis que já filtram
+        // a lista, não só mostram o número. Clicar de novo no mesmo desliga o
+        // filtro rápido; clicar em outro troca (são mutuamente exclusivos —
+        // não faz sentido cruzar "sem banda" com "preço zero" aqui, cada um
+        // é um atalho de triagem separado).
+        ['semBanda', 'ocultos', 'precoZero'].forEach(function (chave) {
+            const btn = document.getElementById('sideChip-' + chave);
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                currentFilters.rapido = currentFilters.rapido === chave ? '' : chave;
+                currentPage = 1;
+                renderProdutos(produtos);
+            });
         });
 })();

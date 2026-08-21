@@ -56,9 +56,17 @@
         const abertos = pedidos.filter(p => p.status !== 'entregue').length;
         if (count) count.textContent = abertos + ' aberto' + (abertos !== 1 ? 's' : '');
 
-        // Update filter chips
+        // Update filter chips (pega tanto os do topo quanto os replicados
+        // no painel lateral — mesma classe, mesmo estado ativo)
         document.querySelectorAll('.status-filter-chip').forEach(chip => {
             chip.classList.toggle('active', chip.dataset.status === filterStatus);
+        });
+
+        // [VZ] Fase 24 — contadores por status do painel lateral
+        const porStatus = {};
+        pedidos.forEach(p => { porStatus[p.status] = (porStatus[p.status] || 0) + 1; });
+        document.querySelectorAll('[data-status-count]').forEach(el => {
+            el.textContent = porStatus[el.dataset.statusCount] || 0;
         });
 
         if (lista.length === 0) {
