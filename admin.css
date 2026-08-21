@@ -2210,6 +2210,21 @@ input.help-topics-search:focus {
     opacity: 1;
 }
 .topic-chip.chip-hidden { display: none; }
+
+.topic-group-label {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    white-space: nowrap;
+}
+.topic-group-label-sep { margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--border-strong); }
+.topic-group-label.chip-hidden { display: none; }
 .help-topics-empty {
     font-size: 0.78rem;
     color: var(--text-muted);
