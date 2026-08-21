@@ -27,14 +27,31 @@ const links    = document.querySelectorAll('.help-topics .topic-chip');
         var input = document.getElementById('helpTopicsSearch');
         var empty = document.getElementById('helpTopicsEmpty');
         if (!input) return;
+        var todosOsItens = Array.from(document.querySelectorAll('.help-topics > *')); // chips E rótulos, na ordem real do DOM
         input.addEventListener('input', function () {
             var q = input.value.trim().toLowerCase();
             var visibleCount = 0;
-            links.forEach(function (a) {
-                var match = !q || a.textContent.toLowerCase().indexOf(q) !== -1;
-                a.classList.toggle('chip-hidden', !match);
+            todosOsItens.forEach(function (el) {
+                if (!el.classList.contains('topic-chip')) return; // rótulos são tratados depois, olhando pra frente
+                var match = !q || el.textContent.toLowerCase().indexOf(q) !== -1;
+                el.classList.toggle('chip-hidden', !match);
                 if (match) visibleCount++;
             });
+            // [VZ] Fase 27b — um rótulo de grupo só aparece se pelo menos um
+            // chip depois dele (até o próximo rótulo) continuar visível.
+            var grupoAtualTemChipVisivel = false;
+            var rotuloAtual = null;
+            todosOsItens.forEach(function (el) {
+                if (el.classList.contains('topic-group-label')) {
+                    if (rotuloAtual) rotuloAtual.classList.toggle('chip-hidden', !grupoAtualTemChipVisivel);
+                    rotuloAtual = el;
+                    grupoAtualTemChipVisivel = false;
+                } else if (el.classList.contains('topic-chip') && !el.classList.contains('chip-hidden')) {
+                    grupoAtualTemChipVisivel = true;
+                }
+            });
+            if (rotuloAtual) rotuloAtual.classList.toggle('chip-hidden', !grupoAtualTemChipVisivel);
+
             if (empty) empty.hidden = visibleCount !== 0;
         });
     })();
