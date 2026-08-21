@@ -1321,7 +1321,20 @@ input.vz-help-drawer-search:focus {
 
 /* ═══ admin-layout.html → extracted styles ═══ */
 
-body {
+/* [VZ] Fase 24 — bug real encontrado no caminho: esta regra saiu do
+   admin-layout.html (única tela que precisa centralizar um card sozinho
+   na viewport — página morta, só existe pra redirecionar) mas foi
+   extraída pro admin.css SEM escopo, como um seletor `body` puro. Isso
+   fazia TODA tela do admin herdar display:flex + align-items:center +
+   justify-content:center no body — inofensivo por acidente até aqui
+   (todo conteúdo real é mais alto que a viewport, então a centralização
+   vertical nunca tinha espaço livre pra atuar), mas incorreto e frágil:
+   numa tela curta ou numa viewport ultra-larga (main bate no max-width
+   de 1760px e sobra espaço), o conteúdo passava a flutuar centralizado
+   em vez de ficar colado no topo/esquerda. Confirmado ao vivo antes da
+   correção (body computava display:flex em toda página do admin).
+   Escopado agora só pra esta tela, via classe no próprio <body>. */
+body.vz-redirect-shell {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3610,3 +3623,123 @@ kbd {
 }
 .atividade-details[open] summary.atividade-toggle::before { transform: rotate(90deg); }
 .atividade-details[open] summary.atividade-toggle { margin-bottom: 8px; }
+
+/* ═══ Fase 24 — painel lateral contextual (Oficina/Produtos, Catalogador,
+   Pedidos). Medido ao vivo antes de construir: com o acervo real (199
+   produtos, grade em modo grid/lista/mosaico) o conteúdo já preenche a
+   largura útil do .main quase todo — não sobra uma faixa vazia pronta
+   pra usar. O painel lateral por isso reserva uma coluna de propósito
+   (não "aproveita sobra"), só em telas realmente largas; abaixo do
+   ponto de corte ele desaparece e a coluna principal volta a ocupar
+   100% — nada muda pra quem usa notebook/tela média. ═══ */
+.vz-main-split { display: block; }
+.vz-main-col   { min-width: 0; }
+.vz-side-panel { display: none; }
+
+@media (min-width: 1440px) {
+    .vz-main-split {
+        display: grid;
+        grid-template-columns: 1fr 260px;
+        align-items: start;
+        gap: 28px;
+    }
+    .vz-side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: sticky;
+        top: 24px;
+    }
+}
+
+.vz-side-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+/* Contadores clicáveis — Oficina/Produtos. Cada um já filtra a lista ao
+   clicar (não é só um resumo), por isso o tratamento visual é de
+   controle (hover, foco, estado ativo), não de texto estático. */
+.vz-side-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.vz-side-chip:hover        { border-color: rgba(45,212,224,0.35); }
+.vz-side-chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.vz-side-chip.active {
+    border-color: var(--cyan);
+    background: rgba(45,212,224,0.08);
+}
+.vz-side-chip-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+.vz-side-chip.active .vz-side-chip-label { color: var(--text); }
+.vz-side-chip-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+/* Log compacto — Catalogador IA. Espelha as últimas 5 identificações já
+   visíveis na tabela de resultados; não busca nada novo do servidor. */
+.vz-side-log-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 0.78rem;
+}
+.vz-side-log-file {
+    color: var(--text-muted);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+.vz-side-log-band { color: var(--text); font-weight: 600; }
+.vz-side-log-vazio { color: var(--text-muted); font-size: 0.8rem; padding: 4px 2px; }
+
+/* Contadores de status — Pedidos. Reaproveita a classe .status-filter-chip
+   (mesmo comportamento de clique/filtro já existente nos pills do topo,
+   nenhuma lógica nova) só com este layout vertical e fixo (sticky) pra
+   não precisar rolar de volta até o topo em listas longas. */
+.vz-side-panel .status-filter-chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+}
+.vz-side-chip-count-sm {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    opacity: 0.85;
+}
+
+/* Botão "Relembrar esse fluxo" (Manual → Fluxos guiados). .btn-secondary é
+   pensado pra <button>; num <a> falta display/text-decoration — escopado
+   ao conteúdo do manual pra não mudar nenhum outro link do admin. */
+.help-content a.btn-secondary {
+    display: inline-block;
+    text-decoration: none;
+    margin: 2px 0 18px;
+}

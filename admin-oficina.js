@@ -23,6 +23,14 @@
             }
         });
         try { sessionStorage.setItem('vz-oficina-aba', tab); } catch (_) {}
+
+        // [VZ] Fase 24 — bug real encontrado ao testar o guia contextual ao
+        // vivo: o Catalogador escuta este evento pra saber quando entrar/sair
+        // da própria aba, mas ninguém disparava. Guia contextual do Catalogador
+        // só ligava via ?tab=catalogador na URL (redirect antigo); clicar na
+        // aba manualmente, do jeito que qualquer pessoa realmente usa a tela,
+        // nunca ativava o guia. Confirmado com evento real antes da correção.
+        document.dispatchEvent(new CustomEvent('vz-oficina-tab', { detail: { tab: tab } }));
     }
 
     document.addEventListener('click', function (e) {

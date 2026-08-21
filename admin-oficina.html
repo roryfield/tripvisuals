@@ -204,6 +204,8 @@
     </div>
     <input type="file" id="fileInputCatalogador" multiple accept="image/jpeg,image/png,image/webp" hidden>
 
+    <div class="vz-main-split">
+    <div class="vz-main-col">
     <!-- Painel de controle -->
     <div class="batch-cfg cat-controls" id="controlPanel">
 
@@ -325,9 +327,19 @@
             <p class="cat-empty" id="emptyMsg">Nenhum resultado ainda.</p>
         </div>
     </div>
+    </div><!-- /vz-main-col -->
+    <aside class="vz-side-panel" aria-label="Últimas identificações">
+        <p class="vz-side-title">Últimas identificações</p>
+        <div id="sideCatalogadorLog">
+            <p class="vz-side-log-vazio">Nenhuma ainda.</p>
+        </div>
+    </aside>
+    </div><!-- /vz-main-split -->
     </div>
 
     <div id="tabProdutos" role="tabpanel" aria-labelledby="btnTabProdutos" hidden>
+    <div class="vz-main-split">
+    <div class="vz-main-col">
 <!-- VIEW CONTROLS -->
         <div class="produtos-count-row">
             <div class="produto-count" id="totalCount">—</div>
@@ -391,6 +403,23 @@
                 <p>Carregando produtos...</p>
             </div>
         </div>
+    </div><!-- /vz-main-col -->
+    <aside class="vz-side-panel" aria-label="Status rápido — Produtos">
+        <p class="vz-side-title">Status rápido</p>
+        <button type="button" class="vz-side-chip" id="sideChip-semBanda">
+            <span class="vz-side-chip-label">Sem banda identificada</span>
+            <span class="vz-side-chip-count" id="sideCount-semBanda">—</span>
+        </button>
+        <button type="button" class="vz-side-chip" id="sideChip-ocultos">
+            <span class="vz-side-chip-label">Ocultos</span>
+            <span class="vz-side-chip-count" id="sideCount-ocultos">—</span>
+        </button>
+        <button type="button" class="vz-side-chip" id="sideChip-precoZero">
+            <span class="vz-side-chip-label">Preço zero</span>
+            <span class="vz-side-chip-count" id="sideCount-precoZero">—</span>
+        </button>
+    </aside>
+    </div><!-- /vz-main-split -->
     </div>
 
 </main>
@@ -399,6 +428,7 @@
 <script src="/admin-catalogador.js"></script>
 <script src="/admin-produtos.js"></script>
 <script src="/admin-oficina.js"></script>
+<script src="/admin-oficina-side.js"></script>
 <script src="/admin-guia.js"></script>
 <script src="/admin-guia-catalogador.js"></script>
 <script src="/admin-shared.js"></script>

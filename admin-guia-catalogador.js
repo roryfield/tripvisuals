@@ -43,10 +43,16 @@
         },
     ];
 
+    // "Relembrar esse fluxo" (índice do Manual) manda pra cá com
+    // ?vzguia=relembrar — ignora a memória de "já visto" desta vez só.
+    function querRelembrar () {
+        return new URLSearchParams(location.search).get('vzguia') === 'relembrar';
+    }
+
     document.addEventListener('vz-oficina-tab', function (e) {
         if (!window.VZGuia) return;
         if (e.detail && e.detail.tab === 'catalogador') {
-            window.VZGuia.iniciarFluxo('catalogador', PASSOS, { tempoInatividade: 8000 });
+            window.VZGuia.iniciarFluxo('catalogador', PASSOS, { tempoInatividade: 8000, forcar: querRelembrar() });
         } else {
             window.VZGuia.pararFluxo();
         }
@@ -55,6 +61,6 @@
     // se a página já carregou direto na aba Catalogador (via ?tab=catalogador),
     // o evento de troca não dispara sozinho — checa uma vez ao carregar.
     if (window.VZGuia && new URLSearchParams(location.search).get('tab') === 'catalogador') {
-        window.VZGuia.iniciarFluxo('catalogador', PASSOS, { tempoInatividade: 8000 });
+        window.VZGuia.iniciarFluxo('catalogador', PASSOS, { tempoInatividade: 8000, forcar: querRelembrar() });
     }
 })();

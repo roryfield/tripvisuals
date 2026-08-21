@@ -33,7 +33,8 @@
         if (lista && lista.children.length > 0) {
             passosFinal = [PASSOS[0]]; // já tem frete configurado, pula o passo 2
         }
-        window.VZGuia.iniciarFluxo('pedidos', passosFinal, { tempoInatividade: 8000 });
+        var forcar = new URLSearchParams(location.search).get('vzguia') === 'relembrar';
+        window.VZGuia.iniciarFluxo('pedidos', passosFinal, { tempoInatividade: 8000, forcar: forcar });
     }
 
     if (document.readyState === 'loading') {

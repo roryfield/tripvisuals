@@ -24,6 +24,22 @@
 
     function agora () { return Date.now(); }
 
+    // ── Memória por navegador (Fase 24) ─────────────────────────────
+    // Uma vez que a pessoa termina um fluxo até o fim, ele não deve mais
+    // disparar sozinho por inatividade nas próximas visitas àquela tela
+    // — só se ela pedir explicitamente via VZGuia.iniciarFluxo(nome, passos,
+    // { forcar: true }) (usado pelo índice de "relembrar fluxo").
+    function chaveVisto (nome) { return 'vz-guia-visto-' + nome; }
+
+    function jaVisto (nome) {
+        try { return localStorage.getItem(chaveVisto(nome)) === '1'; }
+        catch (_) { return false; } // localStorage indisponível (modo privado etc.) — trata como não visto
+    }
+
+    function marcarComoVisto (nome) {
+        try { localStorage.setItem(chaveVisto(nome), '1'); } catch (_) { /* sem persistência, sem problema */ }
+    }
+
     function limparEstadoVisual () {
         var existente = document.getElementById('vzGuiaBalao');
         if (existente) existente.remove();
@@ -89,7 +105,15 @@
             estado.indice++;
             estado.ultimaAcao = agora();
             estado.dispensadoNestePasso = false;
-            if (estado.indice >= estado.passos.length) { pararFluxo(); return; }
+            if (estado.indice >= estado.passos.length) {
+                // Fluxo completo do início ao fim — só isso conta como "já visto".
+                // Sair da tela no meio, trocar de aba, etc. (que também chamam
+                // pararFluxo por fora) não marca nada, o fluxo continua elegível
+                // pra disparar sozinho na próxima vez.
+                marcarComoVisto(estado.nome);
+                pararFluxo();
+                return;
+            }
         }
 
         if (!estado.dispensadoNestePasso && (agora() - estado.ultimaAcao) >= estado.tempoInatividade) {
@@ -99,6 +123,9 @@
 
     function iniciarFluxo (nome, passos, opcoes) {
         opcoes = opcoes || {};
+        // Já visto nesta tela, neste navegador, e ninguém pediu explicitamente
+        // pra ver de novo (forcar: true) — não inicia, silencioso.
+        if (!opcoes.forcar && jaVisto(nome)) return;
         pararFluxo();
         estado = {
             nome: nome,
@@ -125,5 +152,5 @@
         estado = null;
     }
 
-    window.VZGuia = { iniciarFluxo: iniciarFluxo, pararFluxo: pararFluxo };
+    window.VZGuia = { iniciarFluxo: iniciarFluxo, pararFluxo: pararFluxo, jaVisto: jaVisto };
 })();

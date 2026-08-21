@@ -38,7 +38,10 @@
             var pronto = document.querySelector('#themesGrid .vz-card');
             if (pronto || tentativas > 20) {
                 clearInterval(esperar);
-                if (pronto) window.VZGuia.iniciarFluxo('marca-vitrine', PASSOS, { tempoInatividade: 8000 });
+                if (pronto) {
+                    var forcar = new URLSearchParams(location.search).get('vzguia') === 'relembrar';
+                    window.VZGuia.iniciarFluxo('marca-vitrine', PASSOS, { tempoInatividade: 8000, forcar: forcar });
+                }
             }
         }, 250);
     }
