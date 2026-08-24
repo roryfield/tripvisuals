@@ -159,38 +159,4 @@ Histórico completo de fases e decisões técnicas em `VERSIONING.md`.
 
 ---
 
-## Rodando localmente
-
-```bash
-git clone https://github.com/roryfield/tripvisuals.git
-cd tripvisuals
-npm install
-cp .env.example .env
-# Configure: DATABASE_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY,
-# CLOUDINARY_API_SECRET, ADMIN_PASSWORD_HASH
-npm start
-```
-
-Sobe em `http://localhost:3000`.
-
----
-
-## Roadmap
-
-Pendências reais em aberto (ver `AJUSTES-PENDENTES.md` para o detalhe):
-
-- Confirmar ao vivo o desfazer de edição em massa em Produtos
-- Rodar a suíte de testes automatizados contra Postgres local (Docker)
-- Cadastrar mais regiões de frete conforme o volume de vendas exigir
-- Confirmar ponta a ponta o fluxo "criar pedido via comprovante" com Groq + Cloudinary reais
-
-Fora do escopo por decisão, não por esquecimento:
-
-- Lista de interesse (múltiplos itens em uma única mensagem WhatsApp)
-- Download do catálogo em ZIP (botão "em breve" já visível na UI)
-- Picker visual de cores com swatches
-- Gerenciamento de usuários e acessos (múltiplos logins) — ainda em desenho
-
----
-
 Desenvolvido por **Mauricio Rory** · [VOIDZONE](https://linkedin.com/in/mauricio-rory)
