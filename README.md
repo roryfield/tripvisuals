@@ -16,7 +16,7 @@ substitui o fluxo manual de "foto no Instagram → DM → conversa no WhatsApp" 
 catálogo público, organizado e pesquisável, mantendo o WhatsApp como canal de
 fechamento da venda — que é como a dona da loja prefere operar.
 
-O MVP foi entregue com 170+ peças catalogadas em uma única sessão de upload em massa.
+Em produção com 199 peças catalogadas, painel administrativo completo (Hub, Oficina, Marca & Vitrine, Pedidos, Base de Conhecimento) e catalogação assistida por IA.
 
 ---
 
@@ -27,24 +27,26 @@ O MVP foi entregue com 170+ peças catalogadas em uma única sessão de upload e
 - **Modal de detalhe** com foto grande, cor, preço, descrição e botão "Adquirir via WhatsApp"
 - **Modal de FAQ** com tabela completa de preços por tipo (camiseta MC, MM, regata, babylook, moletom careca, canguru)
 - **Fluxo de confirmação pós-WhatsApp** com timeline visual (`Item escolhido → Aguardando confirmação → Em confecção → Enviado`)
+- **Frete calculado por região** direto no catálogo público, configurável por estado, sem depender de CNPJ
 - **Mensagens WhatsApp pré-preenchidas** específicas por contexto (geral ou por item)
 - **Skeleton loaders** + Cloudinary lazy loading para abertura instantânea
 - **Acessibilidade**: focus trap em modais, ESC fecha, navegação por teclado, `prefers-reduced-motion` respeitado, touch targets ≥44×44
 
 ## Para a dona da loja
 
-- **Login** com hash de senha + comparação timing-safe (resistente a timing attacks)
+O painel administrativo é organizado em cinco áreas: **Hub** (visão geral), **Oficina** (upload, catalogação e gestão de produtos), **Marca & Vitrine** (identidade visual e exibição pública), **Pedidos** (fluxo de status) e **Base de Conhecimento** (documentação viva do sistema, método e protocolos).
+
+- **Login** com hash de senha (bcrypt) + comparação timing-safe (resistente a timing attacks)
 - **Sessão persistente** sobrevive a redeploys do Railway (tokens em PostgreSQL, não em memória)
-- **Upload em massa** com batch config: tipo, cor e preço padrão aplicados a todos, edição individual por linha
-- **Nomenclatura inteligente** — limpa nomes de arquivo automaticamente:
-  - `alice-in-chains-30.jpeg` → `CAMISETA ALICE IN CHAINS PRETA`
-  - `WhatsApp Image 2026-05-28 at 17.44.51.jpeg` → usa nome da coleção do batch
-  - Números finais ignorados, prefixos camera/WhatsApp removidos
+- **Catalogador IA** — depois do upload em massa, a IA lê a estampa de cada peça e sugere banda/gênero automaticamente; a dona da loja só revisa e aplica ou descarta item a item, em vez de digitar tudo à mão
+- **Upload em massa** com batch config: tipo, cor e preço padrão aplicados a todos, edição individual por linha, nomenclatura inteligente que limpa nomes de arquivo automaticamente (`alice-in-chains-30.jpeg` → `CAMISETA ALICE IN CHAINS PRETA`, prefixos de câmera/WhatsApp removidos)
+- **Gestão de produtos** com filtros por tipo, banda e gênero, edição em massa validada por campo, painel lateral com contadores clicáveis (sem banda identificada, ocultos, preço zero) que já filtram a lista, e paginação para não travar com o catálogo cheio
 - **Combobox de 28 cores** padrão (Preta, Off-White, Vinho, etc.) + qualquer cor customizada digitável
-- **Edição/remoção** de produtos com 2 modos de visualização (grade ou lista compacta) e busca
-- **Configuração de landing** com botão "Ver ao vivo" para preview imediato em nova aba
-- **Bottom navigation** no padrão iOS/Android
-- **Toast notifications** substituindo `alert()`
+- **Marca & Vitrine** — 5 estilos de landing prontos (de assinatura VDZN a dark editorial) com prévia ao vivo, e 3 modos de exibição da vitrine pública (grade, duo, lista), tudo aplicado sem código
+- **Pedidos** — cada pedido avança por status (Novo → Confirmado → Em Produção → Enviado → Entregue) com um clique, com conferência assistida por IA de comprovante de pagamento (Pix), confirmação sempre manual
+- **Base de Conhecimento** — a lógica do sistema documentada dentro do próprio painel: método, protocolos e histórico de versão, sempre à mão, sem depender de conversa antiga
+- **Guias contextuais** nos fluxos principais, com memória por navegador (não repete se já foi visto) e opção de "relembrar" a qualquer momento
+- **Bottom navigation** no padrão iOS/Android, toast notifications no lugar de `alert()` nativo
 
 ---
 
@@ -55,8 +57,10 @@ O MVP foi entregue com 170+ peças catalogadas em uma única sessão de upload e
 | Backend   | Node.js · Express                     |
 | Database  | PostgreSQL (Railway-hosted)           |
 | Image CDN | Cloudinary (auto WebP/AVIF, signed)   |
-| Auth      | Custom DB-backed sessions             |
+| IA        | Groq SDK (catalogador de estampas + leitura de comprovante) |
+| Auth      | Custom DB-backed sessions (bcrypt)    |
 | Frontend  | Vanilla HTML/CSS/JS (sem framework)   |
+| Testes    | Suíte própria (`npm test`), 45+ verificações automatizadas |
 | Deploy    | Railway (Hobby plan)                  |
 
 ---
@@ -77,6 +81,9 @@ O MVP foi entregue com 170+ peças catalogadas em uma única sessão de upload e
 | XSS                 | Escape de HTML em todo render, encode URI em mensagens WhatsApp               |
 | Timing attacks      | `crypto.timingSafeEqual` no compare de senha                                  |
 | Conexão Postgres    | SSL com `rejectUnauthorized`                                                  |
+| CPF/CNPJ            | Validação de dígito verificador                                               |
+| CSV export          | Proteção contra injeção de fórmula                                            |
+| Log de auditoria    | Tabela `system_events`, log central de eventos administrativos                |
 | Vulnerabilidades    | 0 (auditoria mais recente: 27/27 controles)                                   |
 
 ### Performance
@@ -109,6 +116,8 @@ escopo e qualidade são minhas.
 - Code review crítico antes de cada deploy
 - Interação com a cliente real e tradução das necessidades em escopo técnico
 
+Histórico completo de fases e decisões técnicas em `VERSIONING.md`.
+
 ---
 
 ## Estrutura do projeto
@@ -116,28 +125,36 @@ escopo e qualidade são minhas.
 ```
 /
 ├── server.js                  # Express + API + middleware
+├── catalogador-router.js      # Rotas do Catalogador IA
+├── asaas.js / frete.js        # Pagamento e cálculo de frete
 ├── package.json
 │
 ├── index.html                 # Landing clássica
 ├── landing-retro.html         # Landing alternativa (retrô)
+├── landing-dark.html          # Landing dark editorial
+├── landing-minimalista.html   # Landing minimalista
 ├── catalogo.html              # Catálogo público
 ├── login.html                 # Auth
 │
-├── admin-hub.html             # Dashboard
-├── admin.html                 # Upload em massa
+├── admin-hub.html             # Hub — visão geral
+├── admin-oficina.html         # Oficina — upload, catalogador IA, produtos
+├── admin-catalogador.html     # Catalogador IA (standalone)
 ├── admin-produtos.html        # Gerenciar produtos
-├── admin-layout.html          # Trocar tema
-├── admin-landing.html         # Configurar landing
+├── admin-landing.html         # Marca & Vitrine
+├── admin-pedidos.html         # Pedidos — fluxo de status
+├── admin-conhecimento.html    # Base de Conhecimento
+├── admin-help.html            # Manual / guias contextuais
+├── admin-sobre.html           # Sobre / conta
 ├── admin-config.html          # Configurações da loja
-├── admin-help.html            # FAQ admin
 │
 ├── catalogo.{css,js}          # Catálogo + intro + modais + busca
 ├── admin.css                  # Design system compartilhado
 ├── login.{css,js}             # UI de autenticação
-├── style.css                  # Landing clássica
-├── landing-retro.css          # Landing retrô
 │
-└── admin-*.js                 # Lógica por página admin
+├── admin-*.js                 # Lógica por página admin
+├── tests/                     # Suíte de testes (`npm test`)
+├── VERSIONING.md              # Histórico de versões e fases
+└── SEGURANCA.md                # Detalhe da postura de segurança
 ```
 
 ---
@@ -160,13 +177,19 @@ Sobe em `http://localhost:3000`.
 
 ## Roadmap
 
-Recursos planejados mas intencionalmente fora do MVP:
+Pendências reais em aberto (ver `AJUSTES-PENDENTES.md` para o detalhe):
 
-- Categorias por gênero musical (Rock, Metal, Grunge…) com filtros no catálogo
+- Confirmar ao vivo o desfazer de edição em massa em Produtos
+- Rodar a suíte de testes automatizados contra Postgres local (Docker)
+- Cadastrar mais regiões de frete conforme o volume de vendas exigir
+- Confirmar ponta a ponta o fluxo "criar pedido via comprovante" com Groq + Cloudinary reais
+
+Fora do escopo por decisão, não por esquecimento:
+
 - Lista de interesse (múltiplos itens em uma única mensagem WhatsApp)
 - Download do catálogo em ZIP (botão "em breve" já visível na UI)
 - Picker visual de cores com swatches
-- Paginação / infinite-scroll (necessário ao passar de ~500 produtos)
+- Gerenciamento de usuários e acessos (múltiplos logins) — ainda em desenho
 
 ---
 
