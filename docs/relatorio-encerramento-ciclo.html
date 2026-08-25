@@ -1,0 +1,374 @@
+<title>Fechamento — TripVisuals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3f5f7;
+    --paper-raised: #ffffff;
+    --ink: #161b22;
+    --ink-soft: #4b5768;
+    --ink-faint: #7c8798;
+    --accent: #0e6e66;
+    --accent-ink: #ffffff;
+    --accent-soft: #e3f1ef;
+    --ok: #1f8a4c;
+    --ok-soft: #e6f4ec;
+    --pending: #a3690a;
+    --pending-soft: #faf0dd;
+    --line: #dde1e7;
+    --shadow: 0 1px 2px rgba(22,27,34,.04), 0 8px 24px rgba(22,27,34,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12161c;
+      --paper-raised: #181e26;
+      --ink: #e9ecef;
+      --ink-soft: #a3aebd;
+      --ink-faint: #6b7684;
+      --accent: #4fd1c5;
+      --accent-ink: #0a1613;
+      --accent-soft: rgba(79,209,197,.12);
+      --ok: #4fd18a;
+      --ok-soft: rgba(79,209,138,.12);
+      --pending: #f0b25f;
+      --pending-soft: rgba(240,178,95,.12);
+      --line: #29313b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161c;
+    --paper-raised: #181e26;
+    --ink: #e9ecef;
+    --ink-soft: #a3aebd;
+    --ink-faint: #6b7684;
+    --accent: #4fd1c5;
+    --accent-ink: #0a1613;
+    --accent-soft: rgba(79,209,197,.12);
+    --ok: #4fd18a;
+    --ok-soft: rgba(79,209,138,.12);
+    --pending: #f0b25f;
+    --pending-soft: rgba(240,178,95,.12);
+    --line: #29313b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { animation: rise .5s ease-out both; }
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 64px 24px 96px; }
+
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; text-wrap: balance; margin: 0; }
+
+  /* ---- masthead ---- */
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .masthead { margin-bottom: 56px; }
+  .masthead h1 {
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    font-weight: 600;
+    margin-top: 10px;
+    color: var(--ink);
+  }
+  .masthead .subtitle {
+    font-family: "Fraunces", Georgia, serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .meta-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--ok-soft); color: var(--ok);
+    padding: 6px 14px; border-radius: 100px;
+    font-family: "Public Sans", sans-serif; font-weight: 600; font-size: 13px;
+  }
+  .status-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .meta-sep { color: var(--line); }
+
+  /* ---- executive summary ---- */
+  .summary {
+    font-size: 1.15rem; line-height: 1.65; color: var(--ink);
+    margin-bottom: 64px;
+  }
+  .summary strong { font-weight: 600; }
+
+  /* ---- timeline ---- */
+  .timeline-section { margin-bottom: 64px; }
+  .timeline {
+    list-style: none; margin: 24px 0 0; padding: 0;
+    display: flex; flex-direction: column; gap: 0;
+    border-left: 2px solid var(--line);
+  }
+  .timeline li {
+    position: relative; padding: 0 0 26px 24px;
+  }
+  .timeline li:last-child { padding-bottom: 0; }
+  .timeline li::before {
+    content: ""; position: absolute; left: -6.5px; top: 4px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--paper); border: 2px solid var(--accent);
+  }
+  .timeline li.final::before { background: var(--accent); }
+  .t-time {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px;
+    color: var(--accent); font-weight: 500;
+  }
+  .t-label { font-weight: 600; margin-top: 2px; }
+  .t-detail { color: var(--ink-soft); font-size: 14.5px; margin-top: 2px; }
+
+  /* ---- sections ---- */
+  section.block { margin-bottom: 56px; }
+  .block h2 {
+    font-size: 1.5rem; font-weight: 600; color: var(--ink);
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px;
+  }
+  .block h2 .eyebrow { position: relative; top: -1px; }
+  .block > p { color: var(--ink-soft); margin: 0 0 16px; max-width: 62ch; }
+
+  .card {
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 12px; }
+
+  .item-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    padding: 13px 0; border-bottom: 1px solid var(--line);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-text { font-weight: 500; color: var(--ink); }
+  .item-sub { color: var(--ink-faint); font-size: 13.5px; margin-top: 3px; }
+  .chip {
+    flex: none; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; font-weight: 500; letter-spacing: .02em;
+    padding: 4px 10px; border-radius: 100px; white-space: nowrap;
+  }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.pending { background: var(--pending-soft); color: var(--pending); }
+
+  .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .grid-two { grid-template-columns: 1fr; } }
+  .stat-card {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .stat-num {
+    font-family: "Fraunces", Georgia, serif; font-size: 2rem; font-weight: 500;
+    color: var(--accent); font-variant-numeric: tabular-nums;
+  }
+  .stat-label { color: var(--ink-soft); font-size: 13.5px; margin-top: 2px; }
+
+  ul.plain { margin: 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative; padding-left: 20px; margin-bottom: 10px;
+    color: var(--ink-soft); font-size: 15px;
+  }
+  ul.plain li::before {
+    content: "—"; position: absolute; left: 0; color: var(--ink-faint);
+  }
+  ul.plain li strong { color: var(--ink); font-weight: 600; }
+
+  .callout {
+    background: var(--accent-soft); border-radius: 12px; padding: 18px 20px;
+    color: var(--ink); font-size: 14.5px; line-height: 1.6;
+  }
+  .callout strong { color: var(--accent); }
+
+  a { color: var(--accent); }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .9em;
+    background: var(--accent-soft); padding: 1px 6px; border-radius: 5px;
+  }
+
+  /* ---- sign-off ---- */
+  .signoff {
+    border-top: 1px solid var(--line); margin-top: 64px; padding-top: 32px;
+    text-align: center;
+  }
+  .signoff .mark {
+    font-family: "Fraunces", Georgia, serif; font-style: italic; font-size: 1.3rem;
+    color: var(--ink);
+  }
+  .signoff .by {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+    color: var(--ink-faint); margin-top: 10px; letter-spacing: .03em;
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead reveal">
+    <div class="eyebrow">Relatório de encerramento de ciclo</div>
+    <h1>TripVisuals Wear</h1>
+    <div class="subtitle">Primeira entrega — auditoria de segurança, verificação funcional e fechamento</div>
+    <div class="meta-row">
+      <span class="status-pill">Seguro para operar</span>
+      <span class="meta-sep">·</span>
+      <span>25 ago 2026</span>
+      <span class="meta-sep">·</span>
+      <span>tripvisuals.shop</span>
+    </div>
+  </header>
+
+  <p class="summary reveal">
+    Um <strong>.env real e um cookie.txt com token de sessão</strong> ficaram expostos no histórico
+    do repositório público desde a fundação do projeto — nenhuma checagem de rotina os teria
+    encontrado, porque nenhuma delas olha pra trás no histórico. Foram removidos dos <strong>106
+    commits</strong> em que apareciam, com backup completo antes, verificação independente depois,
+    e uma trava de pré-commit pra isso não se repetir. A loja está no ar, funcional, com <strong>199
+    produtos</strong> ativos no catálogo. Falta uma coisa que só o dono do projeto pode fazer: trocar
+    as três credenciais que estiveram expostas — passo a passo em <code>SECURITY-CHECKLIST.md</code>.
+  </p>
+
+  <section class="timeline-section reveal">
+    <h2 style="font-size:1.5rem;font-weight:600;margin-bottom:4px;">Linha do tempo do incidente</h2>
+    <p style="color:var(--ink-soft);margin:0 0 4px;max-width:62ch;">Todos os horários em 25/08/2026, fuso local.</p>
+    <ol class="timeline">
+      <li>
+        <div class="t-time">11:40</div>
+        <div class="t-label">Auditoria de rotina encontra o primeiro sinal</div>
+        <div class="t-detail">cookie.txt com token de sessão, rastreado e fora do .gitignore.</div>
+      </li>
+      <li>
+        <div class="t-time">12:05</div>
+        <div class="t-label">Varredura completa do histórico revela o achado real</div>
+        <div class="t-detail">.env com credenciais de banco, admin e Cloudinary, commitado meses antes.</div>
+      </li>
+      <li>
+        <div class="t-time">12:10</div>
+        <div class="t-label">Backup completo antes de qualquer alteração</div>
+        <div class="t-detail">Histórico inteiro (todas as branches) + arquivos sensíveis, fora do repositório.</div>
+      </li>
+      <li>
+        <div class="t-time">12:11</div>
+        <div class="t-label">Histórico reescrito e republicado</div>
+        <div class="t-detail">106 commits limpos via git-filter-repo, force-push, confirmado com um clone novo do zero.</div>
+      </li>
+      <li>
+        <div class="t-time">12:31</div>
+        <div class="t-label">Checklist de resposta e trava de pré-commit</div>
+        <div class="t-detail">Passo a passo de rotação de credenciais + hook que bloqueia recorrência, testado e ativo.</div>
+      </li>
+      <li>
+        <div class="t-time">12:40</div>
+        <div class="t-label">Verificação de segredo vira parte permanente da auditoria</div>
+        <div class="t-detail">vdzn-systems-maker passa a escanear o histórico git em toda auditoria futura, não só o estado atual.</div>
+      </li>
+      <li class="final">
+        <div class="t-time">12:43</div>
+        <div class="t-label">Incidente registrado, ciclo fechado</div>
+        <div class="t-detail">Este relatório.</div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="block reveal">
+    <h2><span class="eyebrow">Segurança</span></h2>
+    <p>O que foi encontrado, o que já está resolvido, e o que ainda depende de uma ação sua.</p>
+    <div class="card">
+      <div class="item-row">
+        <div><div class="item-text">.env e cookie.txt removidos de todo o histórico do git</div>
+          <div class="item-sub">106 commits reescritos · verificado em clone novo do GitHub</div></div>
+        <span class="chip ok">resolvido</span>
+      </div>
+      <div class="item-row">
+        <div><div class="item-text">.gitignore cobrindo .env*, cookie.txt</div></div>
+        <span class="chip ok">resolvido</span>
+      </div>
+      <div class="item-row">
+        <div><div class="item-text">Trava de pré-commit contra novo vazamento</div>
+          <div class="item-sub">scripts/pre-commit-secret-scan.sh — testada, instalada</div></div>
+        <span class="chip ok">resolvido</span>
+      </div>
+      <div class="item-row">
+        <div><div class="item-text">Rotação da senha do banco (Railway Postgres)</div></div>
+        <span class="chip pending">pendente — só você</span>
+      </div>
+      <div class="item-row">
+        <div><div class="item-text">Rotação da senha de admin</div></div>
+        <span class="chip pending">pendente — só você</span>
+      </div>
+      <div class="item-row">
+        <div><div class="item-text">Rotação das chaves Cloudinary</div></div>
+        <span class="chip pending">pendente — só você</span>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:16px;">
+      <strong>Sobre "imune"</strong> — nenhum sistema é imune a tudo. O que esse trabalho garante,
+      com confiança real: nenhum segredo acessível publicamente, histórico limpo confirmado por
+      fonte independente, e uma trava automática pra classe de erro que causou isso. Isso cobre a
+      forma de ataque mais comum contra um projeto deste porte — raspagem automatizada de segredo
+      em repositório público. Não cobre um zero-day de infraestrutura, o que nenhuma checklist de
+      aplicação garante.
+    </div>
+  </section>
+
+  <section class="block reveal">
+    <h2><span class="eyebrow">Funcional</span></h2>
+    <p>Conferido ao vivo em tripvisuals.shop, não só no código.</p>
+    <div class="grid-two">
+      <div class="stat-card"><div class="stat-num">199</div><div class="stat-label">produtos ativos no catálogo</div></div>
+      <div class="stat-card"><div class="stat-num">SUCCESS</div><div class="stat-label">último deploy (web + Postgres)</div></div>
+    </div>
+    <ul class="plain" style="margin-top:16px;">
+      <li>Landing, catálogo com filtro por tipo/banda/gênero e o WhatsApp deep-link testados ao vivo, respondendo normalmente.</li>
+      <li>Identidade visual (neon roxo/ciano sobre preto) consistente entre landing e catálogo.</li>
+      <li>Force-push da limpeza de histórico não derrubou o deploy — confirmado direto na Railway.</li>
+    </ul>
+  </section>
+
+  <section class="block reveal">
+    <h2><span class="eyebrow">Qualidade &amp; arquitetura</span></h2>
+    <p>Da auditoria técnica completa (Claude, 90 arquivos) — o que já é ponto forte e o que vale endereçar depois, sem bloquear a entrega.</p>
+    <div class="card">
+      <ul class="plain">
+        <li><strong>Forte:</strong> SQL sempre parametrizado, escape de XSS consistente, CSP sem <code>unsafe-inline</code>, rate limiting em 6+ perfis de rota, suíte de testes real (sobe servidor + Postgres descartável) cobrindo o fluxo do Catalogador e edição em massa.</li>
+        <li><strong>Vale endereçar:</strong> checkout PIX/Asaas sem nenhum teste automatizado — é a única rota que move dinheiro real; comparação do token do webhook Asaas não é de tempo constante; endpoint SSE morto ainda montado; <code>showToast</code>/<code>esc()</code> duplicados em 5–6 arquivos do admin.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block reveal">
+    <h2><span class="eyebrow">Pendências — só você consegue fazer</span></h2>
+    <div class="card">
+      <ul class="plain" style="margin:0;">
+        <li>Rotacionar as três credenciais acima (passo a passo completo: <code>SECURITY-CHECKLIST.md</code>).</li>
+        <li>Rodar a segunda opinião independente (<code>VERIFICACAO-MULTI-IA.md</code>) em Gemini, Claude e Codex, se quiser um terceiro e quarto ponto de vista antes de considerar 100% fechado.</li>
+        <li>Revisar e mesclar o Pull Request com o relatório de auditoria e as 24 lições candidatas.</li>
+        <li>Se alguém mais tiver um clone do repositório, avisar pra re-clonar — o histórico foi reescrito.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="signoff reveal">
+    <div class="mark">Ciclo fechado — a base está segura, no ar, e documentada.</div>
+    <div class="by">vdzn-systems-maker · registro completo em historico/INDICE.md</div>
+  </footer>
+
+</div>
