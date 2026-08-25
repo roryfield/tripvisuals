@@ -3084,7 +3084,7 @@ kbd {
 .cat-empty           { padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.88rem; }
 
 /* ── Aplicar / descartar ao catálogo ─────────────────── */
-.cat-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.cat-actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .cat-btn-aplicar,
 .cat-btn-descartar {
     font-family: 'DM Sans', sans-serif;

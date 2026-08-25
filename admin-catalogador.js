@@ -237,7 +237,7 @@
                        'aria-label="Banda identificada para ' + esc(sh(entry.originalFile)) + '">' +
             '</td>' +
             '<td class="cat-th-hide"><span class="cat-outfile">' + esc(entry.outputFile) + '</span></td>' +
-            '<td class="cat-actions">' + acoes + '</td>';
+            '<td class="cat-actions-cell">' + acoes + '</td>';
         tbody.appendChild(tr);
     }
 
