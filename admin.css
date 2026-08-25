@@ -3085,6 +3085,7 @@ kbd {
 
 /* ── Aplicar / descartar ao catálogo ─────────────────── */
 .cat-actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.vz-table td.cat-actions-cell { padding-top: 8px; padding-bottom: 8px; }
 .cat-btn-aplicar,
 .cat-btn-descartar {
     font-family: 'DM Sans', sans-serif;
