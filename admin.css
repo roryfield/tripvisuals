@@ -2270,7 +2270,18 @@ input.help-topics-search:focus {
     width: 100%;
     max-width: 100%;
     border-radius: 8px;
-    border: 1px solid var(--border-strong);
+    border: 1px solid rgba(45,212,224,0.35);
+    box-shadow: 0 0 0 1px rgba(45,212,224,0.12),
+                0 0 24px rgba(45,212,224,0.18),
+                0 0 48px rgba(168,85,247,0.08);
+    transition: box-shadow 0.2s, border-color 0.2s, opacity 0.15s;
+}
+.help-gif img:hover {
+    opacity: 0.85;
+    border-color: rgba(45,212,224,0.55);
+    box-shadow: 0 0 0 1px rgba(45,212,224,0.2),
+                0 0 28px rgba(45,212,224,0.28),
+                0 0 56px rgba(168,85,247,0.12);
 }
 .help-gif figcaption {
     font-size: 0.78rem;
@@ -3503,9 +3514,6 @@ kbd {
     z-index: 1;
 }
 .vz-dialog-fechar:hover { border-color: var(--cyan); color: var(--cyan); }
-
-.help-gif img { transition: opacity 0.15s; }
-.help-gif img:hover { opacity: 0.85; }
 
 .frete-config-panel {
     background: var(--panel);

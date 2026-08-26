@@ -105,6 +105,7 @@
             estado.indice++;
             estado.ultimaAcao = agora();
             estado.dispensadoNestePasso = false;
+            estado.dicaMostradaPasso = -1; // novo passo — libera a dica dele
             if (estado.indice >= estado.passos.length) {
                 // Fluxo completo do início ao fim — só isso conta como "já visto".
                 // Sair da tela no meio, trocar de aba, etc. (que também chamam
@@ -116,8 +117,11 @@
             }
         }
 
-        if (!estado.dispensadoNestePasso && (agora() - estado.ultimaAcao) >= estado.tempoInatividade) {
+        if (!estado.dispensadoNestePasso &&
+            estado.dicaMostradaPasso !== estado.indice &&
+            (agora() - estado.ultimaAcao) >= estado.tempoInatividade) {
             mostrarDica(estado.passos[estado.indice]);
+            estado.dicaMostradaPasso = estado.indice;
         }
     }
 
@@ -134,6 +138,7 @@
             ultimaAcao: agora(),
             tempoInatividade: opcoes.tempoInatividade || TEMPO_PADRAO_INATIVIDADE,
             dispensadoNestePasso: false,
+            dicaMostradaPasso: -1,
             intervalo: setInterval(tick, opcoes.poll || POLL_PADRAO),
         };
         // qualquer clique real do usuário reseta o relógio de inatividade —
@@ -142,7 +147,10 @@
     }
 
     function resetarInatividade () {
-        if (estado) { estado.ultimaAcao = agora(); estado.dispensadoNestePasso = false; }
+        // Só reseta o relógio de inatividade. NÃO reabre uma dica já dispensada
+        // pelo usuário — isso é o que fazia o balão "flickar" de volta a
+        // qualquer clique na tela depois de fechado.
+        if (estado) { estado.ultimaAcao = agora(); }
     }
 
     function pararFluxo () {
