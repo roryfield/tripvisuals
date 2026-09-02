@@ -109,6 +109,13 @@
         <!-- Batch config -->
         <div class="batch-cfg">
             <div class="batch-field">
+                <label class="batch-label" for="batchCategoria">Categoria do lote</label>
+                <select id="batchCategoria" class="batch-select">
+                    <option value="vestuario">Vestuário</option>
+                    <option value="decor3d">Decor 3D</option>
+                </select>
+            </div>
+            <div class="batch-field" id="batchTipoField">
                 <label class="batch-label" for="batchTipo">Tipo padrão</label>
                 <select id="batchTipo" class="batch-select">
                     <option value="Camiseta">Camiseta</option>
@@ -122,7 +129,7 @@
                 <input id="batchCor" class="batch-input" type="text" list="coresList"
                        value="Preta" maxlength="50" placeholder="Preta, Off-White, ou outra...">
             </div>
-            <div class="batch-field">
+            <div class="batch-field" id="batchGeneroField">
                 <label class="batch-label" for="batchGenero">Gênero padrão</label>
                 <input id="batchGenero" class="batch-input" type="text" list="generosList"
                        value="" maxlength="50" placeholder="Rock, Metal, Grunge...">
@@ -160,10 +167,10 @@
                 <thead>
                     <tr>
                         <th class="vz-w-70">Foto</th>
-                        <th>Tipo</th>
+                        <th id="thTipo">Tipo</th>
                         <th>Estampa / Nome</th>
                         <th>Cor</th>
-                        <th>Gênero</th>
+                        <th id="thGenero">Gênero</th>
                         <th>Preço (R$)</th>
                         <th class="status-cell">Status</th>
                     </tr>
@@ -385,6 +392,11 @@
 
         <!-- FILTROS (Fase 3) -->
         <div class="produtos-filtros">
+            <select id="filtroCategoria" aria-label="Filtrar por categoria">
+                <option value="">Todas as categorias</option>
+                <option value="vestuario">Vestuário</option>
+                <option value="decor3d">Decor 3D</option>
+            </select>
             <select id="filtroTipo" aria-label="Filtrar por tipo">
                 <option value="">Todos os tipos</option>
                 <option value="Camiseta">Camiseta</option>

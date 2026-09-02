@@ -253,6 +253,45 @@
     }
 
     /* ═══════════════════════════════════════════════════════
+       TOAST — fonte única. Antes existiam 6 cópias quase idênticas
+       (admin-hub, admin-landing, admin-layout, admin-pedidos,
+       admin-produtos, admin-sobre), uma delas (admin-sobre) com um bug
+       real: alternava classes .toast-error/.toast-success que nunca
+       existiram no CSS, então o toast de erro nessa página saía sempre
+       na cor de sucesso. `window.showToast(msg, isError)` substitui
+       todas. Se a página não tiver `#toast` no HTML (páginas mais
+       antigas do admin que nunca usaram toast), cria um na primeira
+       chamada — assim toda tela do admin ganha a mesma capacidade sem
+       precisar lembrar de colar o markup em cada uma.
+    ═══════════════════════════════════════════════════════ */
+    var toastTimeoutId = null;
+
+    function ensureToastEl () {
+        var t = document.getElementById('toast');
+        if (t) return t;
+        t = document.createElement('div');
+        t.className = 'toast';
+        t.id        = 'toast';
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'polite');
+        document.body.appendChild(t);
+        return t;
+    }
+
+    function showToast (msg, isError) {
+        var t = ensureToastEl();
+        t.innerText = msg;
+        t.style.background  = isError ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+        t.style.borderColor = isError ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+        t.style.color       = isError ? 'var(--danger)'        : 'var(--cyan)';
+        t.classList.add('show');
+        clearTimeout(toastTimeoutId);
+        toastTimeoutId = setTimeout(function () { t.classList.remove('show'); }, 2500);
+    }
+
+    window.showToast = showToast;
+
+    /* ═══════════════════════════════════════════════════════
        EXIT ANIMATION  (mirrors the login loading screen)
     ═══════════════════════════════════════════════════════ */
     function createExitOverlay () {

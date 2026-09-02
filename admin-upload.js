@@ -6,6 +6,15 @@
     const MAX_BYTES = 10 * 1024 * 1024;
     const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp'];
     const PRECOS    = { 'Camiseta': 99.90, 'Regata': 99.90, 'Babylook': 99.90, 'Moletom': 175.00 };
+    // [VZ] Sem lookup fixo pra Decor 3D — o preço de uma peça impressa varia
+    // demais por tamanho/tempo de impressão pra ter um "padrão" que faça
+    // sentido; esse valor é só ponto de partida editável por item.
+    const PRECO_PADRAO_DECOR3D = 49.90;
+
+    function categoriaAtual() {
+        var sel = document.getElementById('batchCategoria');
+        return sel && sel.value === 'decor3d' ? 'decor3d' : 'vestuario';
+    }
 
     const esc = s => String(s).replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -55,6 +64,7 @@
         var fileInput  = document.getElementById('fileInputUpload');
         var lista      = document.getElementById('lista');
         var btnLancar  = document.getElementById('btnLancar');
+        var batchCategoria = document.getElementById('batchCategoria');
         var batchTipo  = document.getElementById('batchTipo');
         var batchGenero = document.getElementById('batchGenero');
         var batchCor   = document.getElementById('batchCor');
@@ -72,6 +82,7 @@
         }
 
         if (btnLancar)  btnLancar.addEventListener('click', enviarTudo);
+        if (batchCategoria) batchCategoria.addEventListener('change', onBatchCategoriaChange);
         if (batchTipo)  batchTipo.addEventListener('change', onBatchTipoChange);
         if (batchCor)   batchCor.addEventListener('change', onBatchCorChange);
         if (batchPreco) batchPreco.addEventListener('input', onBatchPrecoChange);
@@ -102,6 +113,62 @@
     }
 
     // ── BATCH CONFIG HANDLERS ────────────────────────────────────
+
+    // [VZ] Categoria do lote — Decor 3D não usa o combo fixo de tipo de
+    // vestuário (Camiseta/Regata/Babylook/Moletom) nem gênero. Troca os
+    // controles padrão do lote e, se já existirem linhas na tabela, troca a
+    // célula "Tipo" de cada uma de combo pra texto livre (e volta).
+    function onBatchCategoriaChange() {
+        var isDecor3d = categoriaAtual() === 'decor3d';
+        var tipoField   = document.getElementById('batchTipoField');
+        var generoField = document.getElementById('batchGeneroField');
+        var thTipo   = document.getElementById('thTipo');
+        var thGenero = document.getElementById('thGenero');
+        var batchPreco = document.getElementById('batchPreco');
+
+        if (tipoField)   tipoField.hidden   = isDecor3d;
+        if (generoField) generoField.hidden = isDecor3d;
+        if (thTipo)   thTipo.textContent   = isDecor3d ? 'Tipo de peça' : 'Tipo';
+        if (thGenero) thGenero.hidden      = isDecor3d;
+
+        if (batchPreco) {
+            batchPreco.value = isDecor3d
+                ? PRECO_PADRAO_DECOR3D.toFixed(2)
+                : PRECOS[document.getElementById('batchTipo').value].toFixed(2);
+        }
+
+        filaFiles.forEach(function (_, i) {
+            var cell = document.getElementById('t-' + i);
+            if (!cell) return;
+            var valorAtual = cell.value;
+            var novo;
+            if (isDecor3d) {
+                novo = document.createElement('input');
+                novo.type = 'text';
+                novo.id   = 't-' + i;
+                novo.maxLength = 30;
+                novo.placeholder = 'Vaso, Luminária, Suporte...';
+                novo.setAttribute('aria-label', 'Tipo de peça');
+                novo.value = ['Camiseta','Regata','Babylook','Moletom'].includes(valorAtual) ? '' : valorAtual;
+            } else {
+                novo = document.createElement('select');
+                novo.id = 't-' + i;
+                novo.setAttribute('aria-label', 'Tipo');
+                ['Camiseta','Regata','Babylook','Moletom'].forEach(function (t) {
+                    var opt = document.createElement('option');
+                    opt.value = t; opt.textContent = t;
+                    if (t === valorAtual) opt.selected = true;
+                    novo.appendChild(opt);
+                });
+            }
+            cell.replaceWith(novo);
+            var precoCell = document.getElementById('p-' + i);
+            if (precoCell && !isDecor3d && PRECOS[novo.value] !== undefined) {
+                precoCell.value = PRECOS[novo.value].toFixed(2);
+            }
+        });
+        updatePreview();
+    }
 
     function onBatchTipoChange() {
         var tipo  = document.getElementById('batchTipo').value;
@@ -154,7 +221,7 @@
 
     function updatePreview() {
         var col  = (document.getElementById('batchColecao').value || '').trim().toUpperCase();
-        var tipo = document.getElementById('batchTipo').value;
+        var tipo = categoriaAtual() === 'decor3d' ? 'PEÇA' : document.getElementById('batchTipo').value;
         var cor  = document.getElementById('batchCor').value;
         var prev = document.getElementById('batchPreview');
         if (!prev) return;
@@ -266,27 +333,31 @@
 
         var batchCor = document.getElementById('batchCor').value;
         var lista    = document.getElementById('lista');
+        var isDecor3d = categoriaAtual() === 'decor3d';
         lista.innerHTML = '';
 
         filaFiles.forEach(function (file, i) {
-            var tipoAuto = detectarTipo(file.name);
+            var tipoAuto = isDecor3d ? '' : detectarTipo(file.name);
             var nomeAuto = limparNome(file.name);
             var isBlank  = !nomeAuto;
 
             if (isBlank) blankRows.push(i);
 
-            var precoAuto = PRECOS[tipoAuto].toFixed(2);
+            var precoAuto = isDecor3d ? PRECO_PADRAO_DECOR3D.toFixed(2) : PRECOS[tipoAuto].toFixed(2);
             var previewUrl = URL.createObjectURL(file);
             previewUrls.push(previewUrl);
             var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td><img src="' + previewUrl + '" alt="Pré-visualização"></td>' +
-                '<td><select id="t-' + i + '" aria-label="Tipo">' +
+            var celulaTipo = isDecor3d
+                ? '<td><input type="text" id="t-' + i + '" maxlength="30" placeholder="Vaso, Luminária, Suporte..." aria-label="Tipo de peça"></td>'
+                : '<td><select id="t-' + i + '" aria-label="Tipo">' +
                     '<option value="Camiseta" ' + (tipoAuto === 'Camiseta'  ? 'selected' : '') + '>Camiseta</option>' +
                     '<option value="Regata"   ' + (tipoAuto === 'Regata'    ? 'selected' : '') + '>Regata</option>' +
                     '<option value="Babylook" ' + (tipoAuto === 'Babylook'  ? 'selected' : '') + '>Babylook</option>' +
                     '<option value="Moletom"  ' + (tipoAuto === 'Moletom'   ? 'selected' : '') + '>Moletom</option>' +
-                '</select></td>' +
+                '</select></td>';
+            tr.innerHTML =
+                '<td><img src="' + previewUrl + '" alt="Pré-visualização"></td>' +
+                celulaTipo +
                 '<td><input type="text" id="e-' + i + '" value="' + esc(nomeAuto) + '" ' +
                     'aria-label="Nome" ' +
                     (isBlank ? 'placeholder="aguardando coleção..." class="vz-input-warn"' : '') +
@@ -393,8 +464,16 @@
             fd.append('nome',    nomeFinal);
             fd.append('preco',   preco);
             fd.append('cor',     cor);
-            fd.append('tipo',    document.getElementById('t-' + i)?.value || batchTipo?.value || 'Camiseta');
-            fd.append('genero',  (document.getElementById('g-' + i)?.value || batchGenero?.value || '').trim());
+            // [VZ] Corrigido junto: as duas linhas abaixo referenciavam
+            // `batchTipo`/`batchGenero`, variáveis locais de init() fora de
+            // escopo aqui — só não estourava ReferenceError porque o lado
+            // esquerdo do `||` era sempre truthy antes de existir um campo
+            // de texto que pode ficar vazio (o "Tipo de peça" do Decor 3D).
+            // Trocado por document.getElementById direto, igual ao resto do arquivo.
+            var categoriaLote = categoriaAtual();
+            fd.append('categoria', categoriaLote);
+            fd.append('tipo',    document.getElementById('t-' + i)?.value || (categoriaLote === 'decor3d' ? '' : (document.getElementById('batchTipo')?.value || 'Camiseta')));
+            fd.append('genero',  (document.getElementById('g-' + i)?.value || document.getElementById('batchGenero')?.value || '').trim());
 
             try {
                 var res = await fetch('/api/produtos', {

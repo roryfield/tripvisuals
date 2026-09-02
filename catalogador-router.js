@@ -726,41 +726,11 @@ router.get('/export/csv', async (_, res) => {
     }
 });
 
-// GET /api/catalogador/events — SSE
-// O requireAuth do mount verifica o cookie vztoken antes de chegar aqui.
-// EventSource envia cookies same-origin automaticamente.
-router.get('/events', async (req, res) => {
-    res.setHeader('Content-Type',      'text/event-stream');
-    res.setHeader('Cache-Control',     'no-cache');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
-
-    // Alguns proxies retêm respostas pequenas em buffer antes de repassar ao
-    // navegador. Um "enchimento" de ~2KB logo na conexão força esse buffer a
-    // esvaziar na hora, garantindo que os eventos pequenos que vêm depois não
-    // fiquem presos esperando acumular mais dados.
-    res.write(':' + ' '.repeat(2048) + '\n\n');
-
-    const send = d => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch (_) {} };
-
-    let done = 0;
-    try {
-        const { processed } = await listarItens();
-        done = Object.keys(processed).length;
-    } catch (_) { /* segue com done=0, não derruba a conexão SSE por isso */ }
-
-    send({
-        type:    'connected',
-        running: state.running,
-        paused:  state.paused,
-        done,
-        hasKey:  !!process.env.GROQ_API_KEY,
-    });
-
-    const hb = setInterval(() => { try { res.write(': ping\n\n'); } catch (_) {} }, 20_000);
-    emitter.on('update', send);
-    req.on('close', () => { emitter.off('update', send); clearInterval(hb); });
-});
+// [VZ] GET /api/catalogador/events (SSE) removido — admin-catalogador.js
+// trocou pra polling (ver comentário na linha ~33 desse arquivo), e a rota
+// ficou montada sem nenhum consumidor: superfície exposta à toa. `emitter`
+// e os `emit(...)` que alimentavam essa rota continuam no arquivo, inertes
+// (zero listeners), caso um mecanismo de push volte a fazer sentido depois.
 
 // ── Multer error handler (escoped to router) ──────────────────────────────────
 // eslint-disable-next-line no-unused-vars

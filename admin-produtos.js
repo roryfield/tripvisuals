@@ -12,7 +12,11 @@ let currentView = (function(){
     } catch (_) { return 'grid'; }
 }());
 let currentFilter = '';
-let currentFilters = { tipo: '', banda: '', genero: '', rapido: '' }; // rapido: '' | 'semBanda' | 'ocultos' | 'precoZero'
+let currentFilters = { tipo: '', banda: '', genero: '', categoria: '', rapido: '' }; // rapido: '' | 'semBanda' | 'ocultos' | 'precoZero'
+
+// [VZ] Linha "Decor 3D" — mesma chave ASCII do server.js. Rótulo de exibição
+// só existe aqui no front-end (server só guarda a chave).
+const CATEGORIA_LABELS = { vestuario: 'Vestuário', decor3d: 'Decor 3D' };
 let currentPage = 1;
 const PRODUTOS_POR_PAGINA = 24;
 
@@ -22,15 +26,9 @@ const PRODUTOS_POR_PAGINA = 24;
         }[c]));
         const escapeAttr = s => escapeHTML(s);
 
-        function mostrarToast(msg, erro = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
+        // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
+        // fica como alias local pra não precisar renomear os call sites abaixo.
+        function mostrarToast(msg, erro) { window.showToast(msg, erro); }
 
         // [VZ] Fase 24 — fonte única pros contadores do topo (ativos/ocultos)
         // e pros três contadores clicáveis do painel lateral (sem banda,
@@ -98,6 +96,7 @@ const PRODUTOS_POR_PAGINA = 24;
                 if (currentFilters.tipo && p.tipo !== currentFilters.tipo) return false;
                 if (currentFilters.banda && !(p.banda || '').toLowerCase().includes(currentFilters.banda.toLowerCase())) return false;
                 if (currentFilters.genero && !(p.genero || '').toLowerCase().includes(currentFilters.genero.toLowerCase())) return false;
+                if (currentFilters.categoria && (p.categoria || 'vestuario') !== currentFilters.categoria) return false;
                 if (currentFilters.rapido === 'semBanda'  && (p.banda || '').trim())   return false;
                 if (currentFilters.rapido === 'ocultos'   && !p.oculto)                return false;
                 if (currentFilters.rapido === 'precoZero' && Number(p.preco) > 0)      return false;
@@ -131,6 +130,7 @@ const PRODUTOS_POR_PAGINA = 24;
                 card.dataset.oculto = p.oculto ? 'true' : 'false';
                 card.dataset.prodId = p.id;
                 card.dataset.nome = p.nome; // used by gallery mode CSS ::after
+                const categoriaAtual = p.categoria === 'decor3d' ? 'decor3d' : 'vestuario';
                 card.innerHTML = `
                     ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
                     <label class="bulk-check-wrap">
@@ -151,19 +151,28 @@ const PRODUTOS_POR_PAGINA = 24;
                             </div>
                             <div class="field-classificacao-label">Classificação</div>
                             <div class="field-group field-compact">
+                                <label class="field-label" for="categoria-${p.id}">Categoria</label>
+                                <select id="categoria-${p.id}" aria-label="Categoria" data-action-categoria="${p.id}">
+                                    <option value="vestuario" ${categoriaAtual === 'vestuario' ? 'selected' : ''}>Vestuário</option>
+                                    <option value="decor3d"   ${categoriaAtual === 'decor3d'   ? 'selected' : ''}>Decor 3D</option>
+                                </select>
+                            </div>
+                            <div class="field-group field-compact">
                                 <label class="field-label" for="cor-${p.id}">Cor</label>
                                 <input type="text" id="cor-${p.id}" list="coresList" value="${escapeAttr(p.cor || '')}" maxlength="50" placeholder="ex: Preta">
                             </div>
-                            <div class="field-group field-compact">
-                                <label class="field-label" for="tipo-${p.id}">Tipo</label>
-                                <select id="tipo-${p.id}" aria-label="Tipo">
+                            <div class="field-group field-compact" id="tipoWrap-${p.id}">
+                                <label class="field-label" for="tipo-${p.id}">${categoriaAtual === 'decor3d' ? 'Tipo de peça' : 'Tipo'}</label>
+                                ${categoriaAtual === 'decor3d'
+                                    ? `<input type="text" id="tipo-${p.id}" value="${escapeAttr(p.tipo || '')}" maxlength="30" placeholder="ex: Luminária, Suporte, Miniatura">`
+                                    : `<select id="tipo-${p.id}" aria-label="Tipo">
                                     <option value="Camiseta"  ${p.tipo === 'Camiseta'  ? 'selected' : ''}>Camiseta</option>
                                     <option value="Regata"    ${p.tipo === 'Regata'    ? 'selected' : ''}>Regata</option>
                                     <option value="Babylook"  ${p.tipo === 'Babylook'  ? 'selected' : ''}>Babylook</option>
                                     <option value="Moletom"   ${p.tipo === 'Moletom'   ? 'selected' : ''}>Moletom</option>
-                                </select>
+                                </select>`}
                             </div>
-                            <div class="field-group field-compact">
+                            <div class="field-group field-compact" id="generoWrap-${p.id}" ${categoriaAtual === 'decor3d' ? 'hidden' : ''}>
                                 <label class="field-label" for="genero-${p.id}">Gênero</label>
                                 <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
                             </div>
@@ -218,11 +227,40 @@ const PRODUTOS_POR_PAGINA = 24;
 
             // Bulk checkboxes — separate listener for change events
             grid.addEventListener('change', function(e) {
-                if (!e.target.classList.contains('bulk-check')) return;
-                const id = parseInt(e.target.dataset.id, 10);
-                if (e.target.checked) bulkSelection.add(id);
-                else bulkSelection.delete(id);
-                renderBulkBar();
+                if (e.target.classList.contains('bulk-check')) {
+                    const id = parseInt(e.target.dataset.id, 10);
+                    if (e.target.checked) bulkSelection.add(id);
+                    else bulkSelection.delete(id);
+                    renderBulkBar();
+                    return;
+                }
+                // [VZ] Troca de categoria no editor individual: Decor 3D não usa
+                // gênero (esconde o campo) e o "Tipo" vira texto livre em vez do
+                // combo fixo de vestuário — sem recarregar o card inteiro, pra
+                // não perder o que a pessoa já tiver digitado nos outros campos.
+                if (e.target.dataset.actionCategoria) {
+                    const id = e.target.dataset.actionCategoria;
+                    const isDecor3d = e.target.value === 'decor3d';
+                    const generoWrap = document.getElementById('generoWrap-' + id);
+                    if (generoWrap) generoWrap.hidden = isDecor3d;
+                    const tipoWrap = document.getElementById('tipoWrap-' + id);
+                    const tipoAtual = document.getElementById('tipo-' + id);
+                    if (tipoWrap && tipoAtual) {
+                        const valorAtual = tipoAtual.value;
+                        const label = tipoWrap.querySelector('.field-label');
+                        if (label) label.textContent = isDecor3d ? 'Tipo de peça' : 'Tipo';
+                        if (isDecor3d) {
+                            tipoWrap.querySelector('select, input').outerHTML =
+                                `<input type="text" id="tipo-${id}" maxlength="30" placeholder="ex: Luminária, Suporte, Miniatura" value="${escapeAttr(['Camiseta','Regata','Babylook','Moletom'].includes(valorAtual) ? '' : valorAtual)}">`;
+                        } else {
+                            const opcoes = ['Camiseta', 'Regata', 'Babylook', 'Moletom'];
+                            tipoWrap.querySelector('select, input').outerHTML =
+                                `<select id="tipo-${id}" aria-label="Tipo">` +
+                                opcoes.map(o => `<option value="${o}" ${valorAtual === o ? 'selected' : ''}>${o}</option>`).join('') +
+                                `</select>`;
+                        }
+                    }
+                }
             });
         }
 
@@ -283,6 +321,9 @@ const PRODUTOS_POR_PAGINA = 24;
                 // Mesma lista fixa usada no editor individual (admin-produtos.js, ~linha 114-117)
                 return ['Camiseta', 'Regata', 'Babylook', 'Moletom'];
             }
+            if (campo === 'categoria') {
+                return Object.keys(CATEGORIA_LABELS); // valores reais (chave ASCII), rotulados no <option> abaixo
+            }
             if (campo === 'genero') {
                 // Mesma datalist já cadastrada em admin-produtos.html (#generosList)
                 return Array.from(document.querySelectorAll('#generosList option')).map(o => o.value);
@@ -300,12 +341,16 @@ const PRODUTOS_POR_PAGINA = 24;
             const wrap = document.querySelector('.bulk-campo-valor-wrap');
             if (!wrap) return;
             const valores = valoresFixosPara(campo);
-            const options = valores.map(v => `<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+            const rotulo = v => campo === 'categoria' ? (CATEGORIA_LABELS[v] || v) : v;
+            const options = valores.map(v => `<option value="${escapeAttr(v)}">${escapeHTML(rotulo(v))}</option>`).join('');
+            // Categoria é enum fechado (bloqueado no servidor também) — sem
+            // "Outro (digitar)", que só faz sentido pra campo de texto livre.
+            const permiteOutro = campo !== 'categoria';
             wrap.innerHTML =
                 `<select class="bulk-campo-valor" aria-label="Novo valor">` +
                     `<option value="">Selecione...</option>` +
                     options +
-                    `<option value="__outro__">Outro (digitar)...</option>` +
+                    (permiteOutro ? `<option value="__outro__">Outro (digitar)...</option>` : '') +
                 `</select>` +
                 `<input type="text" class="bulk-campo-valor-outro" placeholder="novo valor" maxlength="80" hidden>`;
             const select = wrap.querySelector('.bulk-campo-valor');
@@ -338,6 +383,7 @@ const PRODUTOS_POR_PAGINA = 24;
                     '<option value="tipo">Tipo</option>' +
                     '<option value="genero">Gênero</option>' +
                     '<option value="banda">Banda</option>' +
+                    '<option value="categoria">Categoria</option>' +
                 '</select>' +
                 '<span class="bulk-campo-valor-wrap"></span>' +
                 '<button type="button" class="bulk-btn bulk-btn-campo">Aplicar a todos</button>' +
@@ -367,8 +413,9 @@ const PRODUTOS_POR_PAGINA = 24;
             const ids    = [...bulkSelection];
 
             if (!valor) { mostrarToast('Selecione ou informe o novo valor antes de aplicar.', true); return; }
-            const nomeCampo = { genero: 'gênero', tipo: 'tipo', banda: 'banda' }[campo] || campo;
-            if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valor}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
+            const nomeCampo  = { genero: 'gênero', tipo: 'tipo', banda: 'banda', categoria: 'categoria' }[campo] || campo;
+            const valorLabel = campo === 'categoria' ? (CATEGORIA_LABELS[valor] || valor) : valor;
+            if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valorLabel}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
 
             try {
                 const res = await fetch('/api/produtos/bulk-campo', {
@@ -456,6 +503,7 @@ const PRODUTOS_POR_PAGINA = 24;
                         nome: nome.toUpperCase(),
                         preco,
                         cor,
+                        categoria: document.getElementById(`categoria-${id}`)?.value || 'vestuario',
                         tipo:      document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
                         genero:    (document.getElementById(`genero-${id}`)?.value || '').trim(),
                         banda:     (document.getElementById(`banda-${id}`)?.value || '').trim(),
@@ -549,11 +597,12 @@ const PRODUTOS_POR_PAGINA = 24;
             });
         }
 
-        // Filtros estruturados (Fase 3): tipo, banda, gênero
-        const filtroTipo   = document.getElementById('filtroTipo');
-        const filtroBanda  = document.getElementById('filtroBanda');
-        const filtroGenero = document.getElementById('filtroGenero');
-        const btnLimpar    = document.getElementById('btnLimparFiltros');
+        // Filtros estruturados (Fase 3): tipo, banda, gênero, categoria
+        const filtroTipo      = document.getElementById('filtroTipo');
+        const filtroBanda     = document.getElementById('filtroBanda');
+        const filtroGenero    = document.getElementById('filtroGenero');
+        const filtroCategoria = document.getElementById('filtroCategoria');
+        const btnLimpar       = document.getElementById('btnLimparFiltros');
         let filtroTimer;
         function aplicarFiltrosDebounced() {
             clearTimeout(filtroTimer);
@@ -572,14 +621,20 @@ const PRODUTOS_POR_PAGINA = 24;
             currentFilters.genero = filtroGenero.value.trim();
             aplicarFiltrosDebounced();
         });
+        if (filtroCategoria) filtroCategoria.addEventListener('change', () => {
+            currentFilters.categoria = filtroCategoria.value;
+            currentPage = 1;
+            renderProdutos(produtos);
+        });
         if (btnLimpar) btnLimpar.addEventListener('click', () => {
-            currentFilters = { tipo: '', banda: '', genero: '', rapido: '' };
+            currentFilters = { tipo: '', banda: '', genero: '', categoria: '', rapido: '' };
             currentFilter  = '';
             currentPage    = 1;
-            if (searchInput)  searchInput.value  = '';
-            if (filtroTipo)   filtroTipo.value    = '';
-            if (filtroBanda)  filtroBanda.value   = '';
-            if (filtroGenero) filtroGenero.value  = '';
+            if (searchInput)     searchInput.value     = '';
+            if (filtroTipo)      filtroTipo.value      = '';
+            if (filtroBanda)     filtroBanda.value     = '';
+            if (filtroGenero)    filtroGenero.value    = '';
+            if (filtroCategoria) filtroCategoria.value = '';
             renderProdutos(produtos);
         });
 

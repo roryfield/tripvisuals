@@ -24,7 +24,8 @@
 
     // ── STATE ────────────────────────────────────────────────────
     var todosProdutos  = [];
-    var activeFilters = { tipo: '', genero: '' };
+    var activeFilters = { tipo: '', genero: '', categoria: '' };
+    var CATEGORIA_LABELS = { vestuario: 'Vestuário', decor3d: 'Decor 3D' };
     var searchAberta  = false;
     var NUMERO_LOJA   = '5511940537169';
 
@@ -138,13 +139,17 @@
                 ' (' + freteAtual.endereco.cidade + '/' + freteAtual.endereco.uf +
                 ', ' + freteAtual.prazoDias + ' dias úteis)\n';
         }
+        // [VZ] Decor 3D não tem tamanho de vestuário — comprarItem() é chamado
+        // sem tamanho (string vazia) pra essa categoria, e a linha some da
+        // mensagem em vez de mandar "Tamanho:" em branco pro WhatsApp da loja.
+        var temTamanho = !!tamanho;
         var texto = 'Olá, equipe Trip Visuals! 🛸\n\n' +
             'Vim pelo catálogo e tenho interesse neste item:\n\n' +
             '*Item:* ' + nome + '\n' +
-            '*Tamanho:* ' + tamanho + '\n' +
+            (temTamanho ? '*Tamanho:* ' + tamanho + '\n' : '') +
             '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n' +
             freteTexto + '\n' +
-            'Poderia me confirmar a disponibilidade nesse tamanho' +
+            (temTamanho ? 'Poderia me confirmar a disponibilidade nesse tamanho' : 'Poderia me confirmar a disponibilidade') +
             (freteAtual && freteAtual.atendido ? '?' : ' e calcular o frete para o meu CEP?');
         window.open(
             'https://wa.me/' + NUMERO_LOJA + '?text=' + encodeURIComponent(texto),
@@ -206,9 +211,10 @@
     function applyFilters(lista) {
         var f = activeFilters;
         return lista.filter(function (p) {
-            var matchTipo   = !f.tipo   || (p.tipo   || '').toLowerCase() === f.tipo.toLowerCase();
-            var matchGenero = !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
-            return matchTipo && matchGenero;
+            var matchTipo      = !f.tipo      || (p.tipo   || '').toLowerCase() === f.tipo.toLowerCase();
+            var matchGenero    = !f.genero    || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
+            var matchCategoria = !f.categoria || (p.categoria || 'vestuario') === f.categoria;
+            return matchTipo && matchGenero && matchCategoria;
         });
     }
 
@@ -220,7 +226,7 @@
         // Update active count
         var countEl = document.getElementById('filterCount');
         if (countEl) {
-            var hasFilter = activeFilters.tipo || activeFilters.genero;
+            var hasFilter = activeFilters.tipo || activeFilters.genero || activeFilters.categoria;
             countEl.textContent = hasFilter
                 ? filtered.length + ' de ' + lista.length + ' produtos'
                 : lista.length + ' produtos';
@@ -266,7 +272,7 @@
     }
 
     function limparFiltros() {
-        activeFilters = { tipo: '', genero: '' };
+        activeFilters = { tipo: '', genero: '', categoria: '' };
         renderFiltros(todosProdutos);
         renderProdutos(todosProdutos);
     }
@@ -277,16 +283,35 @@
 
         var f = activeFilters;
 
+        // [VZ] Categoria (Vestuário / Decor 3D) é a divisão de mais alto
+        // nível — só faz sentido oferecer o toggle quando as duas existem de
+        // fato no acervo (se ainda não há nenhum Decor 3D cadastrado, o
+        // toggle não aparece e o catálogo se comporta exatamente como antes).
+        var categoriasPresentes = [...new Set(lista.map(p => p.categoria || 'vestuario'))];
+        var categoriaHtml = '';
+        if (categoriasPresentes.length > 1) {
+            categoriaHtml = '<div class="filter-group filter-group-categoria" role="group" aria-label="Filtrar por categoria">';
+            categoriaHtml += '<button class="filter-chip' + (!f.categoria ? ' active' : '') + '" data-filter="categoria" data-value="">Todos</button>';
+            ['vestuario', 'decor3d'].forEach(function (c) {
+                if (categoriasPresentes.indexOf(c) === -1) return;
+                categoriaHtml += '<button class="filter-chip' + (f.categoria === c ? ' active' : '') + '" data-filter="categoria" data-value="' + c + '">' + esc(CATEGORIA_LABELS[c]) + '</button>';
+            });
+            categoriaHtml += '</div>';
+        }
+
         // [VZ] Filtro progressivo (faceted filtering): as opções de "tipo"
-        // refletem os produtos já filtrados por gênero (ignorando o filtro
-        // de tipo em si), e vice-versa. Isso evita o cliente cair numa
-        // combinação que sempre dá zero resultados sem entender o motivo —
-        // problema real quando os dois filtros eram calculados sobre a
+        // refletem os produtos já filtrados por gênero e categoria (ignorando
+        // o filtro de tipo em si), e vice-versa. Isso evita o cliente cair
+        // numa combinação que sempre dá zero resultados sem entender o
+        // motivo — problema real quando os filtros eram calculados sobre a
         // lista inteira, sem considerar o que já estava selecionado.
-        var lojaFiltradaPorGenero = lista.filter(function (p) {
+        var lojaFiltradaPorCategoria = lista.filter(function (p) {
+            return !f.categoria || (p.categoria || 'vestuario') === f.categoria;
+        });
+        var lojaFiltradaPorGenero = lojaFiltradaPorCategoria.filter(function (p) {
             return !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
         });
-        var lojaFiltradaPorTipo = lista.filter(function (p) {
+        var lojaFiltradaPorTipo = lojaFiltradaPorCategoria.filter(function (p) {
             return !f.tipo || (p.tipo || '').toLowerCase() === f.tipo.toLowerCase();
         });
 
@@ -322,7 +347,7 @@
             generoHtml += '</div>';
         }
 
-        var clearHtml = (f.tipo || f.genero)
+        var clearHtml = (f.tipo || f.genero || f.categoria)
             ? '<button class="filter-clear" type="button" aria-label="Limpar todos os filtros">× Limpar</button>'
             : '';
 
@@ -330,7 +355,7 @@
 
         bar.innerHTML =
             '<div class="filter-bar-inner">' +
-            tipoHtml + generoHtml + clearHtml + countHtml +
+            categoriaHtml + tipoHtml + generoHtml + clearHtml + countHtml +
             '</div>';
 
         // Wire chip clicks
@@ -352,7 +377,7 @@
         var countEl = document.getElementById('filterCount');
         if (countEl) {
             var filtered = applyFilters(lista);
-            var hasFilter = f.tipo || f.genero;
+            var hasFilter = f.tipo || f.genero || f.categoria;
             countEl.textContent = hasFilter
                 ? filtered.length + ' de ' + lista.length + ' produtos'
                 : lista.length + ' produtos';
@@ -384,6 +409,13 @@
         if (tamanhoEl) tamanhoEl.value = '';
         if (sizeErrorEl) sizeErrorEl.textContent = '';
 
+        // [VZ] Decor 3D não tem tamanho de vestuário — esconde o seletor
+        // inteiro (campo + erro) em vez de deixar um "Selecione o tamanho"
+        // sem sentido pra um objeto decorativo.
+        var isDecor3d = (p.categoria || 'vestuario') === 'decor3d';
+        var tamanhoField = tamanhoEl && tamanhoEl.closest('.product-modal-size-field');
+        if (tamanhoField) tamanhoField.hidden = isDecor3d;
+
         // [VZ] Fase 7 — CEP e frete não persistem entre produtos diferentes
         var cepEl = document.getElementById('modalCep');
         var freteResultEl = document.getElementById('freteResultado');
@@ -399,7 +431,9 @@
         priceEl.textContent  = 'R$ ' + Number(p.preco).toFixed(2);
         // Custom description if available
         var descEl = modal.querySelector('.product-modal-desc');
-        if (descEl) descEl.textContent = p.descricao || 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.';
+        if (descEl) descEl.textContent = p.descricao || (isDecor3d
+            ? 'Peça decorativa impressa em 3D. Detalhes de acabamento e prazo combinados pelo WhatsApp.'
+            : 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.');
         if (tipoEl)   tipoEl.textContent   = p.tipo   || '';
         if (generoEl) generoEl.textContent = p.genero || '';
 
@@ -493,16 +527,17 @@
 
         if (buyBtn)   buyBtn.addEventListener('click', function () {
             if (!modalProduto) return;
+            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
             var tamanhoEl = document.getElementById('modalTamanho');
             var sizeErrorEl = document.getElementById('modalSizeError');
             var tamanho = tamanhoEl ? tamanhoEl.value : '';
-            if (!tamanho) {
+            if (!isDecor3d && !tamanho) {
                 if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
                 if (tamanhoEl) tamanhoEl.focus();
                 return;
             }
             if (sizeErrorEl) sizeErrorEl.textContent = '';
-            comprarItem(modalProduto.nome, modalProduto.preco, tamanho);
+            comprarItem(modalProduto.nome, modalProduto.preco, isDecor3d ? '' : tamanho);
             // Flip the modal into success state
             var card = modal.querySelector('.product-modal-card');
             if (card) {
@@ -626,9 +661,10 @@
 
         if (buyPixBtn) buyPixBtn.addEventListener('click', function () {
             if (!modalProduto) return;
+            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
             var tamanhoEl = document.getElementById('modalTamanho');
             var sizeErrorEl = document.getElementById('modalSizeError');
-            if (!tamanhoEl || !tamanhoEl.value) {
+            if (!isDecor3d && (!tamanhoEl || !tamanhoEl.value)) {
                 if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
                 if (tamanhoEl) tamanhoEl.focus();
                 return;
@@ -646,13 +682,14 @@
         if (pixForm) pixForm.addEventListener('submit', function (e) {
             e.preventDefault();
             if (!modalProduto) return;
+            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
             var tamanho  = (document.getElementById('modalTamanho') || {}).value || '';
             var nome     = (document.getElementById('pixNome') || {}).value || '';
             var whatsapp = (document.getElementById('pixWhatsapp') || {}).value || '';
             var cpf      = (pixCpfInput || {}).value || '';
             nome = nome.trim(); whatsapp = whatsapp.replace(/\D/g, ''); cpf = cpf.replace(/\D/g, '');
 
-            if (!tamanho) { pixFormError.textContent = 'Tamanho não selecionado — volte e selecione antes de continuar.'; return; }
+            if (!isDecor3d && !tamanho) { pixFormError.textContent = 'Tamanho não selecionado — volte e selecione antes de continuar.'; return; }
             if (nome.length < 2) { pixFormError.textContent = 'Digite seu nome.'; return; }
             if (whatsapp.length < 10) { pixFormError.textContent = 'Digite um WhatsApp válido com DDD.'; return; }
             if (!cpfValido(cpf)) { pixFormError.textContent = 'CPF inválido. Confira os números digitados.'; return; }

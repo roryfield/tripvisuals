@@ -9,15 +9,8 @@
     }[c]));
     const escapeAttr = escapeHTML;
 
-    function showToast(msg, isError = false) {
-        const t = $('toast');
-        t.innerText = msg;
-        t.style.background  = isError ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-        t.style.borderColor = isError ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-        t.style.color       = isError ? 'var(--danger)'       : 'var(--cyan)';
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
-    }
+    // [VZ] showToast agora vem de admin-shared.js (fonte única) — a função
+    // local foi removida, os call sites abaixo resolvem pro global.
 
     async function saveConfig(chave, valor) {
         const res = await fetch('/api/config', {

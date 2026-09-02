@@ -90,6 +90,12 @@ async function main() {
             ADMIN_PASSWORD_HASH: bcrypt.hashSync(process.env.TEST_ADMIN_PASSWORD, 10),
             CLOUDINARY_CLOUD_NAME: 'teste', CLOUDINARY_API_KEY: 'teste', CLOUDINARY_API_SECRET: 'teste',
             GROQ_API_KEY: process.env.TEST_GROQ_API_KEY || 'chave-falsa-suficiente-pro-shim',
+            // [VZ] Token fixo só pra suíte poder testar a validação do webhook
+            // da Asaas (comparação em tempo constante) sem precisar de conta
+            // real. ASAAS_API_KEY fica de fora de propósito — isso mantém
+            // checkout_automatico e criação de cobrança real desligados no
+            // ambiente de teste, só o recebimento do webhook é exercitado.
+            ASAAS_WEBHOOK_TOKEN: 'teste-webhook-token-fixo-nao-usar-em-producao',
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -116,6 +122,7 @@ async function main() {
             'fase7-frete.mjs',
             'fase8-comprovante.mjs',
             'fase10-seguranca.mjs',
+            'fase11-checkout-asaas.mjs',
         ];
         for (const arquivo of casos) {
             try {

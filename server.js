@@ -117,6 +117,14 @@ async function initDB() {
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS banda TEXT NOT NULL DEFAULT ''`);
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_produtos_banda ON produtos (banda)`);
+    // [VZ] Linha de produtos "Decor 3D" (peças decorativas impressas em 3D,
+    // vendidas ao lado do vestuário). 'categoria' separa as duas famílias:
+    // controla se o catálogo público mostra seletor de tamanho de roupa e
+    // filtro de gênero, nenhum dos dois aplicável a um objeto decorativo.
+    // Chave em ASCII (não acentuada) por consistência com 'status' de
+    // pedidos — o rótulo exibido ("Decor 3D") vive só no front-end.
+    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS categoria TEXT NOT NULL DEFAULT 'vestuario'`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_produtos_categoria ON produtos (categoria)`);
     // One-time: set tipo from existing product names (idempotent — won't re-set if already correct)
     await pool.query(`
         UPDATE produtos SET tipo =
@@ -575,6 +583,14 @@ function validarProduto({ nome, preco }) {
     return null;
 }
 
+// [VZ] 'vestuario' (camisetas, regatas, babylooks, moletons) e 'decor3d'
+// (peças decorativas impressas em 3D). Entrada fora da lista cai em
+// 'vestuario' — mesmo espírito de fallback já usado pro campo 'tipo'.
+const CATEGORIAS_VALIDAS = ['vestuario', 'decor3d'];
+function normalizarCategoria(valor) {
+    return CATEGORIAS_VALIDAS.includes(valor) ? valor : 'vestuario';
+}
+
 // ── CATALOGADOR IA ─────────────────────────────────────────────
 // Ferramenta de processamento em lote — identificação de bandas via IA.
 // Todas as rotas herdadas pelo requireAuth do sistema principal.
@@ -618,8 +634,8 @@ app.get('/api/produtos', async (req, res) => {
             } catch (_) { /* fail closed: treat as public */ }
         }
         const sql = isAdmin
-            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
-            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
+            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, categoria, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
+            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
         const r = await pool.query(sql);
         res.json(r.rows);
     } catch (e) {
@@ -706,6 +722,7 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)  : 'Camiseta';
     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50)  : '';
     const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)   : '';
+    const categoria= normalizarCategoria(req.body.categoria);
     const destaque = req.body.destaque === true || req.body.destaque === 'true';
     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
@@ -722,11 +739,11 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
             cloudinary_id = result.public_id;
         }
         const r = await pool.query(
-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao, busca_tsv)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao, busca_tsv)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
                      to_tsvector('portuguese', $1 || ' ' || $5 || ' ' || $6 || ' ' || $7))
              RETURNING id`,
-            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao]);
+            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao]);
         res.json({ success: true, id: r.rows[0].id });
     } catch (e) {
         console.error('POST /api/produtos:', e.message);
@@ -744,12 +761,13 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)   : '';
     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50) : '';
     const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)  : '';
+    const categoria= normalizarCategoria(req.body.categoria);
     const destaque = req.body.destaque === true || req.body.destaque === 'true';
     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
     try {
         const r = await pool.query(
-            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, banda=$6, destaque=$7, descricao=$8 WHERE id=$9',
-            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, banda, destaque, descricao, id]);
+            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, banda=$6, categoria=$7, destaque=$8, descricao=$9 WHERE id=$10',
+            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, banda, categoria, destaque, descricao, id]);
         // Update full-text search vector
         await pool.query("UPDATE produtos SET busca_tsv = to_tsvector('portuguese', COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,'')) WHERE id = $1", [id]);
         if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
@@ -781,9 +799,9 @@ app.post('/api/produtos/:id/duplicate', requireAuth, writeLimiter, async (req, r
         if (orig.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
         const p = orig.rows[0];
         const r = await pool.query(
-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, $9) RETURNING id`,
-            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.banda, p.descricao]);
+            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, $10) RETURNING id`,
+            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.banda, p.categoria, p.descricao]);
         res.status(201).json({ id: r.rows[0].id });
     } catch (e) {
         console.error('POST duplicate:', e.message);
@@ -814,12 +832,15 @@ app.patch('/api/produtos/bulk-visibility', requireAuth, writeLimiter, async (req
 // mesmo preço ou nome em vários produtos de uma vez quase nunca é o que a
 // pessoa quer, e um erro de filtro aqui teria efeito muito mais silencioso
 // que ocultar/mostrar (que é óbvio e reversível de imediato).
-const BULK_CAMPOS_PERMITIDOS = ['genero', 'tipo', 'banda'];
+const BULK_CAMPOS_PERMITIDOS = ['genero', 'tipo', 'banda', 'categoria'];
 app.patch('/api/produtos/bulk-campo', requireAuth, writeLimiter, async (req, res) => {
     const { ids, campo, valor } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'IDs obrigatórios.' });
     if (!BULK_CAMPOS_PERMITIDOS.includes(campo)) return res.status(400).json({ error: 'Campo não permitido para edição em massa.' });
     if (typeof valor !== 'string' || !valor.trim()) return res.status(400).json({ error: 'Valor obrigatório.' });
+    if (campo === 'categoria' && !CATEGORIAS_VALIDAS.includes(valor.trim())) {
+        return res.status(400).json({ error: 'Categoria inválida.' });
+    }
     const safeIds = ids.filter(id => Number.isInteger(id) && id > 0);
     if (safeIds.length === 0) return res.status(400).json({ error: 'Nenhum ID válido.' });
     const valorFinal = valor.trim().slice(0, 80);
@@ -991,7 +1012,7 @@ app.get('/api/produtos/search', async (req, res) => {
     if (!q || q.length < 2) return res.json([]);
     try {
         const r = await pool.query(
-            `SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao
+            `SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao
              FROM produtos WHERE oculto = false AND busca_tsv @@ plainto_tsquery('portuguese', $1)
              ORDER BY ts_rank(busca_tsv, plainto_tsquery('portuguese', $1)) DESC LIMIT 50`,
             [q]);
@@ -1410,9 +1431,6 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
     const { produto_id, cliente_nome, cliente_whatsapp, tamanho, cpfCnpj } = req.body || {};
     if (typeof cliente_whatsapp !== 'string' || cliente_whatsapp.trim().length < 8)
         return res.status(400).json({ error: 'WhatsApp do cliente é obrigatório.' });
-    const TAMANHOS_VALIDOS = ['P', 'M', 'G', 'GG', 'XG'];
-    if (!TAMANHOS_VALIDOS.includes(tamanho))
-        return res.status(400).json({ error: 'Selecione um tamanho válido.' });
     const cpfDigits = String(cpfCnpj || '').replace(/\D/g, '');
     if (!validarCpfCnpj(cpfDigits))
         return res.status(400).json({ error: 'CPF/CNPJ inválido.' });
@@ -1425,18 +1443,32 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
     if (!Number.isInteger(pid) || pid < 1)
         return res.status(400).json({ error: 'Produto inválido.' });
 
-    let produtoNome, valorNum;
+    let produtoNome, valorNum, produtoCategoria;
     try {
-        const pr = await pool.query('SELECT nome, preco FROM produtos WHERE id = $1 AND oculto = false', [pid]);
+        const pr = await pool.query('SELECT nome, preco, categoria FROM produtos WHERE id = $1 AND oculto = false', [pid]);
         if (!pr.rows.length) return res.status(404).json({ error: 'Produto não encontrado ou indisponível.' });
-        produtoNome = pr.rows[0].nome;
-        valorNum    = Number(pr.rows[0].preco);
+        produtoNome      = pr.rows[0].nome;
+        valorNum         = Number(pr.rows[0].preco);
+        produtoCategoria = pr.rows[0].categoria || 'vestuario';
     } catch (e) {
         console.error('POST /api/checkout/pix produto lookup:', e.message);
         return res.status(500).json({ error: 'Erro ao verificar produto.' });
     }
     if (!Number.isFinite(valorNum) || valorNum <= 0) {
         return res.status(409).json({ error: 'Preço do produto inválido. Contate a loja.' });
+    }
+
+    // [VZ] Decor 3D não tem tamanho de vestuário — só exige P/M/G/GG/XG pra
+    // categoria 'vestuario'. Precisa da categoria do produto (acima) antes de
+    // validar, por isso esse bloco não pode vir antes do lookup no banco.
+    let tamanhoFinal = '';
+    if (produtoCategoria === 'decor3d') {
+        tamanhoFinal = 'Único';
+    } else {
+        const TAMANHOS_VALIDOS = ['P', 'M', 'G', 'GG', 'XG'];
+        if (!TAMANHOS_VALIDOS.includes(tamanho))
+            return res.status(400).json({ error: 'Selecione um tamanho válido.' });
+        tamanhoFinal = tamanho;
     }
 
     try {
@@ -1454,7 +1486,7 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
                  pix_qr_code, pix_copia_cola, pix_expira_em)
              VALUES ($1,$2,$3,$4,$5,'novo','pendente',$6,$7,$8,$9,$10)
              RETURNING id`,
-            [produtoNome, valorNum, String(tamanho || '').slice(0, 20),
+            [produtoNome, valorNum, tamanhoFinal.slice(0, 20),
              String(cliente_nome || '').slice(0, 100), cliente_whatsapp.trim(),
              customerId, cobranca.asaas_payment_id,
              cobranca.pix_qr_code, cobranca.pix_copia_cola, cobranca.pix_expira_em]);
@@ -1486,6 +1518,23 @@ app.get('/api/pedidos/:id/status', clickLimiter, async (req, res) => {
     }
 });
 
+// [VZ] Comparação em tempo constante — evita que um atacante infira o token
+// correto medindo quanto tempo a comparação leva (mais rápido quebra antes,
+// mais devagar bate mais caracteres antes de divergir). Buffers de tamanho
+// diferente derrubariam o timingSafeEqual antes de chegar nessa proteção,
+// então comparamos contra um buffer de zeros do mesmo tamanho do recebido
+// só pra manter o tempo constante, e sempre retornamos false nesse caso.
+function tokensCoincidem(recebido, esperado) {
+    if (typeof recebido !== 'string' || typeof esperado !== 'string' || !recebido || !esperado) return false;
+    const bufRecebido = Buffer.from(recebido);
+    const bufEsperado = Buffer.from(esperado);
+    if (bufRecebido.length !== bufEsperado.length) {
+        crypto.timingSafeEqual(bufRecebido, Buffer.alloc(bufRecebido.length));
+        return false;
+    }
+    return crypto.timingSafeEqual(bufRecebido, bufEsperado);
+}
+
 // Asaas webhook receiver. Every notification is logged BEFORE any processing
 // is attempted, so a bug in our logic can never silently lose a payment event
 // — worst case, it sits in webhook_log unprocessed and can be replayed by hand.
@@ -1508,7 +1557,7 @@ app.post('/api/webhook/asaas', webhookLimiter, async (req, res) => {
 
     // Verify authenticity. If no token is configured yet (CNPJ/Asaas not
     // activated), reject everything — there is nothing legitimate to receive.
-    if (!expectedToken || !incomingToken || incomingToken !== expectedToken) {
+    if (!tokensCoincidem(incomingToken, expectedToken)) {
         console.warn('Webhook Asaas rejeitado: token ausente ou inválido.');
         return res.status(401).json({ error: 'Token inválido.' });
     }

@@ -17,16 +17,9 @@
     const esc = s => String(s||'').replace(/[&<>"']/g,
         c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    function mostrarToast(msg, erro) {
-        const t = document.getElementById('toast');
-        if (!t) return;
-        t.innerText = msg;
-        t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
-        t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
-        t.style.color       = erro ? 'var(--danger)'        : 'var(--cyan)';
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
-    }
+    // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
+    // fica como alias local pra não precisar renomear os call sites abaixo.
+    function mostrarToast(msg, erro) { window.showToast(msg, erro); }
 
     let pedidos = [];
     let filterStatus = '';

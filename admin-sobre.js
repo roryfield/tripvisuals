@@ -5,14 +5,10 @@
     const $ = id => document.getElementById(id);
 
     // ── Toast ────────────────────────────────────────────────────
-    function showToast(msg, isError) {
-        const t = $('toast');
-        if (!t) return;
-        t.textContent = msg;
-        t.className = 'toast' + (isError ? ' toast-error' : ' toast-success') + ' show';
-        clearTimeout(t._to);
-        t._to = setTimeout(() => { t.classList.remove('show'); }, 3000);
-    }
+    // [VZ] showToast agora vem de admin-shared.js (fonte única). A versão
+    // local tinha um bug real: alternava classes .toast-error/.toast-success
+    // que nunca existiram no admin.css, então o toast de erro nesta página
+    // sempre saía com a cor de sucesso — corrigido ao centralizar.
 
     // ── API helpers ──────────────────────────────────────────────
     async function saveConfig(chave, valor) {
