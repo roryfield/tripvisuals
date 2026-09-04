@@ -1,0 +1,1262 @@
+From 5c88be9d77da9beaccf2d6305a8fbaef64cf78ea Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 2 Sep 2026 22:11:02 +0000
+Subject: [PATCH] =?UTF-8?q?Categoria=20Decor=203D=20+=20quatro=20pend?=
+ =?UTF-8?q?=C3=AAncias=20da=20auditoria=20de=20encerramento?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Pendências do relatório de encerramento (docs/relatorio-encerramento-ciclo.html):
+- Token do webhook Asaas comparado em tempo constante (crypto.timingSafeEqual)
+- Removido endpoint SSE morto do Catalogador (GET /api/catalogador/events),
+  substituído por polling desde a Fase 24, sem consumidor
+- showToast/mostrarToast centralizado em admin-shared.js — corrige de quebra
+  um bug real em admin-sobre.js (classes CSS de erro que nunca existiram)
+- Teste automatizado do checkout/webhook Asaas (tests/cases/fase11-checkout-asaas.mjs)
+
+Nova categoria de produto "Decor 3D" (peças decorativas impressas em 3D):
+- Coluna categoria em produtos (vestuario | decor3d), validada no servidor
+- Admin: seletor de categoria no editor e no upload em lote, tipo vira texto
+  livre e gênero some quando é Decor 3D; filtro dedicado na lista
+- Catálogo público: toggle de categoria, sem seletor de tamanho de roupa nem
+  filtro de gênero para Decor 3D, mensagem de WhatsApp adaptada
+- Checkout PIX não exige tamanho de vestuário para produtos Decor 3D
+
+Suíte de testes completa rodada contra Postgres real, sem regressões.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01AzioJQp7vuoJPM6shUHPUo
+---
+ admin-hub.js                          |  14 +--
+ admin-landing.js                      |  11 +--
+ admin-layout.js                       |  12 +--
+ admin-oficina.html                    |  18 +++-
+ admin-pedidos.js                      |  13 +--
+ admin-produtos.js                     | 123 +++++++++++++++++++-------
+ admin-shared.js                       |  39 ++++++++
+ admin-sobre.js                        |  12 +--
+ admin-upload.js                       |  97 ++++++++++++++++++--
+ catalogador-router.js                 |  40 ++-------
+ catalogo.js                           |  81 ++++++++++++-----
+ server.js                             |  91 ++++++++++++++-----
+ tests/cases/fase11-checkout-asaas.mjs |  91 +++++++++++++++++++
+ tests/run.mjs                         |   7 ++
+ 14 files changed, 478 insertions(+), 171 deletions(-)
+ create mode 100644 tests/cases/fase11-checkout-asaas.mjs
+
+diff --git a/admin-hub.js b/admin-hub.js
+index efe844f..4b6e85a 100644
+--- a/admin-hub.js
++++ b/admin-hub.js
+@@ -17,17 +17,9 @@
+         init();
+     }
+ 
+-    function mostrarToast(msg, erro) {
+-        const t = document.getElementById('toast');
+-        if (!t) return;
+-        t.innerText = msg;
+-        t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+-        t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+-        t.style.color       = erro ? 'var(--danger)'        : 'var(--cyan)';
+-        t.classList.add('show');
+-        clearTimeout(t._to);
+-        t._to = setTimeout(function () { t.classList.remove('show'); }, 2500);
+-    }
++    // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
++    // fica como alias local pra não precisar renomear os call sites abaixo.
++    function mostrarToast(msg, erro) { window.showToast(msg, erro); }
+ 
+     // ── Cada stat carrega independentemente e em paralelo ────────
+     // (antes: 4 awaits sequenciais — um lento atrasava todos os outros)
+diff --git a/admin-landing.js b/admin-landing.js
+index 441bfd3..c27168f 100644
+--- a/admin-landing.js
++++ b/admin-landing.js
+@@ -9,15 +9,8 @@
+     }[c]));
+     const escapeAttr = escapeHTML;
+ 
+-    function showToast(msg, isError = false) {
+-        const t = $('toast');
+-        t.innerText = msg;
+-        t.style.background  = isError ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+-        t.style.borderColor = isError ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+-        t.style.color       = isError ? 'var(--danger)'       : 'var(--cyan)';
+-        t.classList.add('show');
+-        setTimeout(() => t.classList.remove('show'), 2500);
+-    }
++    // [VZ] showToast agora vem de admin-shared.js (fonte única) — a função
++    // local foi removida, os call sites abaixo resolvem pro global.
+ 
+     async function saveConfig(chave, valor) {
+         const res = await fetch('/api/config', {
+diff --git a/admin-layout.js b/admin-layout.js
+index fc9c48f..a02b182 100644
+--- a/admin-layout.js
++++ b/admin-layout.js
+@@ -17,15 +17,9 @@
+         init();
+     }
+ 
+-    function mostrarToast(msg, erro) {
+-        const t = document.getElementById('toast');
+-        t.innerText = msg;
+-        t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+-        t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+-        t.style.color       = erro ? 'var(--danger)'        : 'var(--cyan)';
+-        t.classList.add('show');
+-        setTimeout(function () { t.classList.remove('show'); }, 2500);
+-    }
++    // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
++    // fica como alias local pra não precisar renomear os call sites abaixo.
++    function mostrarToast(msg, erro) { window.showToast(msg, erro); }
+ 
+     async function definirLayout(layout) {
+         // Guarda o estado anterior pra reverter visualmente se o save falhar.
+diff --git a/admin-oficina.html b/admin-oficina.html
+index 5453669..9df0b17 100644
+--- a/admin-oficina.html
++++ b/admin-oficina.html
+@@ -109,6 +109,13 @@
+         <!-- Batch config -->
+         <div class="batch-cfg">
+             <div class="batch-field">
++                <label class="batch-label" for="batchCategoria">Categoria do lote</label>
++                <select id="batchCategoria" class="batch-select">
++                    <option value="vestuario">Vestuário</option>
++                    <option value="decor3d">Decor 3D</option>
++                </select>
++            </div>
++            <div class="batch-field" id="batchTipoField">
+                 <label class="batch-label" for="batchTipo">Tipo padrão</label>
+                 <select id="batchTipo" class="batch-select">
+                     <option value="Camiseta">Camiseta</option>
+@@ -122,7 +129,7 @@
+                 <input id="batchCor" class="batch-input" type="text" list="coresList"
+                        value="Preta" maxlength="50" placeholder="Preta, Off-White, ou outra...">
+             </div>
+-            <div class="batch-field">
++            <div class="batch-field" id="batchGeneroField">
+                 <label class="batch-label" for="batchGenero">Gênero padrão</label>
+                 <input id="batchGenero" class="batch-input" type="text" list="generosList"
+                        value="" maxlength="50" placeholder="Rock, Metal, Grunge...">
+@@ -160,10 +167,10 @@
+                 <thead>
+                     <tr>
+                         <th class="vz-w-70">Foto</th>
+-                        <th>Tipo</th>
++                        <th id="thTipo">Tipo</th>
+                         <th>Estampa / Nome</th>
+                         <th>Cor</th>
+-                        <th>Gênero</th>
++                        <th id="thGenero">Gênero</th>
+                         <th>Preço (R$)</th>
+                         <th class="status-cell">Status</th>
+                     </tr>
+@@ -385,6 +392,11 @@
+ 
+         <!-- FILTROS (Fase 3) -->
+         <div class="produtos-filtros">
++            <select id="filtroCategoria" aria-label="Filtrar por categoria">
++                <option value="">Todas as categorias</option>
++                <option value="vestuario">Vestuário</option>
++                <option value="decor3d">Decor 3D</option>
++            </select>
+             <select id="filtroTipo" aria-label="Filtrar por tipo">
+                 <option value="">Todos os tipos</option>
+                 <option value="Camiseta">Camiseta</option>
+diff --git a/admin-pedidos.js b/admin-pedidos.js
+index aaf8718..992bf8d 100644
+--- a/admin-pedidos.js
++++ b/admin-pedidos.js
+@@ -17,16 +17,9 @@
+     const esc = s => String(s||'').replace(/[&<>"']/g,
+         c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ 
+-    function mostrarToast(msg, erro) {
+-        const t = document.getElementById('toast');
+-        if (!t) return;
+-        t.innerText = msg;
+-        t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+-        t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+-        t.style.color       = erro ? 'var(--danger)'        : 'var(--cyan)';
+-        t.classList.add('show');
+-        setTimeout(() => t.classList.remove('show'), 2500);
+-    }
++    // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
++    // fica como alias local pra não precisar renomear os call sites abaixo.
++    function mostrarToast(msg, erro) { window.showToast(msg, erro); }
+ 
+     let pedidos = [];
+     let filterStatus = '';
+diff --git a/admin-produtos.js b/admin-produtos.js
+index 1389661..0d23599 100644
+--- a/admin-produtos.js
++++ b/admin-produtos.js
+@@ -12,7 +12,11 @@ let currentView = (function(){
+     } catch (_) { return 'grid'; }
+ }());
+ let currentFilter = '';
+-let currentFilters = { tipo: '', banda: '', genero: '', rapido: '' }; // rapido: '' | 'semBanda' | 'ocultos' | 'precoZero'
++let currentFilters = { tipo: '', banda: '', genero: '', categoria: '', rapido: '' }; // rapido: '' | 'semBanda' | 'ocultos' | 'precoZero'
++
++// [VZ] Linha "Decor 3D" — mesma chave ASCII do server.js. Rótulo de exibição
++// só existe aqui no front-end (server só guarda a chave).
++const CATEGORIA_LABELS = { vestuario: 'Vestuário', decor3d: 'Decor 3D' };
+ let currentPage = 1;
+ const PRODUTOS_POR_PAGINA = 24;
+ 
+@@ -22,15 +26,9 @@ const PRODUTOS_POR_PAGINA = 24;
+         }[c]));
+         const escapeAttr = s => escapeHTML(s);
+ 
+-        function mostrarToast(msg, erro = false) {
+-            const t = document.getElementById('toast');
+-            t.innerText = msg;
+-            t.style.background  = erro ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
+-            t.style.borderColor = erro ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
+-            t.style.color       = erro ? 'var(--danger)'       : 'var(--cyan)';
+-            t.classList.add('show');
+-            setTimeout(() => t.classList.remove('show'), 2500);
+-        }
++        // [VZ] showToast agora vem de admin-shared.js (fonte única). mostrarToast
++        // fica como alias local pra não precisar renomear os call sites abaixo.
++        function mostrarToast(msg, erro) { window.showToast(msg, erro); }
+ 
+         // [VZ] Fase 24 — fonte única pros contadores do topo (ativos/ocultos)
+         // e pros três contadores clicáveis do painel lateral (sem banda,
+@@ -98,6 +96,7 @@ const PRODUTOS_POR_PAGINA = 24;
+                 if (currentFilters.tipo && p.tipo !== currentFilters.tipo) return false;
+                 if (currentFilters.banda && !(p.banda || '').toLowerCase().includes(currentFilters.banda.toLowerCase())) return false;
+                 if (currentFilters.genero && !(p.genero || '').toLowerCase().includes(currentFilters.genero.toLowerCase())) return false;
++                if (currentFilters.categoria && (p.categoria || 'vestuario') !== currentFilters.categoria) return false;
+                 if (currentFilters.rapido === 'semBanda'  && (p.banda || '').trim())   return false;
+                 if (currentFilters.rapido === 'ocultos'   && !p.oculto)                return false;
+                 if (currentFilters.rapido === 'precoZero' && Number(p.preco) > 0)      return false;
+@@ -131,6 +130,7 @@ const PRODUTOS_POR_PAGINA = 24;
+                 card.dataset.oculto = p.oculto ? 'true' : 'false';
+                 card.dataset.prodId = p.id;
+                 card.dataset.nome = p.nome; // used by gallery mode CSS ::after
++                const categoriaAtual = p.categoria === 'decor3d' ? 'decor3d' : 'vestuario';
+                 card.innerHTML = `
+                     ${p.oculto ? '<span class="oculto-badge">OCULTO</span>' : ''}
+                     <label class="bulk-check-wrap">
+@@ -150,20 +150,29 @@ const PRODUTOS_POR_PAGINA = 24;
+                                 <input type="number" id="preco-${p.id}" value="${Number(p.preco).toFixed(2)}" step="0.01" min="0" max="999999">
+                             </div>
+                             <div class="field-classificacao-label">Classificação</div>
++                            <div class="field-group field-compact">
++                                <label class="field-label" for="categoria-${p.id}">Categoria</label>
++                                <select id="categoria-${p.id}" aria-label="Categoria" data-action-categoria="${p.id}">
++                                    <option value="vestuario" ${categoriaAtual === 'vestuario' ? 'selected' : ''}>Vestuário</option>
++                                    <option value="decor3d"   ${categoriaAtual === 'decor3d'   ? 'selected' : ''}>Decor 3D</option>
++                                </select>
++                            </div>
+                             <div class="field-group field-compact">
+                                 <label class="field-label" for="cor-${p.id}">Cor</label>
+                                 <input type="text" id="cor-${p.id}" list="coresList" value="${escapeAttr(p.cor || '')}" maxlength="50" placeholder="ex: Preta">
+                             </div>
+-                            <div class="field-group field-compact">
+-                                <label class="field-label" for="tipo-${p.id}">Tipo</label>
+-                                <select id="tipo-${p.id}" aria-label="Tipo">
++                            <div class="field-group field-compact" id="tipoWrap-${p.id}">
++                                <label class="field-label" for="tipo-${p.id}">${categoriaAtual === 'decor3d' ? 'Tipo de peça' : 'Tipo'}</label>
++                                ${categoriaAtual === 'decor3d'
++                                    ? `<input type="text" id="tipo-${p.id}" value="${escapeAttr(p.tipo || '')}" maxlength="30" placeholder="ex: Luminária, Suporte, Miniatura">`
++                                    : `<select id="tipo-${p.id}" aria-label="Tipo">
+                                     <option value="Camiseta"  ${p.tipo === 'Camiseta'  ? 'selected' : ''}>Camiseta</option>
+                                     <option value="Regata"    ${p.tipo === 'Regata'    ? 'selected' : ''}>Regata</option>
+                                     <option value="Babylook"  ${p.tipo === 'Babylook'  ? 'selected' : ''}>Babylook</option>
+                                     <option value="Moletom"   ${p.tipo === 'Moletom'   ? 'selected' : ''}>Moletom</option>
+-                                </select>
++                                </select>`}
+                             </div>
+-                            <div class="field-group field-compact">
++                            <div class="field-group field-compact" id="generoWrap-${p.id}" ${categoriaAtual === 'decor3d' ? 'hidden' : ''}>
+                                 <label class="field-label" for="genero-${p.id}">Gênero</label>
+                                 <input type="text" id="genero-${p.id}" list="generosList" value="${escapeAttr(p.genero || '')}" maxlength="50" placeholder="ex: Metal">
+                             </div>
+@@ -218,11 +227,40 @@ const PRODUTOS_POR_PAGINA = 24;
+ 
+             // Bulk checkboxes — separate listener for change events
+             grid.addEventListener('change', function(e) {
+-                if (!e.target.classList.contains('bulk-check')) return;
+-                const id = parseInt(e.target.dataset.id, 10);
+-                if (e.target.checked) bulkSelection.add(id);
+-                else bulkSelection.delete(id);
+-                renderBulkBar();
++                if (e.target.classList.contains('bulk-check')) {
++                    const id = parseInt(e.target.dataset.id, 10);
++                    if (e.target.checked) bulkSelection.add(id);
++                    else bulkSelection.delete(id);
++                    renderBulkBar();
++                    return;
++                }
++                // [VZ] Troca de categoria no editor individual: Decor 3D não usa
++                // gênero (esconde o campo) e o "Tipo" vira texto livre em vez do
++                // combo fixo de vestuário — sem recarregar o card inteiro, pra
++                // não perder o que a pessoa já tiver digitado nos outros campos.
++                if (e.target.dataset.actionCategoria) {
++                    const id = e.target.dataset.actionCategoria;
++                    const isDecor3d = e.target.value === 'decor3d';
++                    const generoWrap = document.getElementById('generoWrap-' + id);
++                    if (generoWrap) generoWrap.hidden = isDecor3d;
++                    const tipoWrap = document.getElementById('tipoWrap-' + id);
++                    const tipoAtual = document.getElementById('tipo-' + id);
++                    if (tipoWrap && tipoAtual) {
++                        const valorAtual = tipoAtual.value;
++                        const label = tipoWrap.querySelector('.field-label');
++                        if (label) label.textContent = isDecor3d ? 'Tipo de peça' : 'Tipo';
++                        if (isDecor3d) {
++                            tipoWrap.querySelector('select, input').outerHTML =
++                                `<input type="text" id="tipo-${id}" maxlength="30" placeholder="ex: Luminária, Suporte, Miniatura" value="${escapeAttr(['Camiseta','Regata','Babylook','Moletom'].includes(valorAtual) ? '' : valorAtual)}">`;
++                        } else {
++                            const opcoes = ['Camiseta', 'Regata', 'Babylook', 'Moletom'];
++                            tipoWrap.querySelector('select, input').outerHTML =
++                                `<select id="tipo-${id}" aria-label="Tipo">` +
++                                opcoes.map(o => `<option value="${o}" ${valorAtual === o ? 'selected' : ''}>${o}</option>`).join('') +
++                                `</select>`;
++                        }
++                    }
++                }
+             });
+         }
+ 
+@@ -283,6 +321,9 @@ const PRODUTOS_POR_PAGINA = 24;
+                 // Mesma lista fixa usada no editor individual (admin-produtos.js, ~linha 114-117)
+                 return ['Camiseta', 'Regata', 'Babylook', 'Moletom'];
+             }
++            if (campo === 'categoria') {
++                return Object.keys(CATEGORIA_LABELS); // valores reais (chave ASCII), rotulados no <option> abaixo
++            }
+             if (campo === 'genero') {
+                 // Mesma datalist já cadastrada em admin-produtos.html (#generosList)
+                 return Array.from(document.querySelectorAll('#generosList option')).map(o => o.value);
+@@ -300,12 +341,16 @@ const PRODUTOS_POR_PAGINA = 24;
+             const wrap = document.querySelector('.bulk-campo-valor-wrap');
+             if (!wrap) return;
+             const valores = valoresFixosPara(campo);
+-            const options = valores.map(v => `<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
++            const rotulo = v => campo === 'categoria' ? (CATEGORIA_LABELS[v] || v) : v;
++            const options = valores.map(v => `<option value="${escapeAttr(v)}">${escapeHTML(rotulo(v))}</option>`).join('');
++            // Categoria é enum fechado (bloqueado no servidor também) — sem
++            // "Outro (digitar)", que só faz sentido pra campo de texto livre.
++            const permiteOutro = campo !== 'categoria';
+             wrap.innerHTML =
+                 `<select class="bulk-campo-valor" aria-label="Novo valor">` +
+                     `<option value="">Selecione...</option>` +
+                     options +
+-                    `<option value="__outro__">Outro (digitar)...</option>` +
++                    (permiteOutro ? `<option value="__outro__">Outro (digitar)...</option>` : '') +
+                 `</select>` +
+                 `<input type="text" class="bulk-campo-valor-outro" placeholder="novo valor" maxlength="80" hidden>`;
+             const select = wrap.querySelector('.bulk-campo-valor');
+@@ -338,6 +383,7 @@ const PRODUTOS_POR_PAGINA = 24;
+                     '<option value="tipo">Tipo</option>' +
+                     '<option value="genero">Gênero</option>' +
+                     '<option value="banda">Banda</option>' +
++                    '<option value="categoria">Categoria</option>' +
+                 '</select>' +
+                 '<span class="bulk-campo-valor-wrap"></span>' +
+                 '<button type="button" class="bulk-btn bulk-btn-campo">Aplicar a todos</button>' +
+@@ -367,8 +413,9 @@ const PRODUTOS_POR_PAGINA = 24;
+             const ids    = [...bulkSelection];
+ 
+             if (!valor) { mostrarToast('Selecione ou informe o novo valor antes de aplicar.', true); return; }
+-            const nomeCampo = { genero: 'gênero', tipo: 'tipo', banda: 'banda' }[campo] || campo;
+-            if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valor}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
++            const nomeCampo  = { genero: 'gênero', tipo: 'tipo', banda: 'banda', categoria: 'categoria' }[campo] || campo;
++            const valorLabel = campo === 'categoria' ? (CATEGORIA_LABELS[valor] || valor) : valor;
++            if (!confirm(`Alterar o ${nomeCampo} de ${ids.length} produto(s) selecionado(s) para "${valorLabel}"?\n\nEsta ação afeta todos os produtos marcados, não só um.`)) return;
+ 
+             try {
+                 const res = await fetch('/api/produtos/bulk-campo', {
+@@ -456,6 +503,7 @@ const PRODUTOS_POR_PAGINA = 24;
+                         nome: nome.toUpperCase(),
+                         preco,
+                         cor,
++                        categoria: document.getElementById(`categoria-${id}`)?.value || 'vestuario',
+                         tipo:      document.getElementById(`tipo-${id}`)?.value || 'Camiseta',
+                         genero:    (document.getElementById(`genero-${id}`)?.value || '').trim(),
+                         banda:     (document.getElementById(`banda-${id}`)?.value || '').trim(),
+@@ -549,11 +597,12 @@ const PRODUTOS_POR_PAGINA = 24;
+             });
+         }
+ 
+-        // Filtros estruturados (Fase 3): tipo, banda, gênero
+-        const filtroTipo   = document.getElementById('filtroTipo');
+-        const filtroBanda  = document.getElementById('filtroBanda');
+-        const filtroGenero = document.getElementById('filtroGenero');
+-        const btnLimpar    = document.getElementById('btnLimparFiltros');
++        // Filtros estruturados (Fase 3): tipo, banda, gênero, categoria
++        const filtroTipo      = document.getElementById('filtroTipo');
++        const filtroBanda     = document.getElementById('filtroBanda');
++        const filtroGenero    = document.getElementById('filtroGenero');
++        const filtroCategoria = document.getElementById('filtroCategoria');
++        const btnLimpar       = document.getElementById('btnLimparFiltros');
+         let filtroTimer;
+         function aplicarFiltrosDebounced() {
+             clearTimeout(filtroTimer);
+@@ -572,14 +621,20 @@ const PRODUTOS_POR_PAGINA = 24;
+             currentFilters.genero = filtroGenero.value.trim();
+             aplicarFiltrosDebounced();
+         });
++        if (filtroCategoria) filtroCategoria.addEventListener('change', () => {
++            currentFilters.categoria = filtroCategoria.value;
++            currentPage = 1;
++            renderProdutos(produtos);
++        });
+         if (btnLimpar) btnLimpar.addEventListener('click', () => {
+-            currentFilters = { tipo: '', banda: '', genero: '', rapido: '' };
++            currentFilters = { tipo: '', banda: '', genero: '', categoria: '', rapido: '' };
+             currentFilter  = '';
+             currentPage    = 1;
+-            if (searchInput)  searchInput.value  = '';
+-            if (filtroTipo)   filtroTipo.value    = '';
+-            if (filtroBanda)  filtroBanda.value   = '';
+-            if (filtroGenero) filtroGenero.value  = '';
++            if (searchInput)     searchInput.value     = '';
++            if (filtroTipo)      filtroTipo.value      = '';
++            if (filtroBanda)     filtroBanda.value     = '';
++            if (filtroGenero)    filtroGenero.value    = '';
++            if (filtroCategoria) filtroCategoria.value = '';
+             renderProdutos(produtos);
+         });
+ 
+diff --git a/admin-shared.js b/admin-shared.js
+index bfd8f1f..c9f7418 100644
+--- a/admin-shared.js
++++ b/admin-shared.js
+@@ -252,6 +252,45 @@
+             });
+     }
+ 
++    /* ═══════════════════════════════════════════════════════
++       TOAST — fonte única. Antes existiam 6 cópias quase idênticas
++       (admin-hub, admin-landing, admin-layout, admin-pedidos,
++       admin-produtos, admin-sobre), uma delas (admin-sobre) com um bug
++       real: alternava classes .toast-error/.toast-success que nunca
++       existiram no CSS, então o toast de erro nessa página saía sempre
++       na cor de sucesso. `window.showToast(msg, isError)` substitui
++       todas. Se a página não tiver `#toast` no HTML (páginas mais
++       antigas do admin que nunca usaram toast), cria um na primeira
++       chamada — assim toda tela do admin ganha a mesma capacidade sem
++       precisar lembrar de colar o markup em cada uma.
++    ═══════════════════════════════════════════════════════ */
++    var toastTimeoutId = null;
++
++    function ensureToastEl () {
++        var t = document.getElementById('toast');
++        if (t) return t;
++        t = document.createElement('div');
++        t.className = 'toast';
++        t.id        = 'toast';
++        t.setAttribute('role', 'status');
++        t.setAttribute('aria-live', 'polite');
++        document.body.appendChild(t);
++        return t;
++    }
++
++    function showToast (msg, isError) {
++        var t = ensureToastEl();
++        t.innerText = msg;
++        t.style.background  = isError ? 'rgba(255,77,77,0.12)' : 'rgba(0,229,255,0.12)';
++        t.style.borderColor = isError ? 'rgba(255,77,77,0.3)'  : 'rgba(0,229,255,0.3)';
++        t.style.color       = isError ? 'var(--danger)'        : 'var(--cyan)';
++        t.classList.add('show');
++        clearTimeout(toastTimeoutId);
++        toastTimeoutId = setTimeout(function () { t.classList.remove('show'); }, 2500);
++    }
++
++    window.showToast = showToast;
++
+     /* ═══════════════════════════════════════════════════════
+        EXIT ANIMATION  (mirrors the login loading screen)
+     ═══════════════════════════════════════════════════════ */
+diff --git a/admin-sobre.js b/admin-sobre.js
+index 958addd..23af348 100644
+--- a/admin-sobre.js
++++ b/admin-sobre.js
+@@ -5,14 +5,10 @@
+     const $ = id => document.getElementById(id);
+ 
+     // ── Toast ────────────────────────────────────────────────────
+-    function showToast(msg, isError) {
+-        const t = $('toast');
+-        if (!t) return;
+-        t.textContent = msg;
+-        t.className = 'toast' + (isError ? ' toast-error' : ' toast-success') + ' show';
+-        clearTimeout(t._to);
+-        t._to = setTimeout(() => { t.classList.remove('show'); }, 3000);
+-    }
++    // [VZ] showToast agora vem de admin-shared.js (fonte única). A versão
++    // local tinha um bug real: alternava classes .toast-error/.toast-success
++    // que nunca existiram no admin.css, então o toast de erro nesta página
++    // sempre saía com a cor de sucesso — corrigido ao centralizar.
+ 
+     // ── API helpers ──────────────────────────────────────────────
+     async function saveConfig(chave, valor) {
+diff --git a/admin-upload.js b/admin-upload.js
+index b63d99f..51877a2 100644
+--- a/admin-upload.js
++++ b/admin-upload.js
+@@ -6,6 +6,15 @@
+     const MAX_BYTES = 10 * 1024 * 1024;
+     const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp'];
+     const PRECOS    = { 'Camiseta': 99.90, 'Regata': 99.90, 'Babylook': 99.90, 'Moletom': 175.00 };
++    // [VZ] Sem lookup fixo pra Decor 3D — o preço de uma peça impressa varia
++    // demais por tamanho/tempo de impressão pra ter um "padrão" que faça
++    // sentido; esse valor é só ponto de partida editável por item.
++    const PRECO_PADRAO_DECOR3D = 49.90;
++
++    function categoriaAtual() {
++        var sel = document.getElementById('batchCategoria');
++        return sel && sel.value === 'decor3d' ? 'decor3d' : 'vestuario';
++    }
+ 
+     const esc = s => String(s).replace(/[&<>"']/g, c =>
+         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+@@ -55,6 +64,7 @@
+         var fileInput  = document.getElementById('fileInputUpload');
+         var lista      = document.getElementById('lista');
+         var btnLancar  = document.getElementById('btnLancar');
++        var batchCategoria = document.getElementById('batchCategoria');
+         var batchTipo  = document.getElementById('batchTipo');
+         var batchGenero = document.getElementById('batchGenero');
+         var batchCor   = document.getElementById('batchCor');
+@@ -72,6 +82,7 @@
+         }
+ 
+         if (btnLancar)  btnLancar.addEventListener('click', enviarTudo);
++        if (batchCategoria) batchCategoria.addEventListener('change', onBatchCategoriaChange);
+         if (batchTipo)  batchTipo.addEventListener('change', onBatchTipoChange);
+         if (batchCor)   batchCor.addEventListener('change', onBatchCorChange);
+         if (batchPreco) batchPreco.addEventListener('input', onBatchPrecoChange);
+@@ -103,6 +114,62 @@
+ 
+     // ── BATCH CONFIG HANDLERS ────────────────────────────────────
+ 
++    // [VZ] Categoria do lote — Decor 3D não usa o combo fixo de tipo de
++    // vestuário (Camiseta/Regata/Babylook/Moletom) nem gênero. Troca os
++    // controles padrão do lote e, se já existirem linhas na tabela, troca a
++    // célula "Tipo" de cada uma de combo pra texto livre (e volta).
++    function onBatchCategoriaChange() {
++        var isDecor3d = categoriaAtual() === 'decor3d';
++        var tipoField   = document.getElementById('batchTipoField');
++        var generoField = document.getElementById('batchGeneroField');
++        var thTipo   = document.getElementById('thTipo');
++        var thGenero = document.getElementById('thGenero');
++        var batchPreco = document.getElementById('batchPreco');
++
++        if (tipoField)   tipoField.hidden   = isDecor3d;
++        if (generoField) generoField.hidden = isDecor3d;
++        if (thTipo)   thTipo.textContent   = isDecor3d ? 'Tipo de peça' : 'Tipo';
++        if (thGenero) thGenero.hidden      = isDecor3d;
++
++        if (batchPreco) {
++            batchPreco.value = isDecor3d
++                ? PRECO_PADRAO_DECOR3D.toFixed(2)
++                : PRECOS[document.getElementById('batchTipo').value].toFixed(2);
++        }
++
++        filaFiles.forEach(function (_, i) {
++            var cell = document.getElementById('t-' + i);
++            if (!cell) return;
++            var valorAtual = cell.value;
++            var novo;
++            if (isDecor3d) {
++                novo = document.createElement('input');
++                novo.type = 'text';
++                novo.id   = 't-' + i;
++                novo.maxLength = 30;
++                novo.placeholder = 'Vaso, Luminária, Suporte...';
++                novo.setAttribute('aria-label', 'Tipo de peça');
++                novo.value = ['Camiseta','Regata','Babylook','Moletom'].includes(valorAtual) ? '' : valorAtual;
++            } else {
++                novo = document.createElement('select');
++                novo.id = 't-' + i;
++                novo.setAttribute('aria-label', 'Tipo');
++                ['Camiseta','Regata','Babylook','Moletom'].forEach(function (t) {
++                    var opt = document.createElement('option');
++                    opt.value = t; opt.textContent = t;
++                    if (t === valorAtual) opt.selected = true;
++                    novo.appendChild(opt);
++                });
++            }
++            cell.replaceWith(novo);
++            var precoCell = document.getElementById('p-' + i);
++            if (precoCell && !isDecor3d && PRECOS[novo.value] !== undefined) {
++                precoCell.value = PRECOS[novo.value].toFixed(2);
++            }
++        });
++        updatePreview();
++    }
++
+     function onBatchTipoChange() {
+         var tipo  = document.getElementById('batchTipo').value;
+         var preco = PRECOS[tipo].toFixed(2);
+@@ -154,7 +221,7 @@
+ 
+     function updatePreview() {
+         var col  = (document.getElementById('batchColecao').value || '').trim().toUpperCase();
+-        var tipo = document.getElementById('batchTipo').value;
++        var tipo = categoriaAtual() === 'decor3d' ? 'PEÇA' : document.getElementById('batchTipo').value;
+         var cor  = document.getElementById('batchCor').value;
+         var prev = document.getElementById('batchPreview');
+         if (!prev) return;
+@@ -266,27 +333,31 @@
+ 
+         var batchCor = document.getElementById('batchCor').value;
+         var lista    = document.getElementById('lista');
++        var isDecor3d = categoriaAtual() === 'decor3d';
+         lista.innerHTML = '';
+ 
+         filaFiles.forEach(function (file, i) {
+-            var tipoAuto = detectarTipo(file.name);
++            var tipoAuto = isDecor3d ? '' : detectarTipo(file.name);
+             var nomeAuto = limparNome(file.name);
+             var isBlank  = !nomeAuto;
+ 
+             if (isBlank) blankRows.push(i);
+ 
+-            var precoAuto = PRECOS[tipoAuto].toFixed(2);
++            var precoAuto = isDecor3d ? PRECO_PADRAO_DECOR3D.toFixed(2) : PRECOS[tipoAuto].toFixed(2);
+             var previewUrl = URL.createObjectURL(file);
+             previewUrls.push(previewUrl);
+             var tr = document.createElement('tr');
+-            tr.innerHTML =
+-                '<td><img src="' + previewUrl + '" alt="Pré-visualização"></td>' +
+-                '<td><select id="t-' + i + '" aria-label="Tipo">' +
++            var celulaTipo = isDecor3d
++                ? '<td><input type="text" id="t-' + i + '" maxlength="30" placeholder="Vaso, Luminária, Suporte..." aria-label="Tipo de peça"></td>'
++                : '<td><select id="t-' + i + '" aria-label="Tipo">' +
+                     '<option value="Camiseta" ' + (tipoAuto === 'Camiseta'  ? 'selected' : '') + '>Camiseta</option>' +
+                     '<option value="Regata"   ' + (tipoAuto === 'Regata'    ? 'selected' : '') + '>Regata</option>' +
+                     '<option value="Babylook" ' + (tipoAuto === 'Babylook'  ? 'selected' : '') + '>Babylook</option>' +
+                     '<option value="Moletom"  ' + (tipoAuto === 'Moletom'   ? 'selected' : '') + '>Moletom</option>' +
+-                '</select></td>' +
++                '</select></td>';
++            tr.innerHTML =
++                '<td><img src="' + previewUrl + '" alt="Pré-visualização"></td>' +
++                celulaTipo +
+                 '<td><input type="text" id="e-' + i + '" value="' + esc(nomeAuto) + '" ' +
+                     'aria-label="Nome" ' +
+                     (isBlank ? 'placeholder="aguardando coleção..." class="vz-input-warn"' : '') +
+@@ -393,8 +464,16 @@
+             fd.append('nome',    nomeFinal);
+             fd.append('preco',   preco);
+             fd.append('cor',     cor);
+-            fd.append('tipo',    document.getElementById('t-' + i)?.value || batchTipo?.value || 'Camiseta');
+-            fd.append('genero',  (document.getElementById('g-' + i)?.value || batchGenero?.value || '').trim());
++            // [VZ] Corrigido junto: as duas linhas abaixo referenciavam
++            // `batchTipo`/`batchGenero`, variáveis locais de init() fora de
++            // escopo aqui — só não estourava ReferenceError porque o lado
++            // esquerdo do `||` era sempre truthy antes de existir um campo
++            // de texto que pode ficar vazio (o "Tipo de peça" do Decor 3D).
++            // Trocado por document.getElementById direto, igual ao resto do arquivo.
++            var categoriaLote = categoriaAtual();
++            fd.append('categoria', categoriaLote);
++            fd.append('tipo',    document.getElementById('t-' + i)?.value || (categoriaLote === 'decor3d' ? '' : (document.getElementById('batchTipo')?.value || 'Camiseta')));
++            fd.append('genero',  (document.getElementById('g-' + i)?.value || document.getElementById('batchGenero')?.value || '').trim());
+ 
+             try {
+                 var res = await fetch('/api/produtos', {
+diff --git a/catalogador-router.js b/catalogador-router.js
+index 89eb221..cef494c 100644
+--- a/catalogador-router.js
++++ b/catalogador-router.js
+@@ -726,41 +726,11 @@ router.get('/export/csv', async (_, res) => {
+     }
+ });
+ 
+-// GET /api/catalogador/events — SSE
+-// O requireAuth do mount verifica o cookie vztoken antes de chegar aqui.
+-// EventSource envia cookies same-origin automaticamente.
+-router.get('/events', async (req, res) => {
+-    res.setHeader('Content-Type',      'text/event-stream');
+-    res.setHeader('Cache-Control',     'no-cache');
+-    res.setHeader('X-Accel-Buffering', 'no');
+-    res.flushHeaders();
+-
+-    // Alguns proxies retêm respostas pequenas em buffer antes de repassar ao
+-    // navegador. Um "enchimento" de ~2KB logo na conexão força esse buffer a
+-    // esvaziar na hora, garantindo que os eventos pequenos que vêm depois não
+-    // fiquem presos esperando acumular mais dados.
+-    res.write(':' + ' '.repeat(2048) + '\n\n');
+-
+-    const send = d => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch (_) {} };
+-
+-    let done = 0;
+-    try {
+-        const { processed } = await listarItens();
+-        done = Object.keys(processed).length;
+-    } catch (_) { /* segue com done=0, não derruba a conexão SSE por isso */ }
+-
+-    send({
+-        type:    'connected',
+-        running: state.running,
+-        paused:  state.paused,
+-        done,
+-        hasKey:  !!process.env.GROQ_API_KEY,
+-    });
+-
+-    const hb = setInterval(() => { try { res.write(': ping\n\n'); } catch (_) {} }, 20_000);
+-    emitter.on('update', send);
+-    req.on('close', () => { emitter.off('update', send); clearInterval(hb); });
+-});
++// [VZ] GET /api/catalogador/events (SSE) removido — admin-catalogador.js
++// trocou pra polling (ver comentário na linha ~33 desse arquivo), e a rota
++// ficou montada sem nenhum consumidor: superfície exposta à toa. `emitter`
++// e os `emit(...)` que alimentavam essa rota continuam no arquivo, inertes
++// (zero listeners), caso um mecanismo de push volte a fazer sentido depois.
+ 
+ // ── Multer error handler (escoped to router) ──────────────────────────────────
+ // eslint-disable-next-line no-unused-vars
+diff --git a/catalogo.js b/catalogo.js
+index ccf125c..7fe8bf1 100644
+--- a/catalogo.js
++++ b/catalogo.js
+@@ -24,7 +24,8 @@
+ 
+     // ── STATE ────────────────────────────────────────────────────
+     var todosProdutos  = [];
+-    var activeFilters = { tipo: '', genero: '' };
++    var activeFilters = { tipo: '', genero: '', categoria: '' };
++    var CATEGORIA_LABELS = { vestuario: 'Vestuário', decor3d: 'Decor 3D' };
+     var searchAberta  = false;
+     var NUMERO_LOJA   = '5511940537169';
+ 
+@@ -138,13 +139,17 @@
+                 ' (' + freteAtual.endereco.cidade + '/' + freteAtual.endereco.uf +
+                 ', ' + freteAtual.prazoDias + ' dias úteis)\n';
+         }
++        // [VZ] Decor 3D não tem tamanho de vestuário — comprarItem() é chamado
++        // sem tamanho (string vazia) pra essa categoria, e a linha some da
++        // mensagem em vez de mandar "Tamanho:" em branco pro WhatsApp da loja.
++        var temTamanho = !!tamanho;
+         var texto = 'Olá, equipe Trip Visuals! 🛸\n\n' +
+             'Vim pelo catálogo e tenho interesse neste item:\n\n' +
+             '*Item:* ' + nome + '\n' +
+-            '*Tamanho:* ' + tamanho + '\n' +
++            (temTamanho ? '*Tamanho:* ' + tamanho + '\n' : '') +
+             '*Valor base:* R$ ' + Number(preco).toFixed(2) + '\n' +
+             freteTexto + '\n' +
+-            'Poderia me confirmar a disponibilidade nesse tamanho' +
++            (temTamanho ? 'Poderia me confirmar a disponibilidade nesse tamanho' : 'Poderia me confirmar a disponibilidade') +
+             (freteAtual && freteAtual.atendido ? '?' : ' e calcular o frete para o meu CEP?');
+         window.open(
+             'https://wa.me/' + NUMERO_LOJA + '?text=' + encodeURIComponent(texto),
+@@ -206,9 +211,10 @@
+     function applyFilters(lista) {
+         var f = activeFilters;
+         return lista.filter(function (p) {
+-            var matchTipo   = !f.tipo   || (p.tipo   || '').toLowerCase() === f.tipo.toLowerCase();
+-            var matchGenero = !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
+-            return matchTipo && matchGenero;
++            var matchTipo      = !f.tipo      || (p.tipo   || '').toLowerCase() === f.tipo.toLowerCase();
++            var matchGenero    = !f.genero    || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
++            var matchCategoria = !f.categoria || (p.categoria || 'vestuario') === f.categoria;
++            return matchTipo && matchGenero && matchCategoria;
+         });
+     }
+ 
+@@ -220,7 +226,7 @@
+         // Update active count
+         var countEl = document.getElementById('filterCount');
+         if (countEl) {
+-            var hasFilter = activeFilters.tipo || activeFilters.genero;
++            var hasFilter = activeFilters.tipo || activeFilters.genero || activeFilters.categoria;
+             countEl.textContent = hasFilter
+                 ? filtered.length + ' de ' + lista.length + ' produtos'
+                 : lista.length + ' produtos';
+@@ -266,7 +272,7 @@
+     }
+ 
+     function limparFiltros() {
+-        activeFilters = { tipo: '', genero: '' };
++        activeFilters = { tipo: '', genero: '', categoria: '' };
+         renderFiltros(todosProdutos);
+         renderProdutos(todosProdutos);
+     }
+@@ -277,16 +283,35 @@
+ 
+         var f = activeFilters;
+ 
++        // [VZ] Categoria (Vestuário / Decor 3D) é a divisão de mais alto
++        // nível — só faz sentido oferecer o toggle quando as duas existem de
++        // fato no acervo (se ainda não há nenhum Decor 3D cadastrado, o
++        // toggle não aparece e o catálogo se comporta exatamente como antes).
++        var categoriasPresentes = [...new Set(lista.map(p => p.categoria || 'vestuario'))];
++        var categoriaHtml = '';
++        if (categoriasPresentes.length > 1) {
++            categoriaHtml = '<div class="filter-group filter-group-categoria" role="group" aria-label="Filtrar por categoria">';
++            categoriaHtml += '<button class="filter-chip' + (!f.categoria ? ' active' : '') + '" data-filter="categoria" data-value="">Todos</button>';
++            ['vestuario', 'decor3d'].forEach(function (c) {
++                if (categoriasPresentes.indexOf(c) === -1) return;
++                categoriaHtml += '<button class="filter-chip' + (f.categoria === c ? ' active' : '') + '" data-filter="categoria" data-value="' + c + '">' + esc(CATEGORIA_LABELS[c]) + '</button>';
++            });
++            categoriaHtml += '</div>';
++        }
++
+         // [VZ] Filtro progressivo (faceted filtering): as opções de "tipo"
+-        // refletem os produtos já filtrados por gênero (ignorando o filtro
+-        // de tipo em si), e vice-versa. Isso evita o cliente cair numa
+-        // combinação que sempre dá zero resultados sem entender o motivo —
+-        // problema real quando os dois filtros eram calculados sobre a
++        // refletem os produtos já filtrados por gênero e categoria (ignorando
++        // o filtro de tipo em si), e vice-versa. Isso evita o cliente cair
++        // numa combinação que sempre dá zero resultados sem entender o
++        // motivo — problema real quando os filtros eram calculados sobre a
+         // lista inteira, sem considerar o que já estava selecionado.
+-        var lojaFiltradaPorGenero = lista.filter(function (p) {
++        var lojaFiltradaPorCategoria = lista.filter(function (p) {
++            return !f.categoria || (p.categoria || 'vestuario') === f.categoria;
++        });
++        var lojaFiltradaPorGenero = lojaFiltradaPorCategoria.filter(function (p) {
+             return !f.genero || (p.genero || '').toLowerCase() === f.genero.toLowerCase();
+         });
+-        var lojaFiltradaPorTipo = lista.filter(function (p) {
++        var lojaFiltradaPorTipo = lojaFiltradaPorCategoria.filter(function (p) {
+             return !f.tipo || (p.tipo || '').toLowerCase() === f.tipo.toLowerCase();
+         });
+ 
+@@ -322,7 +347,7 @@
+             generoHtml += '</div>';
+         }
+ 
+-        var clearHtml = (f.tipo || f.genero)
++        var clearHtml = (f.tipo || f.genero || f.categoria)
+             ? '<button class="filter-clear" type="button" aria-label="Limpar todos os filtros">× Limpar</button>'
+             : '';
+ 
+@@ -330,7 +355,7 @@
+ 
+         bar.innerHTML =
+             '<div class="filter-bar-inner">' +
+-            tipoHtml + generoHtml + clearHtml + countHtml +
++            categoriaHtml + tipoHtml + generoHtml + clearHtml + countHtml +
+             '</div>';
+ 
+         // Wire chip clicks
+@@ -352,7 +377,7 @@
+         var countEl = document.getElementById('filterCount');
+         if (countEl) {
+             var filtered = applyFilters(lista);
+-            var hasFilter = f.tipo || f.genero;
++            var hasFilter = f.tipo || f.genero || f.categoria;
+             countEl.textContent = hasFilter
+                 ? filtered.length + ' de ' + lista.length + ' produtos'
+                 : lista.length + ' produtos';
+@@ -384,6 +409,13 @@
+         if (tamanhoEl) tamanhoEl.value = '';
+         if (sizeErrorEl) sizeErrorEl.textContent = '';
+ 
++        // [VZ] Decor 3D não tem tamanho de vestuário — esconde o seletor
++        // inteiro (campo + erro) em vez de deixar um "Selecione o tamanho"
++        // sem sentido pra um objeto decorativo.
++        var isDecor3d = (p.categoria || 'vestuario') === 'decor3d';
++        var tamanhoField = tamanhoEl && tamanhoEl.closest('.product-modal-size-field');
++        if (tamanhoField) tamanhoField.hidden = isDecor3d;
++
+         // [VZ] Fase 7 — CEP e frete não persistem entre produtos diferentes
+         var cepEl = document.getElementById('modalCep');
+         var freteResultEl = document.getElementById('freteResultado');
+@@ -399,7 +431,9 @@
+         priceEl.textContent  = 'R$ ' + Number(p.preco).toFixed(2);
+         // Custom description if available
+         var descEl = modal.querySelector('.product-modal-desc');
+-        if (descEl) descEl.textContent = p.descricao || 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.';
++        if (descEl) descEl.textContent = p.descricao || (isDecor3d
++            ? 'Peça decorativa impressa em 3D. Detalhes de acabamento e prazo combinados pelo WhatsApp.'
++            : 'Estampa disponível em camiseta, regata, babylook ou moletom. Modelo, cor e tamanho são combinados pelo WhatsApp.');
+         if (tipoEl)   tipoEl.textContent   = p.tipo   || '';
+         if (generoEl) generoEl.textContent = p.genero || '';
+ 
+@@ -493,16 +527,17 @@
+ 
+         if (buyBtn)   buyBtn.addEventListener('click', function () {
+             if (!modalProduto) return;
++            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
+             var tamanhoEl = document.getElementById('modalTamanho');
+             var sizeErrorEl = document.getElementById('modalSizeError');
+             var tamanho = tamanhoEl ? tamanhoEl.value : '';
+-            if (!tamanho) {
++            if (!isDecor3d && !tamanho) {
+                 if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
+                 if (tamanhoEl) tamanhoEl.focus();
+                 return;
+             }
+             if (sizeErrorEl) sizeErrorEl.textContent = '';
+-            comprarItem(modalProduto.nome, modalProduto.preco, tamanho);
++            comprarItem(modalProduto.nome, modalProduto.preco, isDecor3d ? '' : tamanho);
+             // Flip the modal into success state
+             var card = modal.querySelector('.product-modal-card');
+             if (card) {
+@@ -626,9 +661,10 @@
+ 
+         if (buyPixBtn) buyPixBtn.addEventListener('click', function () {
+             if (!modalProduto) return;
++            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
+             var tamanhoEl = document.getElementById('modalTamanho');
+             var sizeErrorEl = document.getElementById('modalSizeError');
+-            if (!tamanhoEl || !tamanhoEl.value) {
++            if (!isDecor3d && (!tamanhoEl || !tamanhoEl.value)) {
+                 if (sizeErrorEl) sizeErrorEl.textContent = 'Selecione o tamanho antes de continuar.';
+                 if (tamanhoEl) tamanhoEl.focus();
+                 return;
+@@ -646,13 +682,14 @@
+         if (pixForm) pixForm.addEventListener('submit', function (e) {
+             e.preventDefault();
+             if (!modalProduto) return;
++            var isDecor3d = (modalProduto.categoria || 'vestuario') === 'decor3d';
+             var tamanho  = (document.getElementById('modalTamanho') || {}).value || '';
+             var nome     = (document.getElementById('pixNome') || {}).value || '';
+             var whatsapp = (document.getElementById('pixWhatsapp') || {}).value || '';
+             var cpf      = (pixCpfInput || {}).value || '';
+             nome = nome.trim(); whatsapp = whatsapp.replace(/\D/g, ''); cpf = cpf.replace(/\D/g, '');
+ 
+-            if (!tamanho) { pixFormError.textContent = 'Tamanho não selecionado — volte e selecione antes de continuar.'; return; }
++            if (!isDecor3d && !tamanho) { pixFormError.textContent = 'Tamanho não selecionado — volte e selecione antes de continuar.'; return; }
+             if (nome.length < 2) { pixFormError.textContent = 'Digite seu nome.'; return; }
+             if (whatsapp.length < 10) { pixFormError.textContent = 'Digite um WhatsApp válido com DDD.'; return; }
+             if (!cpfValido(cpf)) { pixFormError.textContent = 'CPF inválido. Confira os números digitados.'; return; }
+diff --git a/server.js b/server.js
+index 4a5f6a5..e1973aa 100644
+--- a/server.js
++++ b/server.js
+@@ -117,6 +117,14 @@ async function initDB() {
+     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS banda TEXT NOT NULL DEFAULT ''`);
+     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+     await pool.query(`CREATE INDEX IF NOT EXISTS idx_produtos_banda ON produtos (banda)`);
++    // [VZ] Linha de produtos "Decor 3D" (peças decorativas impressas em 3D,
++    // vendidas ao lado do vestuário). 'categoria' separa as duas famílias:
++    // controla se o catálogo público mostra seletor de tamanho de roupa e
++    // filtro de gênero, nenhum dos dois aplicável a um objeto decorativo.
++    // Chave em ASCII (não acentuada) por consistência com 'status' de
++    // pedidos — o rótulo exibido ("Decor 3D") vive só no front-end.
++    await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS categoria TEXT NOT NULL DEFAULT 'vestuario'`);
++    await pool.query(`CREATE INDEX IF NOT EXISTS idx_produtos_categoria ON produtos (categoria)`);
+     // One-time: set tipo from existing product names (idempotent — won't re-set if already correct)
+     await pool.query(`
+         UPDATE produtos SET tipo =
+@@ -575,6 +583,14 @@ function validarProduto({ nome, preco }) {
+     return null;
+ }
+ 
++// [VZ] 'vestuario' (camisetas, regatas, babylooks, moletons) e 'decor3d'
++// (peças decorativas impressas em 3D). Entrada fora da lista cai em
++// 'vestuario' — mesmo espírito de fallback já usado pro campo 'tipo'.
++const CATEGORIAS_VALIDAS = ['vestuario', 'decor3d'];
++function normalizarCategoria(valor) {
++    return CATEGORIAS_VALIDAS.includes(valor) ? valor : 'vestuario';
++}
++
+ // ── CATALOGADOR IA ─────────────────────────────────────────────
+ // Ferramenta de processamento em lote — identificação de bandas via IA.
+ // Todas as rotas herdadas pelo requireAuth do sistema principal.
+@@ -618,8 +634,8 @@ app.get('/api/produtos', async (req, res) => {
+             } catch (_) { /* fail closed: treat as public */ }
+         }
+         const sql = isAdmin
+-            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
+-            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
++            ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, categoria, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
++            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
+         const r = await pool.query(sql);
+         res.json(r.rows);
+     } catch (e) {
+@@ -706,6 +722,7 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
+     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)  : 'Camiseta';
+     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50)  : '';
+     const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)   : '';
++    const categoria= normalizarCategoria(req.body.categoria);
+     const destaque = req.body.destaque === true || req.body.destaque === 'true';
+     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
+     try {
+@@ -722,11 +739,11 @@ app.post('/api/produtos', requireAuth, uploadLimiter, upload.single('imagem'), a
+             cloudinary_id = result.public_id;
+         }
+         const r = await pool.query(
+-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao, busca_tsv)
+-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
++            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao, busca_tsv)
++             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+                      to_tsvector('portuguese', $1 || ' ' || $5 || ' ' || $6 || ' ' || $7))
+              RETURNING id`,
+-            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao]);
++            [nome.trim(), parseFloat(preco), imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao]);
+         res.json({ success: true, id: r.rows[0].id });
+     } catch (e) {
+         console.error('POST /api/produtos:', e.message);
+@@ -744,12 +761,13 @@ app.put('/api/produtos/:id', requireAuth, writeLimiter, async (req, res) => {
+     const tipo   = typeof req.body.tipo   === 'string' ? req.body.tipo.trim().slice(0, 30)   : '';
+     const genero   = typeof req.body.genero   === 'string' ? req.body.genero.trim().slice(0, 50) : '';
+     const banda    = typeof req.body.banda    === 'string' ? req.body.banda.trim().slice(0, 80)  : '';
++    const categoria= normalizarCategoria(req.body.categoria);
+     const destaque = req.body.destaque === true || req.body.destaque === 'true';
+     const descricao= typeof req.body.descricao=== 'string' ? req.body.descricao.trim().slice(0, 500) : '';
+     try {
+         const r = await pool.query(
+-            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, banda=$6, destaque=$7, descricao=$8 WHERE id=$9',
+-            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, banda, destaque, descricao, id]);
++            'UPDATE produtos SET nome=$1, preco=$2, cor=$3, tipo=$4, genero=$5, banda=$6, categoria=$7, destaque=$8, descricao=$9 WHERE id=$10',
++            [nome.trim(), parseFloat(preco), cor, tipo || 'Camiseta', genero, banda, categoria, destaque, descricao, id]);
+         // Update full-text search vector
+         await pool.query("UPDATE produtos SET busca_tsv = to_tsvector('portuguese', COALESCE(nome,'') || ' ' || COALESCE(cor,'') || ' ' || COALESCE(tipo,'') || ' ' || COALESCE(genero,'')) WHERE id = $1", [id]);
+         if (r.rowCount === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
+@@ -781,9 +799,9 @@ app.post('/api/produtos/:id/duplicate', requireAuth, writeLimiter, async (req, r
+         if (orig.rows.length === 0) return res.status(404).json({ error: 'Produto não encontrado.' });
+         const p = orig.rows[0];
+         const r = await pool.query(
+-            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, destaque, descricao)
+-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, $9) RETURNING id`,
+-            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.banda, p.descricao]);
++            `INSERT INTO produtos (nome, preco, imagem_url, cloudinary_id, cor, tipo, genero, banda, categoria, destaque, descricao)
++             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, $10) RETURNING id`,
++            [p.nome + ' (Cópia)', p.preco, p.imagem_url, '', p.cor, p.tipo, p.genero, p.banda, p.categoria, p.descricao]);
+         res.status(201).json({ id: r.rows[0].id });
+     } catch (e) {
+         console.error('POST duplicate:', e.message);
+@@ -814,12 +832,15 @@ app.patch('/api/produtos/bulk-visibility', requireAuth, writeLimiter, async (req
+ // mesmo preço ou nome em vários produtos de uma vez quase nunca é o que a
+ // pessoa quer, e um erro de filtro aqui teria efeito muito mais silencioso
+ // que ocultar/mostrar (que é óbvio e reversível de imediato).
+-const BULK_CAMPOS_PERMITIDOS = ['genero', 'tipo', 'banda'];
++const BULK_CAMPOS_PERMITIDOS = ['genero', 'tipo', 'banda', 'categoria'];
+ app.patch('/api/produtos/bulk-campo', requireAuth, writeLimiter, async (req, res) => {
+     const { ids, campo, valor } = req.body;
+     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'IDs obrigatórios.' });
+     if (!BULK_CAMPOS_PERMITIDOS.includes(campo)) return res.status(400).json({ error: 'Campo não permitido para edição em massa.' });
+     if (typeof valor !== 'string' || !valor.trim()) return res.status(400).json({ error: 'Valor obrigatório.' });
++    if (campo === 'categoria' && !CATEGORIAS_VALIDAS.includes(valor.trim())) {
++        return res.status(400).json({ error: 'Categoria inválida.' });
++    }
+     const safeIds = ids.filter(id => Number.isInteger(id) && id > 0);
+     if (safeIds.length === 0) return res.status(400).json({ error: 'Nenhum ID válido.' });
+     const valorFinal = valor.trim().slice(0, 80);
+@@ -991,7 +1012,7 @@ app.get('/api/produtos/search', async (req, res) => {
+     if (!q || q.length < 2) return res.json([]);
+     try {
+         const r = await pool.query(
+-            `SELECT id, nome, preco, imagem_url, cor, tipo, genero, destaque, descricao
++            `SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao
+              FROM produtos WHERE oculto = false AND busca_tsv @@ plainto_tsquery('portuguese', $1)
+              ORDER BY ts_rank(busca_tsv, plainto_tsquery('portuguese', $1)) DESC LIMIT 50`,
+             [q]);
+@@ -1410,9 +1431,6 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
+     const { produto_id, cliente_nome, cliente_whatsapp, tamanho, cpfCnpj } = req.body || {};
+     if (typeof cliente_whatsapp !== 'string' || cliente_whatsapp.trim().length < 8)
+         return res.status(400).json({ error: 'WhatsApp do cliente é obrigatório.' });
+-    const TAMANHOS_VALIDOS = ['P', 'M', 'G', 'GG', 'XG'];
+-    if (!TAMANHOS_VALIDOS.includes(tamanho))
+-        return res.status(400).json({ error: 'Selecione um tamanho válido.' });
+     const cpfDigits = String(cpfCnpj || '').replace(/\D/g, '');
+     if (!validarCpfCnpj(cpfDigits))
+         return res.status(400).json({ error: 'CPF/CNPJ inválido.' });
+@@ -1425,12 +1443,13 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
+     if (!Number.isInteger(pid) || pid < 1)
+         return res.status(400).json({ error: 'Produto inválido.' });
+ 
+-    let produtoNome, valorNum;
++    let produtoNome, valorNum, produtoCategoria;
+     try {
+-        const pr = await pool.query('SELECT nome, preco FROM produtos WHERE id = $1 AND oculto = false', [pid]);
++        const pr = await pool.query('SELECT nome, preco, categoria FROM produtos WHERE id = $1 AND oculto = false', [pid]);
+         if (!pr.rows.length) return res.status(404).json({ error: 'Produto não encontrado ou indisponível.' });
+-        produtoNome = pr.rows[0].nome;
+-        valorNum    = Number(pr.rows[0].preco);
++        produtoNome      = pr.rows[0].nome;
++        valorNum         = Number(pr.rows[0].preco);
++        produtoCategoria = pr.rows[0].categoria || 'vestuario';
+     } catch (e) {
+         console.error('POST /api/checkout/pix produto lookup:', e.message);
+         return res.status(500).json({ error: 'Erro ao verificar produto.' });
+@@ -1439,6 +1458,19 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
+         return res.status(409).json({ error: 'Preço do produto inválido. Contate a loja.' });
+     }
+ 
++    // [VZ] Decor 3D não tem tamanho de vestuário — só exige P/M/G/GG/XG pra
++    // categoria 'vestuario'. Precisa da categoria do produto (acima) antes de
++    // validar, por isso esse bloco não pode vir antes do lookup no banco.
++    let tamanhoFinal = '';
++    if (produtoCategoria === 'decor3d') {
++        tamanhoFinal = 'Único';
++    } else {
++        const TAMANHOS_VALIDOS = ['P', 'M', 'G', 'GG', 'XG'];
++        if (!TAMANHOS_VALIDOS.includes(tamanho))
++            return res.status(400).json({ error: 'Selecione um tamanho válido.' });
++        tamanhoFinal = tamanho;
++    }
++
+     try {
+         const customerId = await asaas.criarOuBuscarCliente({
+             nome: cliente_nome, whatsapp: cliente_whatsapp.trim(), cpfCnpj: cpfDigits
+@@ -1454,7 +1486,7 @@ app.post('/api/checkout/pix', checkoutLimiter, async (req, res) => {
+                  pix_qr_code, pix_copia_cola, pix_expira_em)
+              VALUES ($1,$2,$3,$4,$5,'novo','pendente',$6,$7,$8,$9,$10)
+              RETURNING id`,
+-            [produtoNome, valorNum, String(tamanho || '').slice(0, 20),
++            [produtoNome, valorNum, tamanhoFinal.slice(0, 20),
+              String(cliente_nome || '').slice(0, 100), cliente_whatsapp.trim(),
+              customerId, cobranca.asaas_payment_id,
+              cobranca.pix_qr_code, cobranca.pix_copia_cola, cobranca.pix_expira_em]);
+@@ -1486,6 +1518,23 @@ app.get('/api/pedidos/:id/status', clickLimiter, async (req, res) => {
+     }
+ });
+ 
++// [VZ] Comparação em tempo constante — evita que um atacante infira o token
++// correto medindo quanto tempo a comparação leva (mais rápido quebra antes,
++// mais devagar bate mais caracteres antes de divergir). Buffers de tamanho
++// diferente derrubariam o timingSafeEqual antes de chegar nessa proteção,
++// então comparamos contra um buffer de zeros do mesmo tamanho do recebido
++// só pra manter o tempo constante, e sempre retornamos false nesse caso.
++function tokensCoincidem(recebido, esperado) {
++    if (typeof recebido !== 'string' || typeof esperado !== 'string' || !recebido || !esperado) return false;
++    const bufRecebido = Buffer.from(recebido);
++    const bufEsperado = Buffer.from(esperado);
++    if (bufRecebido.length !== bufEsperado.length) {
++        crypto.timingSafeEqual(bufRecebido, Buffer.alloc(bufRecebido.length));
++        return false;
++    }
++    return crypto.timingSafeEqual(bufRecebido, bufEsperado);
++}
++
+ // Asaas webhook receiver. Every notification is logged BEFORE any processing
+ // is attempted, so a bug in our logic can never silently lose a payment event
+ // — worst case, it sits in webhook_log unprocessed and can be replayed by hand.
+@@ -1508,7 +1557,7 @@ app.post('/api/webhook/asaas', webhookLimiter, async (req, res) => {
+ 
+     // Verify authenticity. If no token is configured yet (CNPJ/Asaas not
+     // activated), reject everything — there is nothing legitimate to receive.
+-    if (!expectedToken || !incomingToken || incomingToken !== expectedToken) {
++    if (!tokensCoincidem(incomingToken, expectedToken)) {
+         console.warn('Webhook Asaas rejeitado: token ausente ou inválido.');
+         return res.status(401).json({ error: 'Token inválido.' });
+     }
+diff --git a/tests/cases/fase11-checkout-asaas.mjs b/tests/cases/fase11-checkout-asaas.mjs
+new file mode 100644
+index 0000000..5d2560a
+--- /dev/null
++++ b/tests/cases/fase11-checkout-asaas.mjs
+@@ -0,0 +1,91 @@
++import { criarRelator, login, getBase, query } from '../lib/ctx.mjs';
++
++// [VZ] Fase 11 — checkout PIX/Asaas era a única rota que move dinheiro real
++// sem nenhum teste automatizado (apontado na auditoria de encerramento de
++// ciclo). Cobertura possível sem credenciais reais da Asaas:
++//
++//   1. o gate (checkout_automatico_enabled + ASAAS_API_KEY) bloqueia a rota
++//      quando desligado — é o estado padrão em produção hoje;
++//   2. o webhook, que NÃO faz nenhuma chamada de saída pra Asaas, só recebe
++//      e processa — dá pra testar de ponta a ponta simulando uma notificação
++//      real, incluindo a comparação de token em tempo constante corrigida
++//      nesta rodada.
++//
++// Criar uma cobrança PIX de verdade (POST /api/checkout/pix com o gate
++// ligado) exigiria ASAAS_API_KEY real ou um shim do módulo `https` nativo —
++// fora do escopo deste arquivo. Registrado aqui, não escondido: essa parte
++// da rota segue sem teste automatizado.
++export default async function run() {
++    const r = criarRelator('Fase 11 — Checkout PIX/Asaas');
++    const cookie = await login();
++
++    // ── Gate: automático desligado (padrão) ───────────────────────────
++    const status = await fetch(`${getBase()}/api/checkout/status`);
++    const statusJson = await status.json();
++    r.checar('GET /api/checkout/status responde 200 sem login', status.status === 200);
++    r.checar('checkout automático reporta desligado (nem config nem ASAAS_API_KEY setados no ambiente de teste)',
++        statusJson.enabled === false, JSON.stringify(statusJson));
++
++    const pixDesligado = await fetch(`${getBase()}/api/checkout/pix`, {
++        method: 'POST', headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ produto_id: 1, cliente_whatsapp: '11999998888', cpfCnpj: '11144477735' }),
++    });
++    r.checar('POST /api/checkout/pix com gate desligado responde 503, não gera cobrança',
++        pixDesligado.status === 503, pixDesligado.status);
++
++    // ── Webhook: token ausente/errado é rejeitado, mas ainda fica logado ──
++    const semToken = await fetch(`${getBase()}/api/webhook/asaas`, {
++        method: 'POST', headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ event: 'PAYMENT_CONFIRMED', payment: { id: 'pay_teste_semtoken' } }),
++    });
++    r.checar('webhook sem token é rejeitado (401)', semToken.status === 401, semToken.status);
++
++    const logSemToken = await query(
++        `SELECT id FROM webhook_log WHERE payload::text LIKE '%pay_teste_semtoken%' ORDER BY id DESC LIMIT 1`);
++    r.checar('notificação sem token válido ainda assim fica registrada em webhook_log (auditável antes de qualquer validação)',
++        logSemToken.length === 1);
++
++    const tokenErrado = await fetch(`${getBase()}/api/webhook/asaas`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json', 'asaas-access-token': 'token-inventado-errado' },
++        body: JSON.stringify({ event: 'PAYMENT_CONFIRMED', payment: { id: 'pay_teste_tokenerrado' } }),
++    });
++    r.checar('webhook com token errado (mesmo tamanho ou não) é rejeitado (401)', tokenErrado.status === 401, tokenErrado.status);
++
++    // ── Webhook: token certo confirma pagamento e avança o pedido ─────
++    const TOKEN = process.env.TEST_WEBHOOK_TOKEN || 'teste-webhook-token-fixo-nao-usar-em-producao';
++    const paymentId = 'pay_teste_' + Date.now();
++
++    const pedido = await query(
++        `INSERT INTO pedidos (produto_nome, valor, status, payment_status, asaas_payment_id)
++         VALUES ('CAMISETA TESTE WEBHOOK', 99.90, 'novo', 'pendente', $1) RETURNING id`,
++        [paymentId]);
++    const pedidoId = pedido[0].id;
++
++    const webhookOk = await fetch(`${getBase()}/api/webhook/asaas`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json', 'asaas-access-token': TOKEN },
++        body: JSON.stringify({ event: 'PAYMENT_CONFIRMED', payment: { id: paymentId } }),
++    });
++    r.checar('webhook com token correto responde 200', webhookOk.status === 200, webhookOk.status);
++
++    const pedidoDepois = await query('SELECT status, payment_status FROM pedidos WHERE id = $1', [pedidoId]);
++    r.checar('PAYMENT_CONFIRMED avança o pedido pra confirmado/pago automaticamente',
++        pedidoDepois[0].status === 'confirmado' && pedidoDepois[0].payment_status === 'pago',
++        JSON.stringify(pedidoDepois[0]));
++
++    const logOk = await query(
++        `SELECT processado FROM webhook_log WHERE payload::text LIKE $1 ORDER BY id DESC LIMIT 1`,
++        ['%' + paymentId + '%']);
++    r.checar('notificação processada com sucesso fica marcada em webhook_log', logOk[0]?.processado === true, JSON.stringify(logOk[0]));
++
++    // ── Replay: mesmo evento de novo não deveria quebrar nem reprocessar sem sentido ──
++    const replay = await fetch(`${getBase()}/api/webhook/asaas`, {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json', 'asaas-access-token': TOKEN },
++        body: JSON.stringify({ event: 'PAYMENT_CONFIRMED', payment: { id: paymentId } }),
++    });
++    r.checar('reenvio do mesmo evento (comum em webhooks) continua respondendo 200, sem erro', replay.status === 200, replay.status);
++
++    return r.total();
++}
+diff --git a/tests/run.mjs b/tests/run.mjs
+index 8735094..91624f5 100644
+--- a/tests/run.mjs
++++ b/tests/run.mjs
+@@ -90,6 +90,12 @@ async function main() {
+             ADMIN_PASSWORD_HASH: bcrypt.hashSync(process.env.TEST_ADMIN_PASSWORD, 10),
+             CLOUDINARY_CLOUD_NAME: 'teste', CLOUDINARY_API_KEY: 'teste', CLOUDINARY_API_SECRET: 'teste',
+             GROQ_API_KEY: process.env.TEST_GROQ_API_KEY || 'chave-falsa-suficiente-pro-shim',
++            // [VZ] Token fixo só pra suíte poder testar a validação do webhook
++            // da Asaas (comparação em tempo constante) sem precisar de conta
++            // real. ASAAS_API_KEY fica de fora de propósito — isso mantém
++            // checkout_automatico e criação de cobrança real desligados no
++            // ambiente de teste, só o recebimento do webhook é exercitado.
++            ASAAS_WEBHOOK_TOKEN: 'teste-webhook-token-fixo-nao-usar-em-producao',
+         },
+         stdio: ['ignore', 'pipe', 'pipe'],
+     });
+@@ -116,6 +122,7 @@ async function main() {
+             'fase7-frete.mjs',
+             'fase8-comprovante.mjs',
+             'fase10-seguranca.mjs',
++            'fase11-checkout-asaas.mjs',
+         ];
+         for (const arquivo of casos) {
+             try {
+-- 
+2.43.0
+
