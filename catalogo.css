@@ -144,6 +144,17 @@
             box-shadow: 0 0 12px rgba(0,229,255,0.2);
         }
         .icon-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        /* [VZ] Estado ativo (2026-09-17) — o ícone que abriu um modal (manual/
+           FAQ/feedback) precisa continuar visivelmente "selecionado" enquanto
+           esse modal está aberto, não só durante o hover/clique. Preenchimento
+           + glow persistente, mesma cor de destaque usada no resto do site. */
+        .icon-btn.active {
+            background: rgba(0,229,255,0.14);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 0 1px rgba(0,229,255,0.25), 0 0 14px rgba(0,229,255,0.35);
+        }
+        .icon-btn.active:hover { box-shadow: 0 0 0 1px rgba(0,229,255,0.3), 0 0 18px rgba(0,229,255,0.45); }
         .icon-btn svg { width: 17px; height: 17px; }
 
         /* Layout toggle pill */
@@ -1942,4 +1953,151 @@
 @media (max-width: 600px) {
     .feedback-modal-card { padding: 28px 20px 24px; }
     .feedback-star { font-size: 1.5rem; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   CATALOG OVERVIEW — Destaques / Mais Procurados / Novidades.
+   Primeira coisa visível depois da animação de entrada, antes
+   da grade completa com filtros (que continua exatamente igual
+   logo abaixo). Prateleiras horizontais, mesmo .card-produto
+   da grade principal (via montarCardProduto em catalogo.js).
+   ───────────────────────────────────────────────────────── */
+.catalog-overview {
+    padding: 28px 32px 8px;
+}
+.overview-section { margin-bottom: 30px; }
+.overview-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.overview-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: #fff;
+    margin: 0;
+}
+
+.overview-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 4px;
+    padding-bottom: 6px;
+    margin: 0 -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+.overview-row::-webkit-scrollbar { height: 6px; }
+.overview-row::-webkit-scrollbar-track { background: transparent; }
+.overview-row::-webkit-scrollbar-thumb { background: #262626; border-radius: 10px; }
+
+.overview-row .card-produto {
+    flex: 0 0 auto;
+    width: 210px;
+    scroll-snap-align: start;
+}
+.overview-row .card-produto img { height: 210px; }
+
+.overview-badge {
+    display: inline-block;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+}
+.overview-badge-procurado {
+    color: #000;
+    background: linear-gradient(135deg, var(--cyan), #00a8bd);
+}
+.overview-badge-novo {
+    color: #000;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.overview-cta {
+    display: block;
+    margin: 4px auto 20px;
+    background: none;
+    border: 1px solid #2a2a2a;
+    color: #aaa;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 11px 26px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+.overview-cta:hover { border-color: var(--cyan); color: var(--cyan); }
+
+@media (max-width: 600px) {
+    .catalog-overview { padding: 20px 16px 4px; }
+    .overview-header h2 { font-size: 1.1rem; }
+    .overview-row .card-produto { width: 160px; }
+    .overview-row .card-produto img { height: 160px; }
+    .overview-section { margin-bottom: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overview-row { scroll-behavior: auto; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   AMBIENT GLOW — fundo cyberpunk sutil, presente no catálogo
+   inteiro. Dois blobs (cyan + purple) com deriva autônoma via
+   CSS, mais um nudge de paralaxe controlado por JS (mouse no
+   desktop, inclinação do aparelho no mobile — ver initAmbientGlow
+   em catalogo.js). Sempre atrás de qualquer conteúdo real: cards,
+   header e barra de filtro têm fundo opaco ou z-index explícito
+   por cima, então o glow só aparece nos vãos entre eles.
+   ───────────────────────────────────────────────────────── */
+.ambient-glow {
+    position: fixed;
+    inset: -12vmax;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    transform: translate3d(var(--ambient-x, 0px), var(--ambient-y, 0px), 0);
+}
+.ambient-blob {
+    position: absolute;
+    width: 55vmax;
+    height: 55vmax;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.15;
+}
+.ambient-blob-cyan {
+    top: 0%; left: -5%;
+    background: radial-gradient(circle, var(--cyan), transparent 70%);
+    animation: ambient-drift-a 36s ease-in-out infinite;
+}
+.ambient-blob-purple {
+    bottom: -5%; right: -8%;
+    background: radial-gradient(circle, var(--purple), transparent 70%);
+    animation: ambient-drift-b 44s ease-in-out infinite;
+}
+@keyframes ambient-drift-a {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50%      { transform: translate(7vmax, -5vmax) rotate(12deg) scale(1.12); }
+}
+@keyframes ambient-drift-b {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50%      { transform: translate(-6vmax, 5vmax) rotate(-10deg) scale(0.9); }
+}
+@media (max-width: 600px) {
+    .ambient-blob { width: 80vmax; height: 80vmax; opacity: 0.12; filter: blur(70px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ambient-glow { transform: none; }
+    .ambient-blob { animation: none; opacity: 0.08; }
 }

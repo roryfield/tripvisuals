@@ -17,6 +17,13 @@
 </head>
 <body>
 
+<!-- AMBIENT GLOW — fundo persistente em todo o catálogo, reage ao mouse/
+     toque e deriva sozinho devagar. Decorativo, nunca interativo. -->
+<div class="ambient-glow" id="ambientGlow" aria-hidden="true">
+    <div class="ambient-blob ambient-blob-cyan"></div>
+    <div class="ambient-blob ambient-blob-purple"></div>
+</div>
+
 <!-- CUSTOMER HEADER -->
 <!-- CATALOG OPENING — first paint only, fades out when products are ready -->
 <div class="catalog-intro" id="catalogIntro" aria-hidden="true">
@@ -120,7 +127,7 @@
 
         <div class="hdr-divider" aria-hidden="true"></div>
 
-        <button id="manualBtn" class="icon-btn manual-trigger" type="button"
+        <button id="manualBtn" class="icon-btn manual-trigger" type="button" aria-pressed="false"
             aria-label="Manual de uso do catálogo" title="Como usar o catálogo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -128,7 +135,7 @@
             </svg>
         </button>
 
-        <button id="faqBtn" class="icon-btn faq-trigger" type="button"
+        <button id="faqBtn" class="icon-btn faq-trigger" type="button" aria-pressed="false"
             aria-label="Informações sobre tamanhos, prazos e frete" title="Sobre as peças">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
@@ -137,7 +144,7 @@
             </svg>
         </button>
 
-        <button id="feedbackBtn" class="icon-btn feedback-trigger" type="button"
+        <button id="feedbackBtn" class="icon-btn feedback-trigger" type="button" aria-pressed="false"
             aria-label="Deixar um feedback sobre o catálogo" title="Deixar feedback">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
@@ -178,6 +185,10 @@
 </header>
 
 <div class="search-results" id="searchResults" role="region" aria-live="polite"></div>
+
+<!-- OVERVIEW — Destaques / Mais Procurados / Novidades, rendered by JS
+     after products load. Hidden automatically in small catalogs. -->
+<div id="catalogOverview" class="catalog-overview" aria-label="Destaques do catálogo" hidden></div>
 
 <!-- CATALOG -->
 <!-- FILTER BAR — rendered by JS after products load -->

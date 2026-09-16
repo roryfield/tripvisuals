@@ -9,6 +9,73 @@
         });
     }
 
+    // [VZ] Ambient glow (2026-09-17) — fundo cyberpunk que reage ao
+    // ponteiro no desktop e à inclinação do aparelho no mobile, além da
+    // deriva autônoma já resolvida em CSS (@keyframes ambient-drift-*).
+    // Decisão consciente: NÃO pede permissão de sensor de movimento no
+    // iOS (DeviceOrientationEvent.requestPermission) — isso exigiria um
+    // gesto explícito do usuário e um prompt nativo só pra um efeito
+    // decorativo, o que é abusar da permissão. Em iOS mais novo o efeito
+    // simplesmente não reage à inclinação; a deriva automática do CSS
+    // continua garantindo que o fundo nunca fica estático.
+    function initAmbientGlow() {
+        var el = document.getElementById('ambientGlow');
+        if (!el) return;
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) return;
+
+        var targetX = 0, targetY = 0, curX = 0, curY = 0;
+        var MAX_OFFSET = 34; // px — nudge sutil, nunca desloca a cena inteira
+        var raf = null;
+
+        function aplicar() {
+            curX += (targetX - curX) * 0.06;
+            curY += (targetY - curY) * 0.06;
+            el.style.setProperty('--ambient-x', curX.toFixed(1) + 'px');
+            el.style.setProperty('--ambient-y', curY.toFixed(1) + 'px');
+            if (Math.abs(targetX - curX) > 0.1 || Math.abs(targetY - curY) > 0.1) {
+                raf = requestAnimationFrame(aplicar);
+            } else {
+                raf = null;
+            }
+        }
+        function agendar() {
+            if (!raf) raf = requestAnimationFrame(aplicar);
+        }
+
+        window.addEventListener('pointermove', function (e) {
+            if (e.pointerType === 'touch') return; // toque real é tratado pela inclinação abaixo, não pela posição do dedo
+            var nx = (e.clientX / window.innerWidth) - 0.5;
+            var ny = (e.clientY / window.innerHeight) - 0.5;
+            targetX = nx * MAX_OFFSET * 2;
+            targetY = ny * MAX_OFFSET * 2;
+            agendar();
+        }, { passive: true });
+
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+            window.addEventListener('deviceorientation', function (e) {
+                if (e.gamma === null || e.beta === null) return;
+                var nx = Math.max(-1, Math.min(1, e.gamma / 30));
+                var ny = Math.max(-1, Math.min(1, (e.beta - 40) / 30));
+                targetX = nx * MAX_OFFSET;
+                targetY = ny * MAX_OFFSET;
+                agendar();
+            }, { passive: true });
+        }
+    }
+
+    // [VZ] Estado "ativo" nos ícones do header (2026-09-17) — antes o ícone
+    // que abre um modal (manual/FAQ/feedback) voltava pro visual neutro assim
+    // que o clique terminava, então não dava pra saber, olhando pro header,
+    // qual painel estava aberto. Chamado de dentro de cada abrir*/fechar*,
+    // não do listener de clique, pra cobrir também quando o modal é aberto
+    // por outro caminho (ex.: botão de manual da tela de intro).
+    function marcarBotaoModalAtivo(btn, ativo) {
+        if (!btn) return;
+        btn.classList.toggle('active', !!ativo);
+        btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    }
+
     // [VZ] Visualizador multi-ângulo (2026-09-07) — duas variantes, mesma ideia:
     // trocar a imagem grande do modal sem precisar de nenhuma lib externa.
     //
@@ -315,6 +382,38 @@
         });
     }
 
+    // [VZ] Card de produto — um único builder reaproveitado pela grade
+    // completa (renderProdutos) e pelas prateleiras da tela de overview
+    // (renderOverview), pra manter o mesmo card, o mesmo clique-pra-abrir-
+    // modal e o mesmo fallback de imagem em vez de duas versões divergindo
+    // com o tempo. `badgeExtra` deixa a prateleira anexar um selo próprio
+    // (ex.: "Mais procurado") sem duplicar todo o innerHTML por causa disso.
+    function montarCardProduto(p, i, badgeExtra) {
+        var btn = document.createElement('button');
+        btn.className = 'card-produto';
+        btn.type      = 'button';
+        btn.setAttribute('aria-label', p.nome + (p.cor ? ' — ' + p.cor : '') + ' — R$ ' + Number(p.preco).toFixed(2) + ' — Ver detalhes');
+        btn.style.setProperty('--card-delay', Math.min(i * 40, 600) + 'ms');
+        btn.innerHTML =
+            '<img src="' + esc(p.imagem_url || '') + '" alt="' + esc(p.nome) + '" loading="lazy">' +
+            '<div class="buy-overlay" aria-hidden="true">' +
+            '<div class="buy-pill">Ver detalhes</div>' +
+            '</div>' +
+            '<div class="card-info">' +
+            (badgeExtra || (p.destaque ? '<span class="destaque-badge">Novidade</span>' : '')) +
+            '<h3>' + esc(p.nome) + '</h3>' +
+            '<div class="card-meta">' +
+            (p.genero ? '<span class="genero-badge">' + esc(p.genero) + '</span>' : '') +
+            (p.cor    ? '<span class="cor-badge">'    + esc(p.cor)    + '</span>' : '') +
+            '<span class="price">R$ ' + Number(p.preco).toFixed(2) + '</span>' +
+            '</div>' +
+            '</div>';
+        var img = btn.querySelector('img');
+        if (img) setImgFallback(img);
+        btn.addEventListener('click', function () { abrirModal(p); });
+        return btn;
+    }
+
     function renderProdutos(lista) {
         var vitrine = document.getElementById('vitrine');
         var filtered = applyFilters(lista);
@@ -342,30 +441,90 @@
         }
 
         filtered.forEach(function (p, i) {
-            var btn = document.createElement('button');
-            btn.className = 'card-produto';
-            btn.type      = 'button';
-            btn.setAttribute('aria-label', p.nome + (p.cor ? ' — ' + p.cor : '') + ' — R$ ' + Number(p.preco).toFixed(2) + ' — Ver detalhes');
-            btn.style.setProperty('--card-delay', Math.min(i * 40, 600) + 'ms');
-            btn.innerHTML =
-                '<img src="' + esc(p.imagem_url || '') + '" alt="' + esc(p.nome) + '" loading="lazy">' +
-                '<div class="buy-overlay" aria-hidden="true">' +
-                '<div class="buy-pill">Ver detalhes</div>' +
-                '</div>' +
-                '<div class="card-info">' +
-                (p.destaque ? '<span class="destaque-badge">Novidade</span>' : '') +
-                '<h3>' + esc(p.nome) + '</h3>' +
-                '<div class="card-meta">' +
-                (p.genero ? '<span class="genero-badge">' + esc(p.genero) + '</span>' : '') +
-                (p.cor    ? '<span class="cor-badge">'    + esc(p.cor)    + '</span>' : '') +
-                '<span class="price">R$ ' + Number(p.preco).toFixed(2) + '</span>' +
-                '</div>' +
-                '</div>';
-            var img = btn.querySelector('img');
-            if (img) setImgFallback(img);
-            btn.addEventListener('click', function () { abrirModal(p); });
-            vitrine.appendChild(btn);
+            vitrine.appendChild(montarCardProduto(p, i));
         });
+    }
+
+    // [VZ] Tela de overview (2026-09-16) — a primeira coisa visível depois
+    // da animação de entrada deixa de ser a ordem crua do banco (decorativo
+    // 3D, depois camiseta, por acaso do id) e passa a ser três prateleiras
+    // com propósito: Destaques (curadoria manual via campo 'destaque',
+    // mesmo flag que já existia pro selo "Novidade"), Mais Procurados (por
+    // cliques — dado real já rastreado; NÃO é "mais vendidos", pedidos não
+    // têm vínculo com produto_id hoje, então rotular como vendas seria
+    // inventar um dado que não temos) e Novidades (por criado_em). Cada
+    // prateleira só aparece se tiver conteúdo de verdade pra mostrar, e a
+    // seção inteira some em lojas pequenas, onde ela só repetiria a grade.
+    var OVERVIEW_MIN_PRODUTOS = 6;
+    var OVERVIEW_ITENS_POR_SECAO = 8;
+
+    function renderOverview(lista) {
+        var wrap = document.getElementById('catalogOverview');
+        if (!wrap) return;
+
+        if (!lista || lista.length < OVERVIEW_MIN_PRODUTOS) {
+            wrap.innerHTML = '';
+            wrap.hidden = true;
+            return;
+        }
+
+        var destaques = lista.filter(function (p) { return p.destaque; }).slice(0, OVERVIEW_ITENS_POR_SECAO);
+
+        var procurados = lista
+            .filter(function (p) { return Number(p.cliques) > 0; })
+            .slice()
+            .sort(function (a, b) { return Number(b.cliques) - Number(a.cliques); })
+            .slice(0, OVERVIEW_ITENS_POR_SECAO);
+        // Sinal fraco demais pra virar prateleira — menos de 3 produtos com
+        // algum clique registrado não é "popularidade", é ruído.
+        if (procurados.length < 3) procurados = [];
+
+        var novidades = lista
+            .filter(function (p) { return p.criado_em; })
+            .slice()
+            .sort(function (a, b) { return new Date(b.criado_em) - new Date(a.criado_em); })
+            .slice(0, OVERVIEW_ITENS_POR_SECAO);
+
+        var secoes = [
+            { titulo: 'Destaques',        itens: destaques,  badge: null },
+            { titulo: 'Mais Procurados',  itens: procurados, badge: '<span class="overview-badge overview-badge-procurado">Popular</span>' },
+            { titulo: 'Novidades',        itens: novidades,  badge: '<span class="overview-badge overview-badge-novo">Novo</span>' }
+        ].filter(function (s) { return s.itens.length >= 3; });
+
+        if (!secoes.length) {
+            wrap.innerHTML = '';
+            wrap.hidden = true;
+            return;
+        }
+
+        wrap.hidden = false;
+        wrap.innerHTML = '';
+
+        secoes.forEach(function (secao) {
+            var section = document.createElement('section');
+            section.className = 'overview-section';
+            section.innerHTML =
+                '<div class="overview-header">' +
+                '<h2>' + esc(secao.titulo) + '</h2>' +
+                '</div>';
+            var row = document.createElement('div');
+            row.className = 'overview-row';
+            secao.itens.forEach(function (p, i) {
+                row.appendChild(montarCardProduto(p, i, secao.badge));
+            });
+            section.appendChild(row);
+            wrap.appendChild(section);
+        });
+
+        var cta = document.createElement('button');
+        cta.type = 'button';
+        cta.className = 'overview-cta';
+        cta.textContent = 'Ver catálogo completo ↓';
+        cta.addEventListener('click', function () {
+            var alvo = document.getElementById('filterBar') || document.getElementById('vitrine');
+            if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        wrap.appendChild(cta);
     }
 
     function limparFiltros() {
@@ -675,12 +834,14 @@
             manualModal.classList.add('open');
             manualModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            marcarBotaoModalAtivo(manualBtn, true);
             if (manualClose) setTimeout(function () { manualClose.focus(); }, 50);
         };
         fecharManual = function () {
             manualModal.classList.remove('open');
             manualModal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
+            marcarBotaoModalAtivo(manualBtn, false);
         };
 
         if (manualBtn)      manualBtn.addEventListener('click', abrirManual);
@@ -742,12 +903,14 @@
             modal.classList.add('open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            marcarBotaoModalAtivo(btn, true);
             if (mensagemEl) setTimeout(function () { mensagemEl.focus(); }, 50);
         }
         function fecharFeedback() {
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
+            marcarBotaoModalAtivo(btn, false);
         }
         function resetarForm() {
             card.setAttribute('data-state', 'form');
@@ -833,12 +996,14 @@
             faqModal.classList.add('open');
             faqModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            marcarBotaoModalAtivo(faqBtn, true);
             if (faqClose) setTimeout(function () { faqClose.focus(); }, 50);
         }
         function fecharFaq() {
             faqModal.classList.remove('open');
             faqModal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
+            marcarBotaoModalAtivo(faqBtn, false);
         }
 
         faqBtn.addEventListener('click', abrirFaq);
@@ -1103,6 +1268,7 @@
         initFaqModal();
         initManualModal();
         initFeedbackModal();
+        initAmbientGlow();
         initPixCheckout();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');
@@ -1164,6 +1330,7 @@
         try {
             var resProd   = await fetch('/api/produtos');
             todosProdutos = resProd.ok ? await resProd.json() : [];
+            renderOverview(todosProdutos);
             renderFiltros(todosProdutos);
             renderProdutos(todosProdutos);
         } catch (e) {

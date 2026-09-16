@@ -717,7 +717,11 @@ app.get('/api/produtos', async (req, res) => {
         }
         const sql = isAdmin
             ? 'SELECT id, nome, preco, imagem_url, cor, oculto, tipo, genero, banda, categoria, criado_em, destaque, descricao, cliques FROM produtos ORDER BY destaque DESC, id DESC'
-            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
+            // [VZ] criado_em e cliques expostos publicamente a partir daqui —
+            // alimentam as seções "Novidades" e "Mais Procurados" da tela de
+            // overview do catálogo (ver renderOverview em catalogo.js). Nenhum
+            // dado sensível: são só metadados do próprio produto já visível.
+            : 'SELECT id, nome, preco, imagem_url, cor, tipo, genero, categoria, destaque, descricao, criado_em, cliques FROM produtos WHERE oculto = false ORDER BY destaque DESC, id DESC';
         const r = await pool.query(sql);
         res.json(r.rows);
     } catch (e) {
