@@ -137,6 +137,8 @@
             transition: all 0.2s;
             text-decoration: none;
             flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
         }
         .icon-btn:hover {
             border-color: var(--cyan);
@@ -690,6 +692,27 @@
 }
 .card-produto:hover::after {
     box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.12);
+}
+
+/* [VZ] Glow ripple (2026-09-17) — explosão de glow no ponto do clique,
+   disparada por initGlowRipple() em catalogo.js num listener delegado no
+   documento (ver GLOW_RIPPLE_SELECTOR lá). O elemento alvo precisa de
+   position:relative + overflow:hidden pra clipar certo na própria forma
+   (círculo, pílula, cantos arredondados) — já garantido nos seletores que
+   usam esse efeito (.card-produto, .filter-chip, .filter-more-trigger,
+   .overview-cta, .overview-nav, .icon-btn). */
+.glow-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.55), rgba(157, 0, 255, 0.25) 55%, transparent 72%);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    animation: glow-ripple-burst 0.55s ease-out forwards;
+    z-index: 6;
+}
+@keyframes glow-ripple-burst {
+    0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(1);   opacity: 0; }
 }
 
 
@@ -1536,8 +1559,10 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
-.filter-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+.filter-chip:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.18); }
 /* [VZ] Tipo em destaque (2026-09-15) — grupo mais importante pro cliente
    final (é literalmente "que peça eu quero"), por isso vem com mais peso
    visual que gênero: borda mais forte, levemente maior, com contagem. */
@@ -1560,6 +1585,7 @@
     background: rgba(0,229,255,0.12);
     border-color: var(--cyan);
     color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0,229,255,0.22);
 }
 .filter-clear {
     background: transparent;
@@ -1588,6 +1614,8 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
 .filter-more-trigger:hover { border-color: var(--cyan); color: var(--cyan); }
 .filter-more-trigger.active {
@@ -1973,21 +2001,113 @@
    da grade principal (via montarCardProduto em catalogo.js).
    ───────────────────────────────────────────────────────── */
 .catalog-overview {
-    padding: 28px 32px 8px;
+    padding: 40px 32px 28px;
+    position: relative;
 }
-.overview-section { margin-bottom: 30px; }
+
+/* [VZ] Cabeçalho da vitrine (2026-09-17) — a "moldura da vitrine de loja":
+   um eyebrow + chamada, no mesmo tom do texto de boas-vindas da tela de
+   intro, deixando claro que isso é o mostruário, não só uma lista. */
+.overview-intro { margin-bottom: 28px; max-width: 680px; }
+.overview-intro-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 8px;
+}
+.overview-intro-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    letter-spacing: 1px;
+    line-height: 1.15;
+    color: #fff;
+    margin: 0;
+}
+
+/* [VZ] Reveal-on-scroll (2026-09-17) — cada prateleira nasce oculta e sobe
+   suavemente pra cena quando entra no viewport (ver IntersectionObserver
+   em renderOverview). Sem JS pra alternar a classe .is-visible, ela nunca
+   deveria ficar presa invisível — por isso o estado de repouso já parte de
+   uma opacidade alta o bastante (0) só quando o JS confirma que vai
+   completar a transição; ver fallback em renderOverview. */
+.overview-section {
+    margin-bottom: 36px;
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.overview-section.is-visible { opacity: 1; transform: translateY(0); }
+
 .overview-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 14px;
 }
-.overview-header h2 {
+.overview-header h3 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.3rem;
     letter-spacing: 2px;
     color: #fff;
     margin: 0;
+    font-weight: 400;
+}
+
+/* [VZ] Wrapper da fileira (2026-09-17) — hospeda as setas de navegação e as
+   máscaras de esmaecimento nas bordas, pra deixar claro que existe mais
+   conteúdo pro lado (em vez do produto seguinte aparecer cortado no meio
+   do preço, sem contexto nenhum, como acontecia antes). */
+.overview-row-wrap { position: relative; }
+.overview-row-wrap::before,
+.overview-row-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 12px;
+    width: 64px;
+    pointer-events: none;
+    z-index: 2;
+}
+.overview-row-wrap::before { left: 0;  background: linear-gradient(to right, var(--bg) 15%, transparent); }
+.overview-row-wrap::after  { right: 0; background: linear-gradient(to left,  var(--bg) 15%, transparent); }
+
+.overview-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(5, 5, 5, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, opacity 0.2s;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    overflow: hidden;
+}
+.overview-nav:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+}
+.overview-nav:disabled { opacity: 0; pointer-events: none; }
+.overview-nav-prev { left: 6px; }
+.overview-nav-next { right: 6px; }
+@media (max-width: 760px) {
+    /* Toque já rola por swipe nativo — as setas só fazem sentido pro
+       clique de mouse do desktop. */
+    .overview-nav { display: none; }
 }
 
 .overview-row {
@@ -2033,31 +2153,51 @@
 
 .overview-cta {
     display: block;
-    margin: 4px auto 20px;
+    position: relative;
+    overflow: hidden;
+    margin: 12px auto 20px;
     background: none;
-    border: 1px solid #2a2a2a;
-    color: #aaa;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    color: #ccc;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.5px;
-    padding: 11px 26px;
+    padding: 12px 28px;
     border-radius: 50px;
     cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.overview-cta:hover { border-color: var(--cyan); color: var(--cyan); }
+.overview-cta:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+/* [VZ] Reveal do catálogo completo (2026-09-17) — transição de entrada
+   quando o cliente libera a grade cheia clicando no CTA da vitrine, pra
+   não ser um "pop" seco de conteúdo. */
+@keyframes catalogoCompletoIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.catalogo-completo-reveal { animation: catalogoCompletoIn 0.55s ease both; }
 
 @media (max-width: 600px) {
-    .catalog-overview { padding: 20px 16px 4px; }
-    .overview-header h2 { font-size: 1.1rem; }
+    .catalog-overview { padding: 28px 16px 20px; }
+    .overview-intro-title { font-size: 1.5rem; }
+    .overview-header h3 { font-size: 1.1rem; }
+    .overview-row-wrap::before, .overview-row-wrap::after { width: 28px; }
     .overview-row .card-produto { width: 160px; }
     .overview-row .card-produto img { height: 160px; }
-    .overview-section { margin-bottom: 22px; }
+    .overview-section { margin-bottom: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .overview-row { scroll-behavior: auto; }
+    .overview-section,
+    .catalogo-completo-reveal { opacity: 1; transform: none; animation: none; transition: none; }
 }
 
 /* ─────────────────────────────────────────────────────────

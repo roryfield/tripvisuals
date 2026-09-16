@@ -9,6 +9,43 @@
         });
     }
 
+    // [VZ] Preferência de movimento reduzido (2026-09-17) — lida uma vez,
+    // compartilhada por qualquer efeito decorativo novo (glow ripple,
+    // reveal-on-scroll da vitrine), em vez de cada função reimplementar o
+    // próprio matchMedia.
+    var prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+    // [VZ] Glow ripple (2026-09-17) — feedback tátil no clique, consistente
+    // com a vibe cyberpunk do resto do site: uma explosão de glow nasce no
+    // ponto exato do clique (ou centralizada, quando ativado via teclado) e
+    // se dissolve. Delegado num único listener no documento em vez de um
+    // listener por elemento — necessário porque cards, chips e o CTA da
+    // vitrine são recriados a cada renderProdutos/renderFiltros/renderOverview,
+    // e um listener preso ao elemento se perderia a cada re-render.
+    var GLOW_RIPPLE_SELECTOR = '.card-produto, .filter-chip, .filter-more-trigger, .overview-cta, .overview-nav, .icon-btn';
+    function initGlowRipple() {
+        if (prefersReducedMotion) return;
+        document.addEventListener('click', function (e) {
+            var alvo = e.target.closest(GLOW_RIPPLE_SELECTOR);
+            if (!alvo || alvo.disabled) return;
+            var rect = alvo.getBoundingClientRect();
+            // Clique disparado via teclado (Enter/Espaço) chega com
+            // clientX/clientY zerados — nesse caso centraliza o glow.
+            var semCoordenada = e.clientX === 0 && e.clientY === 0;
+            var cx = semCoordenada ? rect.left + rect.width / 2 : e.clientX;
+            var cy = semCoordenada ? rect.top + rect.height / 2 : e.clientY;
+            var tamanho = Math.max(rect.width, rect.height) * 1.6;
+            var span = document.createElement('span');
+            span.className = 'glow-ripple';
+            span.style.width = tamanho + 'px';
+            span.style.height = tamanho + 'px';
+            span.style.left = (cx - rect.left) + 'px';
+            span.style.top = (cy - rect.top) + 'px';
+            alvo.appendChild(span);
+            span.addEventListener('animationend', function () { span.remove(); });
+        }, true);
+    }
+
     // [VZ] Ambient glow (2026-09-17) — fundo cyberpunk que reage ao
     // ponteiro no desktop e à inclinação do aparelho no mobile, além da
     // deriva autônoma já resolvida em CSS (@keyframes ambient-drift-*).
@@ -21,8 +58,7 @@
     function initAmbientGlow() {
         var el = document.getElementById('ambientGlow');
         if (!el) return;
-        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduceMotion) return;
+        if (prefersReducedMotion) return;
 
         var targetX = 0, targetY = 0, curX = 0, curY = 0;
         var MAX_OFFSET = 34; // px — nudge sutil, nunca desloca a cena inteira
@@ -524,15 +560,75 @@
     var OVERVIEW_MIN_PRODUTOS = 6;
     var OVERVIEW_ITENS_POR_SECAO = 8;
 
+    // [VZ] Catálogo completo sob demanda (2026-09-17) — quando existe uma
+    // vitrine curada de verdade pra mostrar, a grade cheia (com filtros e a
+    // rolagem em lotes) fica escondida até o cliente pedir por ela — clicar
+    // em "Ver catálogo completo". Antes disso, um scroll um pouco mais forte
+    // já derrubava o cliente direto na grade de 404 produtos: a vitrine
+    // virava só um preâmbulo, não a primeira tela de verdade. Numa loja
+    // pequena (sem vitrine, ver abaixo) essa trava não existe — não faz
+    // sentido esconder a única coisa que existe pra mostrar.
+    var catalogoCompletoDesbloqueado = false;
+
+    function mostrarCatalogoCompleto() {
+        var filterBarEl   = document.getElementById('filterBar');
+        var vitrineWrapEl = document.querySelector('.vitrine-wrap');
+        if (catalogoCompletoDesbloqueado) {
+            var alvoExistente = filterBarEl || vitrineWrapEl;
+            if (alvoExistente) alvoExistente.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+            return;
+        }
+        catalogoCompletoDesbloqueado = true;
+        [filterBarEl, vitrineWrapEl].forEach(function (el) {
+            if (!el) return;
+            el.hidden = false;
+            el.classList.add('catalogo-completo-reveal');
+        });
+        // Só rola a tela depois do reflow — o alvo precisa ter altura real
+        // (deixou de estar "hidden") antes do scrollIntoView calcular a
+        // posição, senão a rolagem erra o alvo por uma tela inteira.
+        requestAnimationFrame(function () {
+            var alvo = filterBarEl || vitrineWrapEl;
+            if (alvo) alvo.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+        });
+    }
+
+    function habilitarNavegacaoOverview(row, prevBtn, nextBtn) {
+        function atualizar() {
+            var max = row.scrollWidth - row.clientWidth - 2;
+            prevBtn.disabled = row.scrollLeft <= 2;
+            nextBtn.disabled = max <= 2 || row.scrollLeft >= max;
+        }
+        prevBtn.addEventListener('click', function () {
+            row.scrollBy({ left: -row.clientWidth * 0.85, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+        });
+        nextBtn.addEventListener('click', function () {
+            row.scrollBy({ left: row.clientWidth * 0.85, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+        });
+        row.addEventListener('scroll', atualizar, { passive: true });
+        // Layout só se assenta depois do primeiro paint das imagens — um
+        // tick garante que scrollWidth já reflete a largura final da fileira.
+        requestAnimationFrame(atualizar);
+    }
+
     function renderOverview(lista) {
         var wrap = document.getElementById('catalogOverview');
         if (!wrap) return;
+        var filterBarEl   = document.getElementById('filterBar');
+        var vitrineWrapEl = document.querySelector('.vitrine-wrap');
 
-        if (!lista || lista.length < OVERVIEW_MIN_PRODUTOS) {
+        // [VZ] Sem vitrine possível (acervo pequeno demais pra curadoria
+        // fazer sentido) — a grade completa é a única coisa que existe pra
+        // mostrar, então ela aparece direto, sem trava nenhuma.
+        function semVitrine() {
             wrap.innerHTML = '';
             wrap.hidden = true;
-            return;
+            catalogoCompletoDesbloqueado = true;
+            if (filterBarEl)   { filterBarEl.hidden = false;   filterBarEl.classList.remove('catalogo-completo-reveal'); }
+            if (vitrineWrapEl) { vitrineWrapEl.hidden = false; vitrineWrapEl.classList.remove('catalogo-completo-reveal'); }
         }
+
+        if (!lista || lista.length < OVERVIEW_MIN_PRODUTOS) { semVitrine(); return; }
 
         var destaques = lista.filter(function (p) { return p.destaque; }).slice(0, OVERVIEW_ITENS_POR_SECAO);
 
@@ -557,40 +653,71 @@
             { titulo: 'Novidades',        itens: novidades,  badge: '<span class="overview-badge overview-badge-novo">Novo</span>' }
         ].filter(function (s) { return s.itens.length >= 3; });
 
-        if (!secoes.length) {
-            wrap.innerHTML = '';
-            wrap.hidden = true;
-            return;
-        }
+        if (!secoes.length) { semVitrine(); return; }
+
+        // Vitrine de verdade — a grade completa fica escondida até o
+        // cliente clicar no CTA no fim da vitrine.
+        catalogoCompletoDesbloqueado = false;
+        if (filterBarEl)   { filterBarEl.hidden = true;   filterBarEl.classList.remove('catalogo-completo-reveal'); }
+        if (vitrineWrapEl) { vitrineWrapEl.hidden = true; vitrineWrapEl.classList.remove('catalogo-completo-reveal'); }
 
         wrap.hidden = false;
-        wrap.innerHTML = '';
+        wrap.innerHTML =
+            '<div class="overview-intro">' +
+            '<p class="overview-intro-eyebrow">A vitrine</p>' +
+            '<h2 class="overview-intro-title">O melhor da coleção, direto na entrada</h2>' +
+            '</div>';
 
         secoes.forEach(function (secao) {
             var section = document.createElement('section');
             section.className = 'overview-section';
             section.innerHTML =
                 '<div class="overview-header">' +
-                '<h2>' + esc(secao.titulo) + '</h2>' +
+                '<h3>' + esc(secao.titulo) + '</h3>' +
+                '</div>' +
+                '<div class="overview-row-wrap">' +
+                '<button type="button" class="overview-nav overview-nav-prev" aria-label="Ver itens anteriores">‹</button>' +
+                '<div class="overview-row"></div>' +
+                '<button type="button" class="overview-nav overview-nav-next" aria-label="Ver mais itens">›</button>' +
                 '</div>';
-            var row = document.createElement('div');
-            row.className = 'overview-row';
+            var row = section.querySelector('.overview-row');
             secao.itens.forEach(function (p, i) {
                 row.appendChild(montarCardProduto(p, i, secao.badge));
             });
-            section.appendChild(row);
             wrap.appendChild(section);
+            habilitarNavegacaoOverview(
+                row,
+                section.querySelector('.overview-nav-prev'),
+                section.querySelector('.overview-nav-next')
+            );
         });
 
         var cta = document.createElement('button');
         cta.type = 'button';
         cta.className = 'overview-cta';
         cta.textContent = 'Ver catálogo completo ↓';
-        cta.addEventListener('click', function () {
-            var alvo = document.getElementById('filterBar') || document.getElementById('vitrine');
-            if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
+        cta.addEventListener('click', mostrarCatalogoCompleto);
         wrap.appendChild(cta);
+
+        // [VZ] Reveal-on-scroll — cada prateleira entra em cena (fade + leve
+        // subida) só quando chega perto do viewport, em vez de tudo pipocar
+        // de uma vez no primeiro paint. Sem IntersectionObserver ou com
+        // movimento reduzido, tudo já nasce visível — nunca esconde produto
+        // esperando um scroll que pode não vir do jeito certo.
+        var secoesEl = wrap.querySelectorAll('.overview-section');
+        if (!prefersReducedMotion && 'IntersectionObserver' in window) {
+            var revealObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+            secoesEl.forEach(function (sec) { revealObserver.observe(sec); });
+        } else {
+            secoesEl.forEach(function (sec) { sec.classList.add('is-visible'); });
+        }
     }
 
     function limparFiltros() {
@@ -1335,6 +1462,7 @@
         initManualModal();
         initFeedbackModal();
         initAmbientGlow();
+        initGlowRipple();
         initPixCheckout();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');

@@ -191,7 +191,12 @@
 <div id="catalogOverview" class="catalog-overview" aria-label="Destaques do catálogo" hidden></div>
 
 <!-- CATALOG -->
-<!-- FILTER BAR — rendered by JS after products load -->
+<!-- FILTER BAR — rendered by JS after products load. Visível por padrão
+     (cobre o load inicial, junto com o skeleton em #vitrine); renderOverview
+     esconde os dois quando existe uma vitrine curada de verdade pra mostrar
+     primeiro, liberando a grade só quando o cliente clica em "Ver catálogo
+     completo". Numa loja pequena sem vitrine possível, fica como está aqui:
+     sempre visível. -->
 <div id="filterBar" class="filter-bar" aria-label="Filtros do catálogo"></div>
 
 <div class="vitrine-wrap">
