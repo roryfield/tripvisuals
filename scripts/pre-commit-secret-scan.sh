@@ -26,8 +26,13 @@ fi
 # 2) Conteúdo com cara de segredo real dentro do diff staged (não só nome de arquivo) — pega o
 #    caso de alguém colar uma chave direto num .js/.json por engano.
 PADRAO_SEGREDO='(postgres(ql)?://[^ "'"'"']*:[^ "'"'"']{6,}@|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ASAAS_API_KEY *= *\$aact_[0-9A-Za-z_]+)'
-ACHADOS=$(git diff --cached -U0 -- . ':(exclude).env.example' ':(exclude)scripts/pre-commit-secret-scan.sh' \
+ACHADOS_BRUTOS=$(git diff --cached -U0 -- . ':(exclude).env.example' ':(exclude)scripts/pre-commit-secret-scan.sh' \
   | grep -E '^\+' | grep -viE '^\+\+\+' | grep -E "$PADRAO_SEGREDO" || true)
+# Credencial de banco local de desenvolvimento/teste (localhost, 127.0.0.1, host "db" de
+# docker-compose) não é segredo — é boilerplate comum (inclusive do próprio kit VOIDZONE em
+# tests/env.setup.js e no workflow de CI). Um segredo real vazado aponta pra host de produção,
+# nunca pra localhost. Filtra só essas, mantém tudo o mais como achado real.
+ACHADOS=$(echo "$ACHADOS_BRUTOS" | grep -viE 'postgres(ql)?://[^@]*@(localhost|127\.0\.0\.1|db)([:/]|$)' || true)
 if [ -n "$ACHADOS" ]; then
   echo "BLOQUEADO: linha(s) staged parecem conter um segredo real (senha/chave/token):"
   echo "$ACHADOS" | sed 's/^/  /'

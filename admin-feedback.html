@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Visuals | Feedbacks</title>
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="/admin-auth-init.js"></script>
+</head>
+<body>
+
+    <main class="main">
+
+        <header class="page-header">
+            <div>
+                <p class="page-eyebrow">Catálogo</p>
+                <h2 class="page-title">FEEDBACKS</h2>
+            </div>
+            <div class="vz-flex-actions">
+                <button type="button" class="btn-logout" id="btnLogout" aria-label="Sair">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    <span class="label">Sair</span>
+</button>
+                <div class="produto-count" id="feedbackCount">—</div>
+                <div class="produto-count-label">novos</div>
+            </div>
+        </header>
+
+        <p class="subtitle" style="margin: -6px 0 16px;">
+            Mensagens enviadas direto pelo catálogo público. Anônimo por padrão — quando a pessoa se identifica, o
+            @ do Instagram e a autorização de repost aparecem no card.
+        </p>
+
+        <div class="pedidos-controls">
+            <div class="pedidos-filter-chips" role="group" aria-label="Filtrar por status">
+                <button class="status-filter-chip active" data-status="" type="button">Todos</button>
+                <button class="status-filter-chip" data-status="novo"       type="button">Novo</button>
+                <button class="status-filter-chip" data-status="lido"       type="button">Lido</button>
+                <button class="status-filter-chip" data-status="respondido" type="button">Respondido</button>
+                <button class="status-filter-chip" data-status="arquivado"  type="button">Arquivado</button>
+            </div>
+        </div>
+
+        <div id="feedbackList" class="pedidos-list">
+            <div class="vz-empty-state">Carregando feedbacks...</div>
+        </div>
+
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/admin-feedback.js"></script>
+    <script src="/admin-shared.js"></script>
+</body>
+</html>

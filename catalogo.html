@@ -22,6 +22,11 @@
 <div class="catalog-intro" id="catalogIntro" aria-hidden="true">
     <div class="catalog-intro-glow"></div>
     <div class="catalog-intro-grid"></div>
+    <div class="catalog-intro-rift" aria-hidden="true">
+        <div class="rift-ring rift-ring-1"></div>
+        <div class="rift-ring rift-ring-2"></div>
+        <div class="rift-ring rift-ring-3"></div>
+    </div>
     <div class="catalog-intro-inner">
         <p class="catalog-intro-eyebrow">Bem-vindo ao acervo</p>
         <h1 class="catalog-intro-brand">TRIP VISUALS</h1>
@@ -45,11 +50,25 @@
             </div>
         </div>
 
-        <div class="catalog-intro-loader" aria-label="Carregando catálogo">
-            <div class="catalog-intro-spinner"></div>
+        <!-- [VZ] Portal com controle explícito (2026-09-15) — antes só tinha
+             um spinner e um hint passivo ("toque pra entrar"); agora o
+             cliente tem dois botões reais: entrar direto, ou ver o manual
+             de uso antes. Ambos funcionam mesmo antes do catálogo terminar
+             de carregar (o clique não depende do carregamento). -->
+        <div class="catalog-intro-actions">
+            <button type="button" class="catalog-intro-enter" id="introEnterBtn">
+                Entrar no catálogo <span aria-hidden="true">→</span>
+            </button>
+            <button type="button" class="catalog-intro-manual" id="introManualBtn">
+                Como usar o catálogo
+            </button>
         </div>
 
-        <p class="catalog-intro-hint">toque pra entrar</p>
+        <div class="catalog-intro-loader" aria-label="Carregando catálogo" id="introLoader">
+            <div class="catalog-intro-spinner"></div>
+            <span class="catalog-intro-loader-label">preparando o acervo</span>
+        </div>
+
         <p class="catalog-intro-credit">Sistema por <strong>VOIDZONE</strong></p>
     </div>
 </div>
@@ -68,8 +87,9 @@
                 </svg>
             </button>
             <input class="search-input" id="searchInput" type="text"
-                   placeholder="Buscar produto..."
-                   aria-label="Buscar produto no catálogo">
+                   placeholder="Buscar por banda, estampa..."
+                   aria-label="Buscar produto por banda ou estampa">
+            <button type="button" class="search-clear" id="searchClear" aria-label="Limpar busca" hidden>×</button>
         </div>
 
         <div class="hdr-divider" aria-hidden="true"></div>
@@ -100,12 +120,27 @@
 
         <div class="hdr-divider" aria-hidden="true"></div>
 
+        <button id="manualBtn" class="icon-btn manual-trigger" type="button"
+            aria-label="Manual de uso do catálogo" title="Como usar o catálogo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </button>
+
         <button id="faqBtn" class="icon-btn faq-trigger" type="button"
             aria-label="Informações sobre tamanhos, prazos e frete" title="Sobre as peças">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="16" x2="12" y2="12"/>
                 <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+        </button>
+
+        <button id="feedbackBtn" class="icon-btn feedback-trigger" type="button"
+            aria-label="Deixar um feedback sobre o catálogo" title="Deixar feedback">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             </svg>
         </button>
 
@@ -198,6 +233,138 @@
     </div>
 </div>
 
+<!-- MANUAL DE USO — como navegar o catálogo -->
+<div class="faq-modal" id="manualModal" role="dialog" aria-modal="true" aria-labelledby="manualTitle" aria-hidden="true">
+    <div class="faq-modal-backdrop" id="manualBackdrop"></div>
+    <div class="faq-modal-card" role="document">
+        <button type="button" class="faq-modal-close" id="manualClose" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+        <h2 class="faq-title" id="manualTitle">COMO USAR O CATÁLOGO</h2>
+        <p class="faq-sub">Um guia rápido pra encontrar o que você quer sem perder tempo.</p>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">1</span>
+            <div>
+                <h3 class="faq-section-title">Busque por banda ou estampa</h3>
+                <p class="faq-section-body">O campo de busca fica sempre visível no topo. Digite o nome da banda, do time, ou uma palavra da estampa — os resultados aparecem na hora, sem precisar abrir os filtros.</p>
+            </div>
+        </div>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">2</span>
+            <div>
+                <h3 class="faq-section-title">Filtre por peça ou por gênero</h3>
+                <p class="faq-section-body">A barra de filtros abaixo do topo separa por tipo de peça (camiseta, moletom, regata...) e por gênero musical. Quando há muitas opções de gênero, elas ficam atrás do botão "Gênero ▾" pra não poluir a tela.</p>
+            </div>
+        </div>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">3</span>
+            <div>
+                <h3 class="faq-section-title">Veja os detalhes do produto</h3>
+                <p class="faq-section-body">Clique em qualquer peça pra abrir os detalhes. Quando o produto tem foto de frente e verso, clique na imagem pra virar. Quando tem várias fotos de ângulo (peças decorativas), arraste os dedos ou o mouse sobre a imagem pra girar.</p>
+            </div>
+        </div>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">4</span>
+            <div>
+                <h3 class="faq-section-title">Calcule o frete pelo seu CEP</h3>
+                <p class="faq-section-body">Dentro dos detalhes do produto, digite seu CEP pra ver o valor estimado do frete direto na tela, sem precisar perguntar antes no WhatsApp.</p>
+            </div>
+        </div>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">5</span>
+            <div>
+                <h3 class="faq-section-title">Escolha o modo de exibição</h3>
+                <p class="faq-section-body">Os três ícones no topo (grade, duo, lista) mudam como as peças aparecem na tela — útil se você prefere ver menos peças por vez, em mais detalhe.</p>
+            </div>
+        </div>
+
+        <div class="faq-section manual-step">
+            <span class="manual-step-num">6</span>
+            <div>
+                <h3 class="faq-section-title">Finalize o pedido</h3>
+                <p class="faq-section-body">Escolha o tamanho e clique em "Adquirir via WhatsApp" — isso prepara uma mensagem com os detalhes da peça pra você só confirmar e enviar pra equipe.</p>
+            </div>
+        </div>
+
+        <p class="faq-credit">Sistema por <strong>VOIDZONE</strong></p>
+    </div>
+</div>
+
+<!-- FEEDBACK MODAL — capricho do tema "portal" já usado na tela de entrada -->
+<div class="faq-modal feedback-modal" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" aria-hidden="true">
+    <div class="faq-modal-backdrop" id="feedbackBackdrop"></div>
+    <div class="faq-modal-card feedback-modal-card" data-state="form" role="document">
+        <button type="button" class="faq-modal-close" id="feedbackClose" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+
+        <div class="feedback-portal-bg" aria-hidden="true">
+            <div class="rift-ring rift-ring-1"></div>
+            <div class="rift-ring rift-ring-2"></div>
+            <div class="rift-ring rift-ring-3"></div>
+        </div>
+
+        <div class="feedback-form-view">
+            <h2 class="faq-title" id="feedbackTitle">UM SINAL PRO PORTAL</h2>
+            <p class="faq-sub">Sua opinião ajuda a moldar o próximo envio. Pode abrir o coração — aqui é anônimo se você quiser.</p>
+
+            <form id="feedbackForm" novalidate>
+                <div class="feedback-stars" id="feedbackStars" role="radiogroup" aria-label="Sua nota, de 1 a 5">
+                    <button type="button" class="feedback-star" data-star="1" role="radio" aria-checked="false" aria-label="1 estrela">★</button>
+                    <button type="button" class="feedback-star" data-star="2" role="radio" aria-checked="false" aria-label="2 estrelas">★</button>
+                    <button type="button" class="feedback-star" data-star="3" role="radio" aria-checked="false" aria-label="3 estrelas">★</button>
+                    <button type="button" class="feedback-star" data-star="4" role="radio" aria-checked="false" aria-label="4 estrelas">★</button>
+                    <button type="button" class="feedback-star" data-star="5" role="radio" aria-checked="false" aria-label="5 estrelas">★</button>
+                </div>
+
+                <label class="field-label" for="feedbackMensagem">Sua mensagem</label>
+                <textarea id="feedbackMensagem" class="feedback-textarea" rows="4" maxlength="1000"
+                    placeholder="O que achou das peças, do catálogo, da entrega — o que quiser." required></textarea>
+                <p class="feedback-char-count" id="feedbackCharCount">0/1000</p>
+
+                <label class="feedback-toggle">
+                    <input type="checkbox" id="feedbackAnonimo" checked>
+                    <span>Manter anônimo</span>
+                </label>
+
+                <div class="feedback-identify" id="feedbackIdentify" hidden>
+                    <label class="field-label" for="feedbackInstagram">Seu @ no Instagram (opcional)</label>
+                    <input type="text" id="feedbackInstagram" class="feedback-input" placeholder="@seu.instagram" maxlength="31" autocomplete="off">
+                    <label class="feedback-toggle feedback-toggle-sm">
+                        <input type="checkbox" id="feedbackAutorizaRepost">
+                        <span>Autorizo a Trip Visuals e a VOIDZONE a repostarem minha avaliação</span>
+                    </label>
+                </div>
+
+                <p class="feedback-error" id="feedbackError" role="alert" aria-live="assertive"></p>
+
+                <button type="submit" class="feedback-submit" id="feedbackSubmit">Enviar pro portal</button>
+            </form>
+        </div>
+
+        <div class="feedback-success-view">
+            <svg class="feedback-success-icon" viewBox="0 0 52 52" aria-hidden="true">
+                <circle cx="26" cy="26" r="24" fill="none"/>
+                <path fill="none" d="M14 27l7 7 17-17"/>
+            </svg>
+            <h3 class="feedback-success-title">SINAL RECEBIDO</h3>
+            <p class="feedback-success-sub">Obrigado por dividir isso com a gente. O portal registrou sua mensagem.</p>
+            <button type="button" class="feedback-submit feedback-success-close" id="feedbackSuccessClose">Fechar</button>
+        </div>
+
+        <p class="faq-credit">Sistema por <strong>VOIDZONE</strong></p>
+    </div>
+</div>
+
 <!-- PRODUCT DETAIL MODAL -->
 <div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="product-modal-backdrop" id="modalBackdrop"></div>
@@ -209,6 +376,7 @@
         </button>
         <div class="product-modal-image">
             <img id="modalImg" src="" alt="">
+            <button type="button" id="modalViewerHint" class="modal-viewer-hint" hidden></button>
             <div id="modalGallery" class="modal-gallery"></div>
         </div>
         <div class="product-modal-info">

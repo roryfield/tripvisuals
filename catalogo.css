@@ -63,47 +63,67 @@
         }
 
         /* Search bar */
+        /* [VZ] Busca sempre visível (2026-09-15) — antes ficava escondida atrás
+           de um ícone de lupa que se expandia ao clicar (width:0 por padrão).
+           Feedback real de cliente: não encontrou a busca e teve que procurar
+           a banda dentro dos filtros de gênero. Agora é um campo permanente no
+           cabeçalho, sem gesto escondido pra descobrir. */
         .search-wrap {
             position: relative;
             display: flex;
             align-items: center;
+            width: clamp(150px, 22vw, 240px);
+            flex-shrink: 1;
+            min-width: 96px;
         }
         .search-input {
-            width: 0;
-            padding: 0;
-            background: transparent;
-            border: 1px solid transparent;
+            width: 100%;
+            padding: 9px 32px 9px 38px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
             border-radius: 50px;
             color: #fff;
             font-family: 'DM Sans', sans-serif;
             font-size: 0.85rem;
             outline: none;
-            transition: width 0.35s cubic-bezier(0.4,0,0.2,1),
-                        padding 0.35s, border-color 0.35s;
-            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
         }
-        .search-input.open {
-            width: 200px;
-            padding: 8px 16px 8px 38px;
-            border-color: var(--border);
-            background: rgba(255,255,255,0.05);
+        .search-input:hover { border-color: rgba(255,255,255,0.16); }
+        .search-input:focus, .search-input.open {
+            border-color: var(--cyan);
+            background: rgba(255,255,255,0.07);
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.12);
         }
         .search-input::placeholder { color: #777; }
         .search-btn {
             position: absolute;
-            left: 10px;
+            left: 12px;
             background: none;
             border: none;
             color: #888;
-            cursor: pointer;
+            cursor: text;
             display: flex;
             align-items: center;
             padding: 0;
             transition: color 0.2s;
             z-index: 1;
+            pointer-events: none;
         }
-        .search-btn:hover, .search-btn.active { color: var(--cyan); }
-        .search-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; border-radius: 4px; }
+        .search-wrap:focus-within .search-btn, .search-btn.active { color: var(--cyan); }
+        .search-clear {
+            position: absolute;
+            right: 8px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: #aaa;
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .search-clear:hover { background: rgba(255,255,255,0.16); color: #fff; }
 
         /* Icon buttons */
         .icon-btn {
@@ -307,12 +327,20 @@
 
         /* ── MOBILE ────────────────────────────────────── */
         @media (max-width: 600px) {
-            .cust-header     { padding: 0 16px; }
+            /* [VZ] Cabeçalho em duas linhas no mobile (2026-09-15) — a busca
+               agora é um campo real e sempre visível, e não cabe na mesma
+               linha dos ícones em telas estreitas. Em vez de encolher até
+               ficar ilegível, ela quebra pra sua própria linha (largura
+               total) e os ícones ficam na linha de baixo. body/filter-bar
+               têm o offset ajustado pra compensar a altura extra. */
+            .cust-header     { flex-wrap: wrap; height: auto; padding: 10px 16px; align-items: center; row-gap: 8px; }
+            body             { padding-top: 116px; }
+            .cust-actions    { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
+            .search-wrap     { order: -1; flex: 1 1 100%; width: 100%; min-width: 0; }
             .vitrine-wrap    { padding: 16px; }
             .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
             .grid-1          { gap: 12px; }
             .card-produto img { height: 200px; }
-            .search-input.open { width: 140px; }
             .sr-grid         { grid-template-columns: 1fr 1fr; }
             .hdr-divider     { display: none; }
             .cust-logo-text  { display: none; }
@@ -784,6 +812,29 @@
 }
 .faq-credit strong { color: #555; letter-spacing: 1.5px; }
 
+/* ── Manual de uso — passos numerados dentro do faq-modal ── */
+.manual-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+.manual-step-num {
+    flex: none;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,229,255,0.35);
+    background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(157,0,255,0.12));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    color: var(--cyan);
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+}
+.manual-step .faq-section-title { margin-top: 2px; }
+
 @media (max-width: 600px) {
     .faq-modal { padding: 0; }
     .faq-modal-card {
@@ -955,6 +1006,7 @@
 /* ── Loader — beat 8 (t=1.9s) ───────────────────────────── */
 .catalog-intro-loader {
     display: flex;
+    align-items: center;
     justify-content: center;
     margin-bottom: 20px;
     animation: intro-fade 0.5s 1.9s both;
@@ -973,14 +1025,91 @@
     100% { transform: rotate(360deg); box-shadow: 0 0 0 rgba(0,229,255,0); }
 }
 
-/* ── Hint — beat 9 (t=2.1s) ─────────────────────────────── */
-.catalog-intro-hint {
-    font-size: 0.6rem;
-    color: #777;
-    letter-spacing: 3.5px;
+/* ── Portal rings — a "rift" spinning behind the brand text ─ */
+.catalog-intro-rift {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+}
+.rift-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    filter: blur(0.5px);
+}
+.rift-ring-1 {
+    width: min(70vw, 520px); height: min(70vw, 520px);
+    background: conic-gradient(from 0deg, transparent 0%, rgba(0,229,255,0.16) 15%, transparent 30%, rgba(157,0,255,0.14) 55%, transparent 75%);
+    animation: rift-spin 14s linear infinite;
+}
+.rift-ring-2 {
+    width: min(50vw, 380px); height: min(50vw, 380px);
+    background: conic-gradient(from 180deg, transparent 0%, rgba(157,0,255,0.18) 20%, transparent 40%, rgba(0,229,255,0.14) 65%, transparent 85%);
+    animation: rift-spin 10s linear infinite reverse;
+}
+.rift-ring-3 {
+    width: min(32vw, 240px); height: min(32vw, 240px);
+    border: 1px solid rgba(0,229,255,0.18);
+    box-shadow: inset 0 0 40px rgba(157,0,255,0.12), 0 0 30px rgba(0,229,255,0.08);
+    animation: rift-breathe 3.2s ease-in-out infinite;
+}
+@keyframes rift-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+@keyframes rift-breathe {
+    0%, 100% { transform: scale(1);    opacity: 0.7; }
+    50%      { transform: scale(1.06); opacity: 1; }
+}
+
+/* ── Actions — real controls, not a passive hint (t=2.0s) ──── */
+.catalog-intro-actions {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    animation: intro-fade 0.5s 2.0s both;
+}
+.catalog-intro-enter {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #050505;
+    background: var(--cyan);
+    border: none;
+    border-radius: 50px;
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 0 22px rgba(0,229,255,0.35);
+}
+.catalog-intro-enter:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(0,229,255,0.5); }
+.catalog-intro-enter span { display: inline-block; transition: transform 0.15s; }
+.catalog-intro-enter:hover span { transform: translateX(3px); }
+.catalog-intro-manual {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    color: #888;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    text-decoration-color: rgba(255,255,255,0.2);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+.catalog-intro-manual:hover { color: var(--cyan); text-decoration-color: var(--cyan); }
+
+/* ── Loader label — beat 9 (t=2.15s) ────────────────────── */
+.catalog-intro-loader-label {
+    font-size: 0.58rem;
+    color: #555;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    margin-bottom: 20px;
-    animation: intro-fade 0.5s 2.1s both;
+    margin-left: 10px;
+    vertical-align: middle;
 }
 
 /* ── Credit — beat 10 (t=2.3s) ─────────────────────────── */
@@ -1009,8 +1138,10 @@
     .catalog-intro-spinner, .catalog-intro-brand,
     .catalog-intro-eyebrow, .catalog-intro-tag,
     .catalog-intro-pillars, .catalog-intro-loader,
-    .catalog-intro-hint, .catalog-intro-credit,
-    .catalog-intro-sep, .catalog-intro-pillars > * { animation: none; }
+    .catalog-intro-actions, .catalog-intro-credit,
+    .catalog-intro-sep, .catalog-intro-pillars > *,
+    .rift-ring-1, .rift-ring-2, .rift-ring-3 { animation: none; }
+    .catalog-intro-rift { opacity: 0.4; }
 }
 
 
@@ -1386,6 +1517,24 @@
     white-space: nowrap;
 }
 .filter-chip:hover { border-color: var(--cyan); color: var(--cyan); }
+/* [VZ] Tipo em destaque (2026-09-15) — grupo mais importante pro cliente
+   final (é literalmente "que peça eu quero"), por isso vem com mais peso
+   visual que gênero: borda mais forte, levemente maior, com contagem. */
+.filter-group-tipo { order: -1; }
+.filter-chip-tipo {
+    border-color: rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+    padding: 6px 14px;
+}
+.filter-chip-count {
+    display: inline-block;
+    margin-left: 3px;
+    font-size: 0.64rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+}
+.filter-chip-tipo.active .filter-chip-count { color: rgba(0,229,255,0.75); }
 .filter-chip.active {
     background: rgba(0,229,255,0.12);
     border-color: var(--cyan);
@@ -1402,6 +1551,73 @@
     transition: color 0.2s;
 }
 .filter-clear:hover { color: var(--danger); }
+
+/* [VZ] Filtro colapsável (2026-09-07) — grupo com muitas opções (hoje o
+   gênero) vira um botão único + folha, em vez de poluir a barra inteira. */
+.filter-group-collapsed { display: flex; align-items: center; gap: 4px; }
+.filter-more-trigger {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.65);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.filter-more-trigger:hover { border-color: var(--cyan); color: var(--cyan); }
+.filter-more-trigger.active {
+    background: rgba(0,229,255,0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+.filter-chip-clear-x {
+    background: transparent; border: none; color: #777;
+    font-size: 1rem; line-height: 1; cursor: pointer; padding: 4px 6px;
+}
+.filter-chip-clear-x:hover { color: var(--danger); }
+
+.filter-sheet-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+}
+.filter-sheet-overlay.open { opacity: 1; pointer-events: auto; }
+.filter-sheet {
+    background: #121212;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 640px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 16px 20px 24px;
+    transform: translateY(12px);
+    transition: transform 0.2s;
+}
+.filter-sheet-overlay.open .filter-sheet { transform: translateY(0); }
+.filter-sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+}
+.filter-sheet-header h3 {
+    margin: 0; font-size: 0.95rem; font-weight: 600; color: #eee;
+}
+.filter-sheet-close {
+    background: none; border: none; color: #ccc; font-size: 22px;
+    line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.filter-sheet-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (min-width: 640px) {
+    .filter-sheet-overlay { align-items: center; }
+    .filter-sheet { border-radius: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+}
 .filter-count {
     font-size: 0.7rem;
     color: #777;
@@ -1436,7 +1652,7 @@
 }
 
 @media (max-width: 600px) {
-    .filter-bar { padding: 0 14px; top: 56px; }
+    .filter-bar { padding: 0 14px; top: 116px; }
     .filter-count { display: none; }
 }
 
@@ -1502,6 +1718,26 @@
 }
 .gallery-thumb:hover { opacity: 1; border-color: var(--cyan); }
 
+/* [VZ] Visualizador multi-ângulo (2026-09-07) — flip (vestuário) e giro (decor 3D) */
+.modal-viewer-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+.modal-viewer-hint:hover { background: rgba(0,0,0,0.85); }
+#modalImg.viewer-flip-ativo { cursor: pointer; }
+#modalImg.viewer-spin-ativo { cursor: ew-resize; user-select: none; -webkit-user-drag: none; }
+
 /* [VZ] Fase 7 — campo de CEP e resultado do frete no modal do produto */
 .product-modal-frete-field { margin-bottom: 16px; text-align: left; }
 .product-modal-frete-field label {
@@ -1520,4 +1756,190 @@
     color: var(--cyan);
     min-height: 16px;
     margin-top: 6px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   FEEDBACK MODAL — mesmo tema "portal" da tela de entrada,
+   reaproveitando .rift-ring/@keyframes rift-spin/rift-breathe
+   já definidos ali em vez de duplicar a animação.
+   ───────────────────────────────────────────────────────── */
+.feedback-modal-card {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.feedback-portal-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.16;
+    pointer-events: none;
+    z-index: 0;
+}
+.feedback-form-view,
+.feedback-success-view {
+    position: relative;
+    z-index: 1;
+}
+.feedback-form-view { text-align: left; }
+.feedback-form-view .faq-title,
+.feedback-form-view .faq-sub { text-align: center; }
+
+.feedback-stars {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 4px 0 18px;
+}
+.feedback-star {
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: #333;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.15s, transform 0.15s;
+}
+.feedback-star:hover,
+.feedback-star:focus-visible { transform: scale(1.12); }
+.feedback-star.filled,
+.feedback-star.hovered { color: var(--cyan); text-shadow: 0 0 10px rgba(0,229,255,0.4); }
+
+.feedback-textarea, .feedback-input {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    color: #ddd;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 11px 12px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.feedback-textarea:focus, .feedback-input:focus {
+    outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,229,255,0.12);
+}
+.feedback-char-count {
+    font-size: 0.65rem;
+    color: #555;
+    text-align: right;
+    margin: 4px 0 14px;
+}
+
+.feedback-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #bbb;
+    cursor: pointer;
+    margin-bottom: 14px;
+    line-height: 1.4;
+}
+.feedback-toggle input {
+    width: 17px; height: 17px;
+    accent-color: var(--cyan);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.feedback-toggle-sm { font-size: 0.76rem; color: #888; margin-top: 10px; margin-bottom: 4px; }
+
+.feedback-identify {
+    border-top: 1px solid #1a1a1a;
+    padding-top: 14px;
+    margin-bottom: 14px;
+    animation: intro-fade 0.25s ease both;
+}
+.feedback-identify .field-label {
+    display: block; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+    color: #888; margin-bottom: 6px;
+}
+.feedback-identify .feedback-input { margin-bottom: 4px; }
+
+.feedback-error {
+    font-size: 0.78rem;
+    color: #ff6b6b;
+    min-height: 14px;
+    margin: 0 0 10px;
+}
+
+.feedback-submit {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #050505;
+    background: var(--cyan);
+    border: none;
+    border-radius: 50px;
+    padding: 13px 20px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 0 22px rgba(0,229,255,0.3);
+}
+.feedback-submit:hover:not(:disabled) { transform: translateY(-1px) scale(1.01); }
+.feedback-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Success flip — mesma técnica de .product-modal-card[data-state="success"] */
+.feedback-success-view { display: none; }
+.feedback-modal-card[data-state="success"] .feedback-form-view  { display: none; }
+.feedback-modal-card[data-state="success"] .feedback-success-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding-top: 8px;
+    animation: success-rise 0.4s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.feedback-success-icon {
+    width: 60px; height: 60px;
+    color: var(--cyan);
+    animation: success-pop 0.5s 0.15s cubic-bezier(0.18, 1.2, 0.4, 1.1) both;
+}
+.feedback-success-icon circle {
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-dasharray: 151; stroke-dashoffset: 151;
+    animation: success-circle 0.6s 0.1s ease forwards;
+}
+.feedback-success-icon path {
+    fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 44; stroke-dashoffset: 44;
+    animation: success-check 0.4s 0.55s ease forwards;
+}
+.feedback-success-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.7rem;
+    color: #fff;
+    letter-spacing: 2px;
+    margin: 4px 0 0;
+}
+.feedback-success-sub {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.5;
+    margin: 0 0 4px;
+    max-width: 320px;
+}
+.feedback-success-close { width: auto; padding: 11px 28px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .feedback-portal-bg .rift-ring-1,
+    .feedback-portal-bg .rift-ring-2,
+    .feedback-portal-bg .rift-ring-3 { animation: none; }
+    .feedback-success-icon,
+    .feedback-success-icon circle,
+    .feedback-success-icon path,
+    .feedback-success-view { animation: none; }
+    .feedback-success-icon circle, .feedback-success-icon path { stroke-dashoffset: 0; }
+}
+
+@media (max-width: 600px) {
+    .feedback-modal-card { padding: 28px 20px 24px; }
+    .feedback-star { font-size: 1.5rem; }
 }

@@ -19,6 +19,7 @@ const { registrarEvento, listarEventos } = require('./eventos');
 const frete      = require('./frete');
 const { lerComprovante } = require('./comprovante-ia');
 const { validarCpfCnpj } = require('./documentos');
+const feedbackNotify     = require('./feedback-notify');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -147,6 +148,14 @@ async function initDB() {
         )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_fotos_produto ON produto_fotos (produto_id)`);
+    // [VZ] Papel da foto no visualizador multi-ângulo (2026-09-07): 'capa' (a imagem
+    // principal, id 0 conceitual — na prática a coluna produtos.imagem_url continua
+    // sendo a capa; este 'capa' aqui é só pra permitir marcar uma foto extra como
+    // substituta futura), 'frente'/'verso' (vestuário — ativa o flip no catálogo) ou
+    // 'angulo' (decor 3D — sequência ordenada por 'posicao', ativa o giro). Vazio
+    // ('') é o valor de fotos antigas, sem papel definido — o catálogo trata como
+    // galeria simples (comportamento anterior, thumb por clique), nunca quebra.
+    await pool.query(`ALTER TABLE produto_fotos ADD COLUMN IF NOT EXISTS papel TEXT NOT NULL DEFAULT ''`);
 
     // Full-text search
     await pool.query(`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS busca_tsv tsvector`);
@@ -226,6 +235,26 @@ async function initDB() {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_events_criado ON system_events (criado_em DESC)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_events_modulo ON system_events (modulo)`);
+
+    // [VZ] Feedback do cliente final — capturado direto no catálogo público.
+    // Anônimo por padrão; instagram_handle e autoriza_repost só são
+    // preenchidos quando a pessoa opta por se identificar (ver validação
+    // na rota POST /api/feedback). Append-only do lado do cliente final —
+    // só o admin muda o campo status, pra triagem (novo → lido/respondido/arquivado).
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS feedbacks (
+            id                SERIAL PRIMARY KEY,
+            mensagem          TEXT NOT NULL,
+            nota              SMALLINT,
+            anonimo           BOOLEAN NOT NULL DEFAULT true,
+            instagram_handle  TEXT NOT NULL DEFAULT '',
+            autoriza_repost   BOOLEAN NOT NULL DEFAULT false,
+            status            TEXT NOT NULL DEFAULT 'novo',
+            criado_em         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedbacks_status  ON feedbacks (status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedbacks_criado ON feedbacks (criado_em DESC)`);
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS configuracoes (
@@ -573,6 +602,16 @@ const exportLimiter = rateLimit({
     standardHeaders: true, legacyHeaders: false
 });
 
+// [VZ] Feedback público — sem auth (o cliente final nunca faz login),
+// então o rate limit é a única defesa contra spam/abuso. Generoso o
+// suficiente pra uma pessoa real mandar mais de um feedback na mesma
+// visita (ex.: corrigir o texto), curto o suficiente pra travar um bot.
+const feedbackLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, max: 6,
+    message: { error: 'Muitos envios de feedback. Tente novamente mais tarde.' },
+    standardHeaders: true, legacyHeaders: false
+});
+
 // ── PRODUCT VALIDATION ─────────────────────────────────────────
 function validarProduto({ nome, preco }) {
     if (typeof nome !== 'string' || nome.trim().length < 1 || nome.length > 200)
@@ -589,6 +628,49 @@ function validarProduto({ nome, preco }) {
 const CATEGORIAS_VALIDAS = ['vestuario', 'decor3d'];
 function normalizarCategoria(valor) {
     return CATEGORIAS_VALIDAS.includes(valor) ? valor : 'vestuario';
+}
+
+// [VZ] Papel de uma foto extra em produto_fotos — ver comentário em initDB() na
+// criação da coluna. '' (vazio) é sempre aceito, é o valor de foto sem papel
+// definido (galeria simples, comportamento anterior).
+const PAPEIS_FOTO_VALIDOS = ['', 'capa', 'frente', 'verso', 'angulo'];
+function normalizarPapelFoto(valor) {
+    return PAPEIS_FOTO_VALIDOS.includes(valor) ? valor : '';
+}
+
+// [VZ] Feedback — validação. instagram_handle é sempre salvo sem o @
+// (normalizado aqui), pra nunca ter "@@user" ou inconsistência na hora
+// de montar o link em admin-feedback.js.
+const FEEDBACK_STATUS_VALIDOS = ['novo', 'lido', 'respondido', 'arquivado'];
+function normalizarInstagramHandle(valor) {
+    if (typeof valor !== 'string') return '';
+    const limpo = valor.trim().replace(/^@+/, '');
+    if (!limpo) return '';
+    if (!/^[a-zA-Z0-9._]{1,30}$/.test(limpo)) return null; // sinaliza inválido
+    return limpo;
+}
+function validarFeedback({ mensagem, nota, anonimo, instagramHandle, autorizaRepost }) {
+    if (typeof mensagem !== 'string' || mensagem.trim().length < 3 || mensagem.length > 1000)
+        return { erro: 'Mensagem deve ter entre 3 e 1000 caracteres.' };
+    let notaNum = null;
+    if (nota !== undefined && nota !== null && nota !== '') {
+        notaNum = parseInt(nota, 10);
+        if (!Number.isInteger(notaNum) || notaNum < 1 || notaNum > 5)
+            return { erro: 'Nota deve ser um número entre 1 e 5.' };
+    }
+    const ehAnonimo = anonimo !== false; // padrão anônimo — só deixa de ser com anonimo === false explícito
+    let handle = '';
+    let repost = false;
+    if (!ehAnonimo) {
+        const normalizado = normalizarInstagramHandle(instagramHandle);
+        if (normalizado === null)
+            return { erro: 'Instagram inválido — use só letras, números, ponto e underline.' };
+        handle = normalizado;
+        // Autorização de repost só é gravada se de fato houver um @ pra vincular —
+        // sem handle não existe conta pra creditar/repostar.
+        repost = !!autorizaRepost && !!handle;
+    }
+    return { erro: null, mensagem: mensagem.trim(), nota: notaNum, anonimo: ehAnonimo, instagramHandle: handle, autorizaRepost: repost };
 }
 
 // ── CATALOGADOR IA ─────────────────────────────────────────────
@@ -1029,7 +1111,7 @@ app.get('/api/produtos/:id/fotos', async (req, res) => {
     if (!Number.isInteger(id) || id < 1) return res.json([]);
     try {
         const r = await pool.query(
-            'SELECT id, url, posicao FROM produto_fotos WHERE produto_id = $1 ORDER BY posicao', [id]);
+            'SELECT id, url, posicao, papel FROM produto_fotos WHERE produto_id = $1 ORDER BY posicao', [id]);
         res.json(r.rows);
     } catch (_) { res.json([]); }
 });
@@ -1040,18 +1122,48 @@ app.post('/api/produtos/:id/fotos', requireAuth, uploadLimiter, upload.single('i
     if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória.' });
     const detected = detectImageType(req.file.buffer);
     if (!detected) return res.status(400).json({ error: 'Arquivo não é uma imagem válida.' });
+    const papel = normalizarPapelFoto(req.body.papel);
     try {
         const result = await uploadToCloudinary(req.file.buffer, Date.now() + '_extra_' + id);
         const url = cloudTransform(result.url, TRANSFORM_PRODUCT);
         const posCount = await pool.query('SELECT COUNT(*) FROM produto_fotos WHERE produto_id = $1', [id]);
         const pos = parseInt(posCount.rows[0].count, 10);
         const r = await pool.query(
-            'INSERT INTO produto_fotos (produto_id, url, cloudinary_id, posicao) VALUES ($1, $2, $3, $4) RETURNING id, url, posicao',
-            [id, url, result.public_id, pos]);
+            'INSERT INTO produto_fotos (produto_id, url, cloudinary_id, posicao, papel) VALUES ($1, $2, $3, $4, $5) RETURNING id, url, posicao, papel',
+            [id, url, result.public_id, pos, papel]);
         res.status(201).json(r.rows[0]);
     } catch (e) {
         console.error('POST fotos:', e.message);
         res.status(500).json({ error: 'Erro ao adicionar foto.' });
+    }
+});
+
+// [VZ] Reordenar e/ou trocar o papel de uma foto já existente — usado pelo
+// assistente de captura (reordenar sequência de ângulos) e pra corrigir um
+// papel errado sem precisar apagar/reenviar a foto.
+app.patch('/api/produtos/:id/fotos/:fotoId', requireAuth, writeLimiter, async (req, res) => {
+    const pid = parseInt(req.params.id, 10);
+    const fid = parseInt(req.params.fotoId, 10);
+    if (!Number.isInteger(pid) || !Number.isInteger(fid)) return res.status(400).json({ error: 'ID inválido.' });
+    const temPosicao = req.body.posicao !== undefined;
+    const temPapel = req.body.papel !== undefined;
+    if (!temPosicao && !temPapel) return res.status(400).json({ error: 'Nada pra atualizar (envie posicao e/ou papel).' });
+    const posicao = temPosicao ? parseInt(req.body.posicao, 10) : null;
+    if (temPosicao && (!Number.isInteger(posicao) || posicao < 0)) return res.status(400).json({ error: 'Posição inválida.' });
+    const papel = temPapel ? normalizarPapelFoto(req.body.papel) : null;
+    try {
+        const r = await pool.query(
+            `UPDATE produto_fotos SET
+                posicao = COALESCE($3, posicao),
+                papel = COALESCE($4, papel)
+             WHERE id = $1 AND produto_id = $2
+             RETURNING id, url, posicao, papel`,
+            [fid, pid, posicao, papel]);
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Foto não encontrada.' });
+        res.json(r.rows[0]);
+    } catch (e) {
+        console.error('PATCH fotos:', e.message);
+        res.status(500).json({ error: 'Erro ao atualizar foto.' });
     }
 });
 
@@ -1676,6 +1788,74 @@ app.post('/api/landing/bg', requireAuth, uploadLimiter, upload.single('imagem'),
     } catch (e) {
         console.error('POST /api/landing/bg:', e.message);
         res.status(500).json({ error: 'Erro ao enviar imagem de fundo.' });
+    }
+});
+
+// [VZ] Feedback — POST é público (o cliente final do catálogo nunca
+// faz login); GET e PUT exigem sessão de admin, igual ao resto do painel.
+app.post('/api/feedback', feedbackLimiter, async (req, res) => {
+    const v = validarFeedback({
+        mensagem: req.body.mensagem,
+        nota: req.body.nota,
+        anonimo: req.body.anonimo,
+        instagramHandle: req.body.instagramHandle,
+        autorizaRepost: req.body.autorizaRepost
+    });
+    if (v.erro) return res.status(400).json({ error: v.erro });
+    try {
+        const r = await pool.query(
+            `INSERT INTO feedbacks (mensagem, nota, anonimo, instagram_handle, autoriza_repost)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, mensagem, nota, anonimo, instagram_handle, autoriza_repost, status, criado_em`,
+            [v.mensagem, v.nota, v.anonimo, v.instagramHandle, v.autorizaRepost]
+        );
+        const feedback = r.rows[0];
+        await registrarEvento(pool, {
+            modulo: 'feedback', tipo: 'recebido', severidade: 'info',
+            resumo: 'Novo feedback recebido no catálogo.',
+            detalhes: { id: feedback.id, nota: feedback.nota, anonimo: feedback.anonimo }
+        });
+        // Best-effort — nunca bloqueia nem falha a resposta ao cliente final
+        // por causa de um problema no envio do e-mail de notificação.
+        feedbackNotify.notificarNovoFeedback(pool, registrarEvento, feedback).catch(() => {});
+        res.status(201).json({ success: true });
+    } catch (e) {
+        console.error('POST /api/feedback:', e.message);
+        res.status(500).json({ error: 'Erro ao registrar feedback.' });
+    }
+});
+
+app.get('/api/feedback', requireAuth, async (req, res) => {
+    const status = FEEDBACK_STATUS_VALIDOS.includes(req.query.status) ? req.query.status : null;
+    try {
+        const { rows } = await pool.query(
+            `SELECT id, mensagem, nota, anonimo, instagram_handle, autoriza_repost, status, criado_em
+             FROM feedbacks
+             ${status ? 'WHERE status = $1' : ''}
+             ORDER BY criado_em DESC
+             LIMIT 200`,
+            status ? [status] : []
+        );
+        res.json(rows);
+    } catch (e) {
+        console.error('GET /api/feedback:', e.message);
+        res.status(500).json({ error: 'Erro ao carregar feedbacks.' });
+    }
+});
+
+app.put('/api/feedback/:id', requireAuth, writeLimiter, async (req, res) => {
+    if (!FEEDBACK_STATUS_VALIDOS.includes(req.body.status))
+        return res.status(400).json({ error: 'Status inválido.' });
+    try {
+        const r = await pool.query(
+            `UPDATE feedbacks SET status = $1 WHERE id = $2 RETURNING id`,
+            [req.body.status, req.params.id]
+        );
+        if (!r.rows.length) return res.status(404).json({ error: 'Feedback não encontrado.' });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('PUT /api/feedback/:id:', e.message);
+        res.status(500).json({ error: 'Erro ao atualizar feedback.' });
     }
 });
 

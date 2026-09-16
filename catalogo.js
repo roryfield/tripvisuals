@@ -9,6 +9,115 @@
         });
     }
 
+    // [VZ] Visualizador multi-ângulo (2026-09-07) — duas variantes, mesma ideia:
+    // trocar a imagem grande do modal sem precisar de nenhuma lib externa.
+    //
+    // #modalImg e o listener de window são reaproveitados a cada abertura de
+    // modal (o elemento nunca é recriado) — sem limpar os listeners do produto
+    // anterior antes de anexar os novos, eles se acumulam a cada produto aberto.
+    // limparViewerAnterior() existe só pra isso: sempre roda antes de montar um
+    // visualizador novo (e quando o produto não tem papel nenhum, void a chama
+    // sozinha lá embaixo, no reset do modal).
+    var limparViewerAnterior = function () {};
+
+    // Flip (vestuário: frente/verso): clique alterna entre as duas fotos.
+    // Não é uma animação 3D de verdade, é troca de imagem — deliberado, simples
+    // e leve, sem custo de fotografia extra além das duas fotos que já existem.
+    function initFlipViewer(img, hint, urlFrente, urlVerso) {
+        limparViewerAnterior();
+        var mostrandoVerso = false;
+        img.src = urlFrente;
+        img.classList.add('viewer-flip-ativo');
+        var onClick = function () {
+            mostrandoVerso = !mostrandoVerso;
+            img.src = mostrandoVerso ? urlVerso : urlFrente;
+            if (hint) hint.textContent = mostrandoVerso ? '🔄 Ver frente' : '🔄 Ver verso';
+        };
+        img.addEventListener('click', onClick);
+        if (hint) {
+            hint.hidden = false;
+            hint.textContent = '🔄 Ver verso';
+            hint.onclick = onClick;
+        }
+        limparViewerAnterior = function () {
+            img.removeEventListener('click', onClick);
+            img.classList.remove('viewer-flip-ativo');
+            if (hint) hint.onclick = null;
+        };
+    }
+
+    // Giro (decor 3D: sequência de ângulos): arrastar horizontalmente (mouse ou
+    // touch) cicla pela sequência de fotos, dando a sensação de girar o objeto.
+    // Técnica padrão de mercado (o mesmo princípio do "360 view" do Shopify e de
+    // plugins de produto giratório) — troca de frame por posição do arraste, sem
+    // modelagem 3D nenhuma por trás.
+    function initSpinViewer(img, hint, urls) {
+        limparViewerAnterior();
+        var indice = 0;
+        img.src = urls[0];
+        img.classList.add('viewer-spin-ativo');
+        if (hint) {
+            hint.hidden = false;
+            hint.textContent = '↔ Arraste pra girar';
+        }
+
+        var arrastando = false;
+        var moveu = false;
+        var xInicial = 0;
+        var indiceInicial = 0;
+        var LARGURA_POR_FRAME = 18; // px de arraste por foto — sensível o bastante sem ficar nervoso
+
+        function posX(e) {
+            return (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+        }
+
+        function aplicarIndice(novoIndice) {
+            var n = urls.length;
+            indice = ((novoIndice % n) + n) % n;
+            img.src = urls[indice];
+        }
+
+        function onStart(e) {
+            arrastando = true;
+            moveu = false;
+            xInicial = posX(e);
+            indiceInicial = indice;
+        }
+        function onMove(e) {
+            if (!arrastando) return;
+            var delta = posX(e) - xInicial;
+            if (Math.abs(delta) > 4) moveu = true;
+            aplicarIndice(indiceInicial - Math.round(delta / LARGURA_POR_FRAME));
+        }
+        function onEnd() { arrastando = false; }
+        // Clique simples (sem arrastar), pra quem não percebe que dá pra arrastar —
+        // avança um frame por clique. Só dispara se o gesto não foi um arraste
+        // (senão soltar o mouse depois de girar também contaria como clique).
+        function onClick() {
+            if (moveu) return;
+            aplicarIndice(indice + 1);
+        }
+
+        img.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        img.addEventListener('touchstart', onStart, { passive: true });
+        img.addEventListener('touchmove', onMove, { passive: true });
+        img.addEventListener('touchend', onEnd);
+        img.addEventListener('click', onClick);
+
+        limparViewerAnterior = function () {
+            img.removeEventListener('mousedown', onStart);
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
+            img.removeEventListener('touchstart', onStart);
+            img.removeEventListener('touchmove', onMove);
+            img.removeEventListener('touchend', onEnd);
+            img.removeEventListener('click', onClick);
+            img.classList.remove('viewer-spin-ativo');
+        };
+    }
+
     // ── FALLBACK IMAGE ───────────────────────────────────────────
     var FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320">' +
@@ -26,7 +135,6 @@
     var todosProdutos  = [];
     var activeFilters = { tipo: '', genero: '', categoria: '' };
     var CATEGORIA_LABELS = { vestuario: 'Vestuário', decor3d: 'Decor 3D' };
-    var searchAberta  = false;
     var NUMERO_LOJA   = '5511940537169';
 
     // [VZ] Checkout automático — false até /api/checkout/status confirmar
@@ -49,30 +157,19 @@
     }
 
     // ── SEARCH ───────────────────────────────────────────────────
+    // [VZ] Busca sempre visível (2026-09-15) — o campo não colapsa mais atrás
+    // de um ícone (ver catalogo.css). O ícone só dá foco ao campo; o estado
+    // "aberto" que sobra é puramente visual, pra destacar quando há foco ou
+    // texto digitado.
     function toggleSearch() {
         var input = document.getElementById('searchInput');
-        var btn   = document.getElementById('searchToggle');
-        searchAberta = !searchAberta;
-        input.classList.toggle('open', searchAberta);
-        btn.classList.toggle('active', searchAberta);
-        if (searchAberta) {
-            setTimeout(function () { input.focus(); }, 350);
-        } else {
-            input.value = '';
-            fecharResultados();
-        }
+        input.focus();
     }
 
     function fecharSearchSeVazio() {
         var input = document.getElementById('searchInput');
         if (!input.value.trim()) {
-            setTimeout(function () {
-                searchAberta = false;
-                input.classList.remove('open');
-                var btn = document.getElementById('searchToggle');
-                if (btn) btn.classList.remove('active');
-                fecharResultados();
-            }, 200);
+            setTimeout(fecharResultados, 200);
         }
     }
 
@@ -318,12 +415,17 @@
         var tipos   = [...new Set(lojaFiltradaPorGenero.map(p => p.tipo   || '').filter(Boolean))].sort();
         var generos = [...new Set(lojaFiltradaPorTipo.map(p => p.genero || '').filter(Boolean))].sort();
 
+        // [VZ] Contagem por chip (2026-09-15) — mostra quantos produtos tem em
+        // cada tipo sem precisar clicar, e junto com o destaque visual abaixo
+        // é o que faz "Camiseta" pular aos olhos entre as opções, resolvendo o
+        // pedido de reposicionar a barra pra dar mais visibilidade às camisetas.
         var tipoHtml = '';
         if (tipos.length > 0) {
-            tipoHtml  = '<div class="filter-group" role="group" aria-label="Filtrar por tipo">';
-            tipoHtml += '<button class="filter-chip' + (!f.tipo ? ' active' : '') + '" data-filter="tipo" data-value="">Todos</button>';
+            tipoHtml  = '<div class="filter-group filter-group-tipo" role="group" aria-label="Filtrar por tipo de peça">';
+            tipoHtml += '<button class="filter-chip filter-chip-tipo' + (!f.tipo ? ' active' : '') + '" data-filter="tipo" data-value="">Todos</button>';
             tipos.forEach(function (t) {
-                tipoHtml += '<button class="filter-chip' + (f.tipo === t ? ' active' : '') + '" data-filter="tipo" data-value="' + esc(t) + '">' + esc(t) + '</button>';
+                var qtd = lojaFiltradaPorGenero.filter(function (p) { return (p.tipo || '').toLowerCase() === t.toLowerCase(); }).length;
+                tipoHtml += '<button class="filter-chip filter-chip-tipo' + (f.tipo === t ? ' active' : '') + '" data-filter="tipo" data-value="' + esc(t) + '">' + esc(t) + ' <span class="filter-chip-count">' + qtd + '</span></button>';
             });
             // Se o tipo ativo não existe mais nessa combinação, ele some da lista
             // mas continua selecionado — adiciona como chip extra pra não travar
@@ -334,8 +436,18 @@
             tipoHtml += '</div>';
         }
 
+        // [VZ] Filtro colapsável (2026-09-07): qualquer grupo de filtro com mais
+        // opções que LIMITE_CHIPS_VISIVEIS vira um botão único ("Gênero ▾") que
+        // abre uma folha em vez de poluir a barra inteira com dezenas de chips
+        // sempre visíveis (era o caso do gênero, hoje 21 opções, mas a regra é
+        // genérica — qualquer filtro que cresça passa a se comportar assim
+        // sozinho, sem precisar mexer aqui de novo). No mobile é o problema real
+        // reportado: os chips ocupavam a tela inteira antes de qualquer produto
+        // aparecer.
+        var LIMITE_CHIPS_VISIVEIS = 6;
         var generoHtml = '';
-        if (generos.length >= 1) {
+        var generoSheetHtml = '';
+        if (generos.length > 0 && generos.length <= LIMITE_CHIPS_VISIVEIS) {
             generoHtml  = '<div class="filter-group" role="group" aria-label="Filtrar por gênero">';
             generoHtml += '<button class="filter-chip' + (!f.genero ? ' active' : '') + '" data-filter="genero" data-value="">Todos</button>';
             generos.forEach(function (g) {
@@ -345,6 +457,24 @@
                 generoHtml += '<button class="filter-chip active" data-filter="genero" data-value="' + esc(f.genero) + '">' + esc(f.genero) + ' (0)</button>';
             }
             generoHtml += '</div>';
+        } else if (generos.length > LIMITE_CHIPS_VISIVEIS) {
+            var rotuloBotao = f.genero ? ('Gênero: ' + f.genero) : ('Gênero (' + generos.length + ')');
+            generoHtml = '<div class="filter-group filter-group-collapsed">' +
+                '<button type="button" class="filter-more-trigger' + (f.genero ? ' active' : '') + '" id="filterMoreGenero">' +
+                esc(rotuloBotao) + ' <span aria-hidden="true">▾</span>' +
+                '</button>' +
+                (f.genero ? '<button type="button" class="filter-chip-clear-x" id="filterGeneroClearX" aria-label="Limpar filtro de gênero">×</button>' : '') +
+                '</div>';
+            generoSheetHtml =
+                '<div class="filter-sheet-overlay" id="filterSheetOverlay">' +
+                '<div class="filter-sheet" role="dialog" aria-modal="true" aria-label="Filtrar por gênero">' +
+                '<div class="filter-sheet-header"><h3>Gênero</h3><button type="button" class="filter-sheet-close" id="filterSheetClose" aria-label="Fechar">×</button></div>' +
+                '<div class="filter-sheet-chips">' +
+                '<button class="filter-chip' + (!f.genero ? ' active' : '') + '" data-filter="genero" data-value="">Todos</button>' +
+                generos.map(function (g) {
+                    return '<button class="filter-chip' + (f.genero === g ? ' active' : '') + '" data-filter="genero" data-value="' + esc(g) + '">' + esc(g) + '</button>';
+                }).join('') +
+                '</div></div></div>';
         }
 
         var clearHtml = (f.tipo || f.genero || f.categoria)
@@ -356,9 +486,9 @@
         bar.innerHTML =
             '<div class="filter-bar-inner">' +
             categoriaHtml + tipoHtml + generoHtml + clearHtml + countHtml +
-            '</div>';
+            '</div>' + generoSheetHtml;
 
-        // Wire chip clicks
+        // Wire chip clicks (inline chips e chips dentro da folha, mesmo seletor)
         bar.querySelectorAll('.filter-chip').forEach(function (chip) {
             chip.addEventListener('click', function () {
                 var key = chip.dataset.filter;
@@ -372,6 +502,25 @@
         // Wire clear button
         var clearBtn = bar.querySelector('.filter-clear');
         if (clearBtn) clearBtn.addEventListener('click', limparFiltros);
+
+        // Wire o botão colapsado de gênero: abre a folha, fecha no X, no
+        // backdrop ou ao escolher uma opção (o listener de .filter-chip acima
+        // já dispara o re-render, que recria a folha fechada por padrão).
+        var moreTrigger = bar.querySelector('#filterMoreGenero');
+        var sheetOverlay = bar.querySelector('#filterSheetOverlay');
+        if (moreTrigger && sheetOverlay) {
+            moreTrigger.addEventListener('click', function () { sheetOverlay.classList.add('open'); });
+            sheetOverlay.addEventListener('click', function (e) { if (e.target === sheetOverlay) sheetOverlay.classList.remove('open'); });
+            var sheetClose = bar.querySelector('#filterSheetClose');
+            if (sheetClose) sheetClose.addEventListener('click', function () { sheetOverlay.classList.remove('open'); });
+        }
+        var generoClearX = bar.querySelector('#filterGeneroClearX');
+        if (generoClearX) generoClearX.addEventListener('click', function (e) {
+            e.stopPropagation();
+            activeFilters.genero = '';
+            renderFiltros(todosProdutos);
+            renderProdutos(todosProdutos);
+        });
 
         // Update count
         var countEl = document.getElementById('filterCount');
@@ -423,6 +572,12 @@
         if (freteResultEl) freteResultEl.textContent = '';
         freteAtual = null;
 
+        // Tira os listeners de flip/giro do produto anterior antes de trocar de
+        // imagem — sem isso eles ficam grudados em #modalImg (elemento fixo,
+        // nunca recriado) e se acumulam a cada produto aberto.
+        limparViewerAnterior();
+        limparViewerAnterior = function () {};
+
         img.src    = p.imagem_url || '';
         img.alt    = p.nome;
         setImgFallback(img);
@@ -441,13 +596,34 @@
         var buyPixBtn = document.getElementById('modalBuyPix');
         if (buyPixBtn) buyPixBtn.hidden = !checkoutAutomaticoHabilitado;
 
-        // Load extra photos for gallery
+        // Load extra photos for gallery — e, quando o produto tiver fotos marcadas
+        // com papel (frente/verso ou angulo), troca a galeria simples por um
+        // visualizador multi-ângulo (flip pra vestuário, giro pra decor 3D).
+        // Ver docs internos combinados com Rory em 2026-09-07.
         var gallery = document.getElementById('modalGallery');
+        var hint = document.getElementById('modalViewerHint');
+        if (hint) { hint.hidden = true; hint.onclick = null; }
         if (gallery && p.id) {
             gallery.innerHTML = '';
             fetch('/api/produtos/' + p.id + '/fotos').then(function(r){ return r.json(); }).then(function(fotos){
-                if (fotos.length > 0) {
-                    gallery.innerHTML = fotos.map(function(f){
+                if (!fotos.length) return;
+
+                var frente = fotos.find(function(f){ return f.papel === 'frente'; });
+                var verso  = fotos.find(function(f){ return f.papel === 'verso'; });
+                var angulos = fotos.filter(function(f){ return f.papel === 'angulo'; })
+                    .sort(function(a, b){ return a.posicao - b.posicao; });
+                var semPapel = fotos.filter(function(f){ return !f.papel; });
+
+                if (frente && verso) {
+                    initFlipViewer(img, hint, frente.url, verso.url);
+                } else if (angulos.length >= 3) {
+                    initSpinViewer(img, hint, angulos.map(function(f){ return f.url; }));
+                }
+
+                // Fotos sem papel (produtos antigos, ou extras além do flip/giro)
+                // continuam como galeria de thumb simples, igual antes.
+                if (semPapel.length > 0) {
+                    gallery.innerHTML = semPapel.map(function(f){
                         return '<img src="' + esc(f.url) + '" alt="" class="gallery-thumb" loading="lazy">';
                     }).join('');
                     gallery.querySelectorAll('.gallery-thumb').forEach(function(thumb){
@@ -476,6 +652,174 @@
         document.body.style.overflow = '';
         modalProduto = null;
         pararPollingPix();
+    }
+
+    // [VZ] abrirManual/fecharManual precisam existir em escopo de módulo
+    // porque o botão de manual da tela de intro (mostrarIntro) dispara
+    // abrirManual() antes de initManualModal() ter necessariamente
+    // terminado de rodar — na prática bootCatalog() chama mostrarIntro()
+    // e depois initEventListeners() de forma síncrona, então quando o
+    // clique de fato acontece a função já foi atribuída, mas mantemos as
+    // referências aqui pra não depender dessa ordem por acidente.
+    var abrirManual = function () {};
+    var fecharManual = function () {};
+
+    function initManualModal() {
+        var manualModal    = document.getElementById('manualModal');
+        var manualBtn       = document.getElementById('manualBtn');
+        var manualBackdrop  = document.getElementById('manualBackdrop');
+        var manualClose     = document.getElementById('manualClose');
+        if (!manualModal) return;
+
+        abrirManual = function () {
+            manualModal.classList.add('open');
+            manualModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            if (manualClose) setTimeout(function () { manualClose.focus(); }, 50);
+        };
+        fecharManual = function () {
+            manualModal.classList.remove('open');
+            manualModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        };
+
+        if (manualBtn)      manualBtn.addEventListener('click', abrirManual);
+        if (manualClose)    manualClose.addEventListener('click', fecharManual);
+        if (manualBackdrop) manualBackdrop.addEventListener('click', fecharManual);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && manualModal.classList.contains('open')) fecharManual();
+        });
+    }
+
+    // [VZ] Feedback do cliente final — modal com tema "portal" (mesma
+    // linguagem visual da tela de entrada), anônimo por padrão. Segue o
+    // mesmo padrão de abrir/fechar dos outros modais (open/aria-hidden/
+    // overflow lock/Escape), só que com um estado extra ("success") pra
+    // flip de tela igual ao modal de produto depois da compra.
+    function initFeedbackModal() {
+        var modal      = document.getElementById('feedbackModal');
+        var btn        = document.getElementById('feedbackBtn');
+        var backdrop   = document.getElementById('feedbackBackdrop');
+        var closeBtn   = document.getElementById('feedbackClose');
+        var card       = modal ? modal.querySelector('.feedback-modal-card') : null;
+        var form       = document.getElementById('feedbackForm');
+        var mensagemEl = document.getElementById('feedbackMensagem');
+        var charCount  = document.getElementById('feedbackCharCount');
+        var anonimoEl  = document.getElementById('feedbackAnonimo');
+        var identifyEl = document.getElementById('feedbackIdentify');
+        var instaEl    = document.getElementById('feedbackInstagram');
+        var repostEl   = document.getElementById('feedbackAutorizaRepost');
+        var errorEl    = document.getElementById('feedbackError');
+        var submitBtn  = document.getElementById('feedbackSubmit');
+        var successClose = document.getElementById('feedbackSuccessClose');
+        var starsWrap  = document.getElementById('feedbackStars');
+        if (!modal || !btn || !card) return;
+
+        var notaSelecionada = 0;
+        var stars = Array.prototype.slice.call(starsWrap.querySelectorAll('.feedback-star'));
+
+        function pintarEstrelas(valor) {
+            stars.forEach(function (s) {
+                var n = parseInt(s.getAttribute('data-star'), 10);
+                s.classList.toggle('filled', n <= valor);
+                s.setAttribute('aria-checked', n === notaSelecionada ? 'true' : 'false');
+            });
+        }
+        stars.forEach(function (s) {
+            s.addEventListener('click', function () {
+                var n = parseInt(s.getAttribute('data-star'), 10);
+                // Clicar na mesma estrela já selecionada desmarca (nota é opcional).
+                notaSelecionada = (notaSelecionada === n) ? 0 : n;
+                pintarEstrelas(notaSelecionada);
+            });
+            s.addEventListener('mouseenter', function () {
+                pintarEstrelas(parseInt(s.getAttribute('data-star'), 10));
+            });
+        });
+        starsWrap.addEventListener('mouseleave', function () { pintarEstrelas(notaSelecionada); });
+
+        function abrirFeedback() {
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            if (mensagemEl) setTimeout(function () { mensagemEl.focus(); }, 50);
+        }
+        function fecharFeedback() {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+        function resetarForm() {
+            card.setAttribute('data-state', 'form');
+            form.reset();
+            notaSelecionada = 0;
+            pintarEstrelas(0);
+            if (charCount) charCount.textContent = '0/1000';
+            if (identifyEl) identifyEl.hidden = true;
+            if (errorEl) errorEl.textContent = '';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar pro portal'; }
+        }
+
+        btn.addEventListener('click', abrirFeedback);
+        if (closeBtn)  closeBtn.addEventListener('click', fecharFeedback);
+        if (backdrop)  backdrop.addEventListener('click', fecharFeedback);
+        if (successClose) successClose.addEventListener('click', function () {
+            fecharFeedback();
+            resetarForm();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.classList.contains('open')) fecharFeedback();
+        });
+
+        if (mensagemEl && charCount) mensagemEl.addEventListener('input', function () {
+            charCount.textContent = mensagemEl.value.length + '/1000';
+        });
+
+        if (anonimoEl && identifyEl) anonimoEl.addEventListener('change', function () {
+            identifyEl.hidden = anonimoEl.checked;
+            // Voltar a ser anônimo limpa qualquer identificação já digitada —
+            // ninguém quer descobrir depois que um dado "esquecido" no campo
+            // foi enviado junto por engano.
+            if (anonimoEl.checked) {
+                if (instaEl)  instaEl.value = '';
+                if (repostEl) repostEl.checked = false;
+            }
+        });
+
+        if (form) form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var mensagem = mensagemEl ? mensagemEl.value.trim() : '';
+            if (mensagem.length < 3) {
+                if (errorEl) errorEl.textContent = 'Escreva uma mensagem um pouco maior antes de enviar.';
+                if (mensagemEl) mensagemEl.focus();
+                return;
+            }
+            if (errorEl) errorEl.textContent = '';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+
+            var anonimo = anonimoEl ? anonimoEl.checked : true;
+            var payload = {
+                mensagem: mensagem,
+                nota: notaSelecionada || null,
+                anonimo: anonimo,
+                instagramHandle: (!anonimo && instaEl) ? instaEl.value.trim() : '',
+                autorizaRepost: (!anonimo && repostEl) ? repostEl.checked : false
+            };
+
+            try {
+                var res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await res.json().catch(function () { return {}; });
+                if (!res.ok) throw new Error(data.error || 'Não foi possível enviar seu feedback agora.');
+                card.setAttribute('data-state', 'success');
+            } catch (err) {
+                if (errorEl) errorEl.textContent = err.message || 'Não foi possível enviar seu feedback agora. Tente de novo em um instante.';
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar pro portal'; }
+            }
+        });
     }
 
     function initFaqModal() {
@@ -757,17 +1101,29 @@
     function initEventListeners() {
         initModal();
         initFaqModal();
+        initManualModal();
+        initFeedbackModal();
         initPixCheckout();
         var searchToggle = document.getElementById('searchToggle');
         var searchInput  = document.getElementById('searchInput');
         var layoutBtns   = document.querySelectorAll('.lt-btn');
         var logoEl       = document.getElementById('landingLogo');
 
+        var searchClear = document.getElementById('searchClear');
         if (searchToggle) searchToggle.addEventListener('click', toggleSearch);
         if (searchInput) {
-            searchInput.addEventListener('input', function () { filtrarProdutos(this.value); });
+            searchInput.addEventListener('input', function () {
+                filtrarProdutos(this.value);
+                if (searchClear) searchClear.hidden = !this.value;
+            });
             searchInput.addEventListener('blur', fecharSearchSeVazio);
         }
+        if (searchClear) searchClear.addEventListener('click', function () {
+            searchInput.value = '';
+            searchClear.hidden = true;
+            fecharResultados();
+            searchInput.focus();
+        });
         layoutBtns.forEach(function (btn) {
             btn.addEventListener('click', function () { setLayout(this.id.replace('lt-', '')); });
         });
@@ -841,7 +1197,27 @@
         introStart = Date.now();
         el.classList.add('active');
         el.setAttribute('aria-hidden', 'false');
-        el.addEventListener('click', esconderIntro, { once: true });
+
+        // [VZ] Controle explícito (2026-09-15) — clicar em qualquer lugar que
+        // não seja um dos botões de ação ainda fecha (atalho pra quem já
+        // conhece o site), mas os botões são o caminho principal agora, não
+        // um hint passivo escondido atrás de um clique genérico.
+        el.addEventListener('click', function (e) {
+            if (e.target.closest('.catalog-intro-actions')) return;
+            esconderIntro();
+        });
+        var enterBtn = document.getElementById('introEnterBtn');
+        if (enterBtn) enterBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            esconderIntro();
+        });
+        var manualBtn = document.getElementById('introManualBtn');
+        if (manualBtn) manualBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            esconderIntro();
+            abrirManual();
+        });
+
         // Hard cap — never get stuck
         setTimeout(function () { esconderIntro(); }, INTRO_MAX_MS);
     }

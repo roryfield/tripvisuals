@@ -2043,6 +2043,21 @@ input.produtos-search {
 .status-producao   { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
 .status-enviado    { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
 .status-entregue   { background: rgba(37,211,102,0.12);  color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+/* [VZ] Status exclusivos do painel de Feedbacks — mesma escala de cor,
+   'lido' reaproveita o azul de 'confirmado', 'respondido' o verde de
+   'entregue', 'arquivado' o roxo de 'enviado', pra manter a linguagem
+   visual sem inventar uma paleta nova. */
+.status-lido       { background: rgba(59,130,246,0.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.status-respondido { background: rgba(37,211,102,0.12);  color: #25d366; border: 1px solid rgba(37,211,102,0.3); }
+.status-arquivado  { background: rgba(139,92,246,0.12);  color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+
+/* [VZ] Cards do painel de Feedbacks — reaproveita .pedido-card inteiro,
+   só adiciona o que é específico de feedback (estrelas, @ do Instagram). */
+.feedback-admin-estrelas { color: #fbbf24; font-size: 0.95rem; letter-spacing: 1px; }
+.feedback-admin-sem-nota { color: #555; font-size: 0.75rem; font-style: italic; }
+.feedback-admin-anon     { color: #777; font-size: 0.78rem; font-style: italic; }
+.feedback-admin-insta    { color: var(--cyan); font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.feedback-admin-insta:hover { text-decoration: underline; }
 
 /* [VZ] Payment badge — only rendered for pedidos created via PIX automation.
    Pre-existing/manual (WhatsApp) pedidos have payment_status='manual' and
@@ -3751,4 +3766,75 @@ kbd {
     display: inline-block;
     text-decoration: none;
     margin: 2px 0 18px;
+}
+/* ═══════════════════════════════════════════════════════
+   ASSISTENTE DE CAPTURA DE FOTOS (admin-fotos-wizard.js)
+   2026-09-07 — modal autocontido, sem depender de classes
+   de outro componente do admin.
+   ═══════════════════════════════════════════════════════ */
+.fw-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+}
+.fw-modal {
+    background: #141414; border: 1px solid #2a2a2a; border-radius: 12px;
+    max-width: 720px; width: 100%; max-height: 90vh; overflow-y: auto;
+    padding: 20px;
+}
+.fw-loading { color: #999; text-align: center; padding: 40px 0; }
+.fw-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.fw-header h2 { margin: 0 0 4px; font-size: 18px; }
+.fw-sub { margin: 0; color: #999; font-size: 13px; }
+.fw-close {
+    background: none; border: none; color: #ccc; font-size: 26px;
+    line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.fw-progress { color: #6bd1ff; font-size: 13px; margin: 12px 0; }
+.fw-slots {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 14px;
+}
+.fw-slot {
+    border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px; background: #1a1a1a;
+}
+.fw-slot-pronto { border-color: #2f8f5f; }
+.fw-slot-preview {
+    aspect-ratio: 1; background: #0d0d0d; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.fw-slot-preview img { width: 100%; height: 100%; object-fit: cover; }
+.fw-slot-num { color: #555; font-size: 28px; font-weight: 700; }
+.fw-slot-info { font-size: 12px; color: #aaa; }
+.fw-slot-info strong { display: block; color: #eee; font-size: 13px; margin-bottom: 2px; }
+.fw-slot-actions { display: flex; gap: 6px; }
+.fw-btn-upload {
+    flex: 1; text-align: center; background: #1f6feb; color: #fff;
+    border-radius: 6px; padding: 7px 8px; font-size: 12px; cursor: pointer;
+}
+.fw-btn-upload:hover { background: #2a7fff; }
+.fw-btn-remover {
+    background: #3a1f1f; color: #ff8a8a; border: 1px solid #5a2a2a;
+    border-radius: 6px; padding: 7px 8px; font-size: 12px; cursor: pointer;
+}
+.fw-decor-controls {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    color: #ccc; font-size: 13px; margin-bottom: 10px;
+}
+.fw-btn-secundario {
+    background: #222; border: 1px solid #333; color: #ccc;
+    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px;
+}
+.fw-btn-secundario:disabled { opacity: 0.4; cursor: not-allowed; }
+.fw-status { min-height: 18px; font-size: 13px; color: #7fd88a; text-align: center; }
+.fw-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+.fw-btn-concluir {
+    background: #2f8f5f; color: #fff; border: none; border-radius: 6px;
+    padding: 9px 22px; font-size: 14px; cursor: pointer;
+}
+.btn-fotos-item {
+    background: #1f6feb; color: #fff; border: none; border-radius: 6px;
+    padding: 6px 10px; font-size: 12px; cursor: pointer;
 }

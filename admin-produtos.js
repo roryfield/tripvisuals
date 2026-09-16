@@ -193,6 +193,7 @@ const PRODUTOS_POR_PAGINA = 24;
                             <button class="btn-salvar-item" id="btn-${p.id}" data-id="${p.id}" data-action="salvar">Salvar</button>
                             <button class="btn-destaque-item" data-id="${p.id}" data-destaque="${p.destaque ? 'true' : 'false'}" data-action="destaque">${p.destaque ? '★ Destacado' : '☆ Destacar'}</button>
                             <button class="btn-duplicar-item" data-id="${p.id}" data-action="duplicar">Duplicar</button>
+                            <button class="btn-fotos-item" data-id="${p.id}" data-categoria="${categoriaAtual}" data-nome="${escapeAttr(p.nome)}" data-action="fotos">📸 Fotos</button>
                             <button class="btn-ocultar-item" data-id="${p.id}" data-oculto="${p.oculto ? 'true' : 'false'}" data-action="visibility">${p.oculto ? 'Mostrar' : 'Ocultar'}</button>
                             <button class="btn-remover-item" data-id="${p.id}" data-nome="${escapeAttr(p.nome)}" data-action="remover">Remover</button>
                         </div>
@@ -223,6 +224,9 @@ const PRODUTOS_POR_PAGINA = 24;
                 if (action === 'visibility') toggleVisibility(id, btn);
                 if (action === 'destaque')   toggleDestaque(id, btn);
                 if (action === 'duplicar')   duplicarProduto(id);
+                if (action === 'fotos' && window.abrirAssistenteFotos) {
+                    window.abrirAssistenteFotos({ id, categoria: btn.dataset.categoria, nome: btn.dataset.nome });
+                }
             });
 
             // Bulk checkboxes — separate listener for change events
