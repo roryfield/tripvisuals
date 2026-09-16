@@ -80,6 +80,7 @@
                     '<div class="pedido-card-left">' +
                         '<p class="pedido-produto">' + esc(p.produto_nome) + (p.tamanho ? ' · ' + esc(p.tamanho) : '') + '</p>' +
                         (p.cliente_nome ? '<p class="pedido-cliente">' + esc(p.cliente_nome) + (p.cliente_whatsapp ? ' · ' + esc(p.cliente_whatsapp) : '') + (p.cep ? ' · CEP ' + esc(p.cep) : '') + '</p>' : '') +
+                        (p.cliente_email ? '<p class="pedido-cliente pedido-email">✉ ' + esc(p.cliente_email) + '</p>' : '') +
                         (p.notas ? '<p class="pedido-notas">' + esc(p.notas) + '</p>' : '') +
                     '</div>' +
                     '<div class="pedido-card-right">' +
@@ -113,6 +114,7 @@
                 tamanho:          p.tamanho,
                 cliente_nome:     p.cliente_nome,
                 cliente_whatsapp: p.cliente_whatsapp,
+                cliente_email:    p.cliente_email,
                 cep:              p.cep,
                 notas:            p.notas,
                 status:           novoStatus
@@ -149,6 +151,7 @@
         document.getElementById('fProduto').value    = pedido?.produto_nome || '';
         document.getElementById('fCliente').value   = pedido?.cliente_nome || '';
         document.getElementById('fWhatsapp').value  = pedido?.cliente_whatsapp || '';
+        document.getElementById('fEmail').value     = pedido?.cliente_email || '';
         document.getElementById('fTamanho').value   = pedido?.tamanho || '';
         document.getElementById('fValor').value     = pedido?.valor || '';
         document.getElementById('fCep').value       = pedido?.cep || '';
@@ -226,6 +229,7 @@
             produto_nome:       document.getElementById('fProduto').value.trim(),
             cliente_nome:       document.getElementById('fCliente').value.trim(),
             cliente_whatsapp:   document.getElementById('fWhatsapp').value.trim(),
+            cliente_email:      document.getElementById('fEmail').value.trim(),
             tamanho:            document.getElementById('fTamanho').value.trim(),
             valor:              valorRaw === '' ? '' : valorNum,
             cep:                document.getElementById('fCep').value.trim(),

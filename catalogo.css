@@ -1490,6 +1490,16 @@
     .zip-soon-badge { font-size: 0.45rem; padding: 1px 3px; top: -4px; right: -3px; }
 }
 
+/* [VZ] Sentinela da renderização em lotes (2026-09-16) — invisível, só
+   existe pro IntersectionObserver ter algo pra observar perto do fim da
+   vitrine. Sem altura ela nunca entra no viewport e o próximo lote nunca
+   dispara. */
+.vitrine-sentinel {
+    width: 100%;
+    height: 40px;
+    margin-top: -20px;
+}
+
 /* ─────────────────────────────────────────────────────────
    CATALOG FILTER BAR
    ───────────────────────────────────────────────────────── */

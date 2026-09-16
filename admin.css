@@ -2000,6 +2000,7 @@ input.produtos-search {
 .pedido-card-left { flex: 1; min-width: 0; }
 .pedido-produto { font-weight: 600; font-size: 0.9rem; color: #fff; margin-bottom: 3px; }
 .pedido-cliente { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; }
+.pedido-email { font-size: 0.74rem; opacity: 0.85; }
 .pedido-notas   { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
 .pedido-card-right { text-align: right; flex-shrink: 0; }
 .pedido-valor { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 1px; }

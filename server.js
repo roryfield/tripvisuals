@@ -20,6 +20,7 @@ const frete      = require('./frete');
 const { lerComprovante } = require('./comprovante-ia');
 const { validarCpfCnpj } = require('./documentos');
 const feedbackNotify     = require('./feedback-notify');
+const pedidoNotify       = require('./pedido-notify');
 
 // [VZ] Optional Sentry error monitoring.
 // Set SENTRY_DSN in Railway env vars to enable. No-op if not set.
@@ -184,6 +185,11 @@ async function initDB() {
     // [VZ] Coluna cep adicionada após o lançamento inicial — ALTER cobre
     // bancos já existentes em produção (CREATE TABLE só roda na 1ª criação).
     await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cep TEXT DEFAULT ''`);
+    // [VZ] cliente_email — opcional, sempre foi assim porque o checkout roda
+    // por WhatsApp e nunca pediu e-mail. Alimenta pedido-notify.js: com esse
+    // campo preenchido, o pedido ganha confirmação e avisos de status por
+    // e-mail; sem ele, o fluxo continua exatamente como sempre foi.
+    await pool.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cliente_email TEXT DEFAULT ''`);
 
     // [VZ] Payment automation columns — additive, all nullable/defaulted so
     // existing manual (WhatsApp) pedidos are unaffected. Populated only when
@@ -1312,23 +1318,40 @@ app.get('/api/pedidos', requireAuth, async (req, res) => {
     }
 });
 
+// [VZ] E-mail é sempre opcional aqui — só valida formato quando alguém de
+// fato digitou algo, nunca exige o campo. Regex simples de propósito,
+// suficiente pra pegar erro de digitação óbvio sem rejeitar e-mail real.
+function normalizarEmailOpcional(valor) {
+    const limpo = String(valor || '').trim().slice(0, 200);
+    if (!limpo) return { erro: null, email: '' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(limpo)) return { erro: 'E-mail inválido.' };
+    return { erro: null, email: limpo };
+}
+
 app.post('/api/pedidos', requireAuth, writeLimiter, async (req, res) => {
-    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status } = req.body;
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cliente_email, cep, notas, status } = req.body;
     if (!produto_nome || String(produto_nome).trim().length === 0)
         return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
+    const emailInfo = normalizarEmailOpcional(cliente_email);
+    if (emailInfo.erro) return res.status(400).json({ error: emailInfo.erro });
     try {
         const r = await pool.query(
-            `INSERT INTO pedidos (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            `INSERT INTO pedidos (produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cliente_email, cep, notas, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
             [String(produto_nome).trim().slice(0, 200),
              parseFloat(valor) || null,
              String(tamanho || '').trim().slice(0, 20),
              String(cliente_nome || '').trim().slice(0, 100),
              String(cliente_whatsapp || '').trim().slice(0, 30),
+             emailInfo.email,
              String(cep || '').trim().slice(0, 9),
              String(notas || '').trim().slice(0, 1000),
              ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo']);
-        res.status(201).json(r.rows[0]);
+        const pedido = r.rows[0];
+        res.status(201).json(pedido);
+        // Best-effort, depois da resposta — nunca atrasa nem quebra a
+        // criação do pedido por causa de um problema no envio do e-mail.
+        pedidoNotify.notificarPedido(pool, registrarEvento, pedido, 'recebido').catch(() => {});
     } catch (e) {
         console.error('POST /api/pedidos:', e.message);
         res.status(500).json({ error: 'Erro ao criar pedido.' });
@@ -1338,25 +1361,40 @@ app.post('/api/pedidos', requireAuth, writeLimiter, async (req, res) => {
 app.put('/api/pedidos/:id', requireAuth, writeLimiter, async (req, res) => {
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
-    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cep, notas, status } = req.body;
+    const { produto_nome, valor, tamanho, cliente_nome, cliente_whatsapp, cliente_email, cep, notas, status } = req.body;
     if (!produto_nome || String(produto_nome).trim().length === 0)
         return res.status(400).json({ error: 'Nome do produto é obrigatório.' });
+    const emailInfo = normalizarEmailOpcional(cliente_email);
+    if (emailInfo.erro) return res.status(400).json({ error: emailInfo.erro });
+    const novoStatus = ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo';
     try {
+        // Status anterior primeiro — só notifica o cliente quando o status
+        // de fato muda, não em toda edição (ex.: corrigir um preço não deve
+        // gerar um e-mail de "atualização do pedido").
+        const anterior = await pool.query('SELECT status FROM pedidos WHERE id = $1', [id]);
+        if (!anterior.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        const statusAnterior = anterior.rows[0].status;
+
         const r = await pool.query(
             `UPDATE pedidos SET produto_nome=$1, valor=$2, tamanho=$3,
-              cliente_nome=$4, cliente_whatsapp=$5, cep=$6, notas=$7, status=$8
-             WHERE id=$9 RETURNING *`,
+              cliente_nome=$4, cliente_whatsapp=$5, cliente_email=$6, cep=$7, notas=$8, status=$9
+             WHERE id=$10 RETURNING *`,
             [String(produto_nome).trim().slice(0, 200),
              parseFloat(valor) || null,
              String(tamanho || '').trim().slice(0, 20),
              String(cliente_nome || '').trim().slice(0, 100),
              String(cliente_whatsapp || '').trim().slice(0, 30),
+             emailInfo.email,
              String(cep || '').trim().slice(0, 9),
              String(notas || '').trim().slice(0, 1000),
-             ['novo','confirmado','producao','enviado','entregue'].includes(status) ? status : 'novo',
+             novoStatus,
              id]);
         if (r.rowCount === 0) return res.status(404).json({ error: 'Pedido não encontrado.' });
-        res.json(r.rows[0]);
+        const pedido = r.rows[0];
+        res.json(pedido);
+        if (novoStatus !== statusAnterior) {
+            pedidoNotify.notificarPedido(pool, registrarEvento, pedido, 'status').catch(() => {});
+        }
     } catch (e) {
         console.error('PUT /api/pedidos/:id:', e.message);
         res.status(500).json({ error: 'Erro ao atualizar pedido.' });
@@ -1487,10 +1525,18 @@ app.post('/api/pedidos/:id/confirmar-pagamento', requireAuth, writeLimiter, asyn
     const id = parseInt(req.params.id, 10);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     try {
+        // Estado anterior primeiro, só pra saber se isso é uma confirmação
+        // nova (dispara e-mail) ou um reenvio idempotente do mesmo clique
+        // (não dispara de novo) — o comportamento da rota em si (sempre
+        // succeed) continua igual ao de antes, intencionalmente.
+        const antes = await pool.query('SELECT payment_status FROM pedidos WHERE id = $1', [id]);
+        if (!antes.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        const jaEstavaPago = antes.rows[0].payment_status === 'pago';
+
         const r = await pool.query(
-            `UPDATE pedidos SET payment_status = 'pago', status = 'confirmado' WHERE id = $1 RETURNING id`,
+            `UPDATE pedidos SET payment_status = 'pago', status = 'confirmado' WHERE id = $1 RETURNING *`,
             [id]);
-        if (!r.rows.length) return res.status(404).json({ error: 'Pedido não encontrado.' });
+        const pedido = r.rows[0];
 
         await registrarEvento(pool, {
             modulo:   'pedidos',
@@ -1500,6 +1546,7 @@ app.post('/api/pedidos/:id/confirmar-pagamento', requireAuth, writeLimiter, asyn
         });
 
         res.json({ success: true });
+        if (!jaEstavaPago) pedidoNotify.notificarPedido(pool, registrarEvento, pedido, 'status').catch(() => {});
     } catch (e) {
         console.error('POST /confirmar-pagamento:', e.message);
         res.status(500).json({ error: 'Erro ao confirmar pagamento.' });
@@ -1686,10 +1733,14 @@ app.post('/api/webhook/asaas', webhookLimiter, async (req, res) => {
                 `UPDATE pedidos
                     SET payment_status = 'pago', status = 'confirmado'
                   WHERE asaas_payment_id = $1 AND payment_status != 'pago'
-                  RETURNING id`,
+                  RETURNING *`,
                 [payment.id]);
             if (r.rowCount === 0) {
                 console.log(`Webhook ${event} para pagamento ${payment.id} — pedido não encontrado ou já processado.`);
+            } else {
+                // Best-effort — a WHERE acima já garante que isso só roda na
+                // transição real pra 'pago', nunca em reentrega/retry do webhook.
+                pedidoNotify.notificarPedido(pool, registrarEvento, r.rows[0], 'status').catch(() => {});
             }
         }
         if (logId) await pool.query('UPDATE webhook_log SET processado = true WHERE id = $1', [logId]);

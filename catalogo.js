@@ -414,10 +414,60 @@
         return btn;
     }
 
+    // [VZ] Renderização em lotes (2026-09-16): antes disso, a vitrine
+    // inteira (hoje 404+ produtos) entrava no DOM de uma vez só — pesado no
+    // primeiro paint e a sensação de "rolo sem fim" reportada pelo cliente,
+    // já que nunca havia um ponto de pausa. Sem mexer na API (ainda busca
+    // tudo em /api/produtos numa chamada só — ok pro volume atual do
+    // acervo), a lista já filtrada passa a entrar em lotes de VITRINE_LOTE
+    // itens. O próximo lote só é montado quando o usuário de fato chega
+    // perto do fim da vitrine, via IntersectionObserver numa sentinela —
+    // sem listener de scroll manual, sem polling.
+    var VITRINE_LOTE = 24;
+    var vitrineState = { lista: [], proximoIndex: 0 };
+    var vitrineObserver = null;
+
+    function pegarSentinelaVitrine() {
+        var wrap = document.querySelector('.vitrine-wrap');
+        if (!wrap) return null;
+        var sentinela = document.getElementById('vitrineSentinel');
+        if (!sentinela) {
+            sentinela = document.createElement('div');
+            sentinela.id = 'vitrineSentinel';
+            sentinela.className = 'vitrine-sentinel';
+            sentinela.setAttribute('aria-hidden', 'true');
+            wrap.appendChild(sentinela);
+        }
+        return sentinela;
+    }
+
+    function renderProximoLoteVitrine() {
+        var vitrine = document.getElementById('vitrine');
+        if (!vitrine) return;
+        var inicio = vitrineState.proximoIndex;
+        var fim = Math.min(inicio + VITRINE_LOTE, vitrineState.lista.length);
+        var frag = document.createDocumentFragment();
+        for (var i = inicio; i < fim; i++) {
+            frag.appendChild(montarCardProduto(vitrineState.lista[i], i - inicio));
+        }
+        vitrine.appendChild(frag);
+        vitrineState.proximoIndex = fim;
+
+        var sentinela = document.getElementById('vitrineSentinel');
+        if (vitrineState.proximoIndex >= vitrineState.lista.length) {
+            if (vitrineObserver) { vitrineObserver.disconnect(); vitrineObserver = null; }
+            if (sentinela) sentinela.hidden = true;
+        } else if (sentinela) {
+            sentinela.hidden = false;
+        }
+    }
+
     function renderProdutos(lista) {
         var vitrine = document.getElementById('vitrine');
         var filtered = applyFilters(lista);
         vitrine.innerHTML = '';
+
+        if (vitrineObserver) { vitrineObserver.disconnect(); vitrineObserver = null; }
 
         // Update active count
         var countEl = document.getElementById('filterCount');
@@ -437,12 +487,28 @@
                 '</div>';
             var clr = vitrine.querySelector('.state-clear-filters');
             if (clr) clr.addEventListener('click', function () { limparFiltros(); });
+            var sentinelaVazia = document.getElementById('vitrineSentinel');
+            if (sentinelaVazia) sentinelaVazia.hidden = true;
             return;
         }
 
-        filtered.forEach(function (p, i) {
-            vitrine.appendChild(montarCardProduto(p, i));
-        });
+        vitrineState = { lista: filtered, proximoIndex: 0 };
+        renderProximoLoteVitrine();
+
+        if (filtered.length > VITRINE_LOTE) {
+            var sentinela = pegarSentinelaVitrine();
+            if (sentinela && 'IntersectionObserver' in window) {
+                vitrineObserver = new IntersectionObserver(function (entries) {
+                    if (entries[0].isIntersecting) renderProximoLoteVitrine();
+                }, { rootMargin: '600px 0px' });
+                vitrineObserver.observe(sentinela);
+            } else {
+                // Sem suporte a IntersectionObserver: renderiza tudo de uma
+                // vez, igual ao comportamento anterior — nunca deixa
+                // produto escondido esperando um scroll que não dispara.
+                while (vitrineState.proximoIndex < vitrineState.lista.length) renderProximoLoteVitrine();
+            }
+        }
     }
 
     // [VZ] Tela de overview (2026-09-16) — a primeira coisa visível depois
