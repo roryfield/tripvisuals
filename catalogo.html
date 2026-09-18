@@ -25,7 +25,13 @@
 </div>
 
 <!-- CUSTOMER HEADER -->
-<!-- CATALOG OPENING — first paint only, fades out when products are ready -->
+<!-- [VZ] Portal sob demanda (2026-09-18) — antes essa tela cobria a página
+     inteira sozinha, assim que o site carregava, com um teto de 5s pra
+     fechar sozinha; a pessoa mal via o botão de manual antes de a animação
+     sumir. Agora é um modal real, só abre se o cliente clicar no botão
+     "✦ Conheça o acervo" no header (ver introTriggerBtn abaixo). Sem
+     temporizador: fica aberto até a pessoa clicar em Entrar, no X, no
+     manual, ou fora do card. -->
 <div class="catalog-intro" id="catalogIntro" aria-hidden="true">
     <div class="catalog-intro-glow"></div>
     <div class="catalog-intro-grid"></div>
@@ -35,6 +41,7 @@
         <div class="rift-ring rift-ring-3"></div>
     </div>
     <div class="catalog-intro-inner">
+        <button type="button" class="catalog-intro-close" id="introCloseBtn" aria-label="Fechar">×</button>
         <p class="catalog-intro-eyebrow">Bem-vindo ao acervo</p>
         <h1 class="catalog-intro-brand">TRIP VISUALS</h1>
         <div class="catalog-intro-sep" aria-hidden="true"></div>
@@ -57,11 +64,6 @@
             </div>
         </div>
 
-        <!-- [VZ] Portal com controle explícito (2026-09-15) — antes só tinha
-             um spinner e um hint passivo ("toque pra entrar"); agora o
-             cliente tem dois botões reais: entrar direto, ou ver o manual
-             de uso antes. Ambos funcionam mesmo antes do catálogo terminar
-             de carregar (o clique não depende do carregamento). -->
         <div class="catalog-intro-actions">
             <button type="button" class="catalog-intro-enter" id="introEnterBtn">
                 Entrar no catálogo <span aria-hidden="true">→</span>
@@ -69,11 +71,6 @@
             <button type="button" class="catalog-intro-manual" id="introManualBtn">
                 Como usar o catálogo
             </button>
-        </div>
-
-        <div class="catalog-intro-loader" aria-label="Carregando catálogo" id="introLoader">
-            <div class="catalog-intro-spinner"></div>
-            <span class="catalog-intro-loader-label">preparando o acervo</span>
         </div>
 
         <p class="catalog-intro-credit">Sistema por <strong>VOIDZONE</strong></p>
@@ -126,6 +123,18 @@
         </div>
 
         <div class="hdr-divider" aria-hidden="true"></div>
+
+        <!-- [VZ] Gatilho do portal (2026-09-18) — abre a animação de boas-
+             vindas sob demanda, em vez de forçá-la no carregamento. O ponto
+             pulsante só aparece na primeira sessão (ver shouldShowIntro no
+             JS) pra chamar atenção sem virar ruído visual permanente. -->
+        <button id="introTriggerBtn" class="icon-btn intro-trigger" type="button" aria-pressed="false"
+            aria-label="Conheça o acervo Trip Visuals" title="Conheça o acervo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>
+            </svg>
+            <span class="intro-trigger-pulse" id="introTriggerPulse" aria-hidden="true" hidden></span>
+        </button>
 
         <button id="manualBtn" class="icon-btn manual-trigger" type="button" aria-pressed="false"
             aria-label="Manual de uso do catálogo" title="Como usar o catálogo">

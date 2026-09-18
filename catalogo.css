@@ -19,6 +19,15 @@
             padding-top: 72px;
         }
 
+        /* [VZ] Toque mobile (2026-09-18) — o flash cinza/azul padrão do
+           Android/iOS no tap conflita com os estados :active próprios do
+           site (fica um "duplo clique visual"); removido globalmente,
+           os botões já têm feedback de toque desenhado à mão abaixo. */
+        button, a, .icon-btn, .filter-chip, .filter-more-trigger,
+        .overview-cta, .overview-nav, .card-produto, .sr-item, .state-clear-filters {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         /* ── CUSTOMER HEADER ───────────────────────────── */
         .cust-header {
             position: fixed;
@@ -145,6 +154,15 @@
             color: var(--cyan);
             box-shadow: 0 0 12px rgba(0,229,255,0.2);
         }
+        /* [VZ] Feedback de toque (2026-09-18) — :hover nunca dispara em tela
+           sensível ao toque, então sem isso o botão parece "não responder"
+           no celular mesmo funcionando. Espelha o hover com leve compressão. */
+        .icon-btn:active {
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0,229,255,0.2);
+            transform: scale(0.92);
+        }
         .icon-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
         /* [VZ] Estado ativo (2026-09-17) — o ícone que abriu um modal (manual/
            FAQ/feedback) precisa continuar visivelmente "selecionado" enquanto
@@ -157,6 +175,30 @@
             box-shadow: 0 0 0 1px rgba(0,229,255,0.25), 0 0 14px rgba(0,229,255,0.35);
         }
         .icon-btn.active:hover { box-shadow: 0 0 0 1px rgba(0,229,255,0.3), 0 0 18px rgba(0,229,255,0.45); }
+
+        /* [VZ] Aceno do portal (2026-09-18) — ponto pulsante que só existe
+           na primeira sessão do cliente, convidando a clicar no botão de
+           "Conheça o acervo" sem bloquear nada; some assim que ele clica
+           (ou numa próxima sessão). */
+        .intro-trigger { position: relative; }
+        .intro-trigger-pulse {
+            position: absolute;
+            top: -2px; right: -2px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 0 rgba(0,229,255,0.6);
+            animation: intro-trigger-ping 1.8s ease-out infinite;
+            pointer-events: none;
+        }
+        @keyframes intro-trigger-ping {
+            0%   { box-shadow: 0 0 0 0 rgba(0,229,255,0.55); }
+            70%  { box-shadow: 0 0 0 8px rgba(0,229,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,229,255,0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .intro-trigger-pulse { animation: none; }
+        }
         .icon-btn svg { width: 17px; height: 17px; }
 
         /* Layout toggle pill */
@@ -210,14 +252,20 @@
             color: #666;
             margin-bottom: 16px;
         }
-        .sr-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
+        /* [VZ] Lista compacta (2026-09-18) — antes era um grid multi-coluna
+           que virava uma parede de cartões pequenos em buscas com muitos
+           matches (ex.: "101 resultados"). Uma lista vertical única, com
+           teto de itens renderizados (ver SR_MAX_RESULTADOS no JS), é mais
+           fácil de escanear tanto no desktop quanto no mobile. */
+        .sr-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 420px;
         }
         .sr-item {
             display: flex; align-items: center; gap: 12px;
-            padding: 10px;
+            padding: 8px 10px;
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
@@ -228,10 +276,17 @@
             text-align: left;
             width: 100%;
         }
-        .sr-item:hover, .sr-item:focus-visible {
+        .sr-more-hint {
+            padding: 10px 10px 2px;
+            font-size: 0.72rem;
+            color: #666;
+            font-style: italic;
+        }
+        .sr-item:hover, .sr-item:focus-visible, .sr-item:active {
             background: rgba(255,255,255,0.05);
             outline: none;
         }
+        .sr-item:active { background: rgba(0,229,255,0.08); }
         .sr-item img {
             width: 44px; height: 44px;
             object-fit: cover; border-radius: 6px;
@@ -274,6 +329,11 @@
             transform: translateY(-4px);
             box-shadow: 0 12px 32px rgba(0,229,255,0.08);
         }
+        .card-produto:active {
+            border-color: rgba(0,229,255,0.4);
+            transform: scale(0.98);
+            box-shadow: 0 8px 20px rgba(0,229,255,0.1);
+        }
         .card-produto:focus-visible {
             outline: 2px solid var(--cyan);
             outline-offset: 4px;
@@ -284,7 +344,7 @@
             display: block;
             transition: opacity 0.3s;
         }
-        .card-produto:hover img { opacity: 0.75; }
+        .card-produto:hover img, .card-produto:active img { opacity: 0.75; }
 
         .buy-overlay {
             position: absolute; inset: 0;
@@ -354,7 +414,9 @@
             .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; gap: 12px; }
             .grid-1          { gap: 12px; }
             .card-produto img { height: 200px; }
-            .sr-grid         { grid-template-columns: 1fr 1fr; }
+            .search-results  { padding: 16px 16px; max-height: 70vh; }
+            .sr-list         { max-width: none; }
+            .sr-item img     { width: 38px; height: 38px; }
             .hdr-divider     { display: none; }
             .cust-logo-text  { display: none; }
         }
@@ -938,6 +1000,25 @@
     position: relative; z-index: 1;
     padding: 20px; max-width: 560px; width: 100%;
 }
+
+/* [VZ] Fechar explícito (2026-09-18) — agora que o portal só abre por
+   clique (não some mais sozinho), precisa de uma saída óbvia além de
+   clicar fora ou apertar "Entrar". */
+.catalog-intro-close {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: #999;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.catalog-intro-close:hover  { border-color: var(--cyan); color: var(--cyan); }
+.catalog-intro-close:active { border-color: var(--cyan); color: var(--cyan); transform: scale(0.9); }
 
 /* ── Eyebrow — beat 1 (t=0.1s) ─────────────────────────── */
 .catalog-intro-eyebrow {
@@ -1563,6 +1644,7 @@
     overflow: hidden;
 }
 .filter-chip:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.18); }
+.filter-chip:active { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,0.18); transform: scale(0.95); }
 /* [VZ] Tipo em destaque (2026-09-15) — grupo mais importante pro cliente
    final (é literalmente "que peça eu quero"), por isso vem com mais peso
    visual que gênero: borda mais forte, levemente maior, com contagem. */
@@ -1618,6 +1700,7 @@
     overflow: hidden;
 }
 .filter-more-trigger:hover { border-color: var(--cyan); color: var(--cyan); }
+.filter-more-trigger:active { border-color: var(--cyan); color: var(--cyan); transform: scale(0.95); }
 .filter-more-trigger.active {
     background: rgba(0,229,255,0.12);
     border-color: var(--cyan);
@@ -1686,6 +1769,7 @@
     transition: all 0.2s;
 }
 .state-clear-filters:hover { border-color: var(--cyan); background: rgba(0,229,255,0.08); }
+.state-clear-filters:active { border-color: var(--cyan); background: rgba(0,229,255,0.14); transform: scale(0.97); }
 
 /* Genero badge — same style as cor-badge but distinct */
 .genero-badge {
@@ -2101,6 +2185,12 @@
     color: var(--cyan);
     box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
 }
+.overview-nav:active:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+    transform: translateY(-50%) scale(0.9);
+}
 .overview-nav:disabled { opacity: 0; pointer-events: none; }
 .overview-nav-prev { left: 6px; }
 .overview-nav-next { right: 6px; }
@@ -2131,6 +2221,56 @@
     scroll-snap-align: start;
 }
 .overview-row .card-produto img { height: 210px; }
+
+/* [VZ] Toggle de layout também na vitrine (2026-09-18) — antes os botões
+   grid-1/2/3 do header só afetavam a grade completa (#vitrine), que fica
+   escondida atrás do "Ver catálogo completo" na home; escolher um layout
+   ali marcava o botão como ativo mas nada mudava na tela, porque a vitrine
+   curada sempre usava o carrossel horizontal (o antigo default "grid-3").
+   Agora a escolha vale também aqui: lista (grid-1) empilha os cards em
+   coluna única, duo (grid-2) usa 2 colunas — os dois sem scroll horizontal
+   nem setas, já que não há carrossel pra navegar. grid-3 é o carrossel
+   original, sem alteração. */
+.overview-row-wrap.grid-1 .overview-nav,
+.overview-row-wrap.grid-2 .overview-nav {
+    display: none;
+}
+.overview-row-wrap.grid-1::before,
+.overview-row-wrap.grid-1::after,
+.overview-row-wrap.grid-2::before,
+.overview-row-wrap.grid-2::after {
+    content: none;
+}
+.overview-row-wrap.grid-1 .overview-row,
+.overview-row-wrap.grid-2 .overview-row {
+    overflow-x: visible;
+    scroll-snap-type: none;
+    margin: 0;
+    padding: 0;
+}
+.overview-row-wrap.grid-1 .overview-row {
+    flex-direction: column;
+}
+.overview-row-wrap.grid-1 .overview-row .card-produto {
+    width: 100%;
+}
+.overview-row-wrap.grid-1 .overview-row .card-produto img {
+    height: 320px;
+}
+.overview-row-wrap.grid-2 .overview-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.overview-row-wrap.grid-2 .overview-row .card-produto {
+    width: 100%;
+}
+.overview-row-wrap.grid-2 .overview-row .card-produto img {
+    height: 240px;
+}
+@media (max-width: 600px) {
+    .overview-row-wrap.grid-2 .overview-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .overview-row-wrap.grid-2 .overview-row .card-produto img { height: 180px; }
+}
 
 .overview-badge {
     display: inline-block;
@@ -2173,6 +2313,12 @@
     color: var(--cyan);
     box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
     transform: translateY(-1px);
+}
+.overview-cta:active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+    transform: scale(0.96);
 }
 
 /* [VZ] Reveal do catálogo completo (2026-09-17) — transição de entrada

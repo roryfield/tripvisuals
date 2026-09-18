@@ -112,6 +112,27 @@
         btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
     }
 
+    // [VZ] Modais mutuamente exclusivos (2026-09-18) — o bug relatado ("os
+    // botões continuam clicados mesmo quando seleciono outro"): abrir um
+    // modal novo (ex.: feedback) nunca fechava outro que já estivesse
+    // aberto por baixo (ex.: manual ou FAQ). Os dois ficavam com a classe
+    // "open" ao mesmo tempo, os dois ícones do header ficavam com o glow
+    // "ativo" ao mesmo tempo, e — pior — um único Escape fechava os dois
+    // de uma vez, porque cada modal tem seu próprio listener de keydown e
+    // todos corriam na mesma tecla. Cada abrir* agora chama
+    // fecharOutrosModais() primeiro, fechando (de verdade, com seu próprio
+    // fechar*, não só escondendo) qualquer outro modal registrado que
+    // ainda esteja aberto.
+    var modaisRegistrados = [];
+    function registrarModal(estaAberto, fechar) {
+        modaisRegistrados.push({ estaAberto: estaAberto, fechar: fechar });
+    }
+    function fecharOutrosModais(fecharAtual) {
+        modaisRegistrados.forEach(function (m) {
+            if (m.fechar !== fecharAtual && m.estaAberto()) m.fechar();
+        });
+    }
+
     // [VZ] Visualizador multi-ângulo (2026-09-07) — duas variantes, mesma ideia:
     // trocar a imagem grande do modal sem precisar de nenhuma lib externa.
     //
@@ -248,8 +269,21 @@
     var pixPedidoId  = null;
 
     // ── LAYOUT ───────────────────────────────────────────────────
+    // [VZ] Layout também na vitrine curada (2026-09-18) — antes só a grade
+    // completa (#vitrine) reagia ao toggle grid-1/2/3; como ela fica
+    // escondida atrás do "Ver catálogo completo" na home, escolher um
+    // layout ali marcava o botão como ativo mas nada mudava na tela (bug
+    // relatado). layoutAtual guarda a escolha corrente pra renderOverview
+    // aplicá-la nas prateleiras que ela cria depois desse ponto.
+    var layoutAtual = 'grid-3';
+
     function setLayout(layout) {
+        layoutAtual = layout;
         document.getElementById('vitrine').className = layout;
+        document.querySelectorAll('.overview-row-wrap').forEach(function (wrap) {
+            wrap.classList.remove('grid-1', 'grid-2', 'grid-3');
+            wrap.classList.add(layout);
+        });
         ['grid-1', 'grid-2', 'grid-3'].forEach(function (l) {
             var btn = document.getElementById('lt-' + l);
             if (!btn) return;
@@ -281,6 +315,14 @@
         if (el) el.classList.remove('visible');
     }
 
+    // [VZ] Resultados de busca compactos (2026-09-18) — antes renderizava
+    // TODOS os matches num grid multi-coluna (uma busca de "in" virava
+    // "101 RESULTADOS" em ~30 cartões apertados, pior ainda no mobile).
+    // Agora: lista vertical única (mais fácil de escanear, sem "parede" de
+    // cards) com um teto de itens renderizados; o resto vira uma dica pra
+    // refinar a busca, em vez de forçar a pessoa a rolar uma grade cheia.
+    var SR_MAX_RESULTADOS = 6;
+
     function filtrarProdutos(query) {
         var box = document.getElementById('searchResults');
         var q   = query.trim().toLowerCase();
@@ -300,12 +342,15 @@
             return;
         }
 
+        var visiveis  = found.slice(0, SR_MAX_RESULTADOS);
+        var restantes = found.length - visiveis.length;
+
         box.innerHTML = '<p class="sr-label">' + found.length +
             ' resultado' + (found.length > 1 ? 's' : '') +
-            '</p><div class="sr-grid" id="srGrid"></div>';
+            '</p><div class="sr-list" id="srGrid"></div>';
 
         var grid = document.getElementById('srGrid');
-        found.forEach(function (p) {
+        visiveis.forEach(function (p) {
             var btn = document.createElement('button');
             btn.className = 'sr-item';
             btn.type      = 'button';
@@ -321,6 +366,15 @@
             btn.addEventListener('click', function () { abrirModal(p); });
             grid.appendChild(btn);
         });
+
+        if (restantes > 0) {
+            var dica = document.createElement('p');
+            dica.className = 'sr-more-hint';
+            dica.textContent = '+ ' + restantes +
+                (restantes > 1 ? ' outros resultados' : ' outro resultado') +
+                ' — continue digitando pra refinar a busca';
+            grid.appendChild(dica);
+        }
     }
 
     document.addEventListener('click', function (e) {
@@ -675,7 +729,7 @@
                 '<div class="overview-header">' +
                 '<h3>' + esc(secao.titulo) + '</h3>' +
                 '</div>' +
-                '<div class="overview-row-wrap">' +
+                '<div class="overview-row-wrap ' + esc(layoutAtual) + '">' +
                 '<button type="button" class="overview-nav overview-nav-prev" aria-label="Ver itens anteriores">‹</button>' +
                 '<div class="overview-row"></div>' +
                 '<button type="button" class="overview-nav overview-nav-next" aria-label="Ver mais itens">›</button>' +
@@ -889,6 +943,7 @@
     var modalProduto = null;
 
     function abrirModal(p) {
+        fecharOutrosModais(fecharModal);
         // Async click counter — fire-and-forget
         if (p.id) {
             fetch('/api/produtos/' + p.id + '/click', { method: 'POST' }).catch(function(){});
@@ -1007,12 +1062,11 @@
     }
 
     // [VZ] abrirManual/fecharManual precisam existir em escopo de módulo
-    // porque o botão de manual da tela de intro (mostrarIntro) dispara
-    // abrirManual() antes de initManualModal() ter necessariamente
-    // terminado de rodar — na prática bootCatalog() chama mostrarIntro()
-    // e depois initEventListeners() de forma síncrona, então quando o
-    // clique de fato acontece a função já foi atribuída, mas mantemos as
-    // referências aqui pra não depender dessa ordem por acidente.
+    // porque o botão de manual da tela de intro (initCatalogIntro) chama
+    // abrirManual() num clique que só acontece depois que a pessoa já
+    // abriu o portal manualmente — a essa altura initManualModal() já
+    // rodou de sobra, mas mantemos as referências aqui pra não depender
+    // dessa ordem por acidente.
     var abrirManual = function () {};
     var fecharManual = function () {};
 
@@ -1024,6 +1078,7 @@
         if (!manualModal) return;
 
         abrirManual = function () {
+            fecharOutrosModais(fecharManual);
             manualModal.classList.add('open');
             manualModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -1036,6 +1091,7 @@
             document.body.style.overflow = '';
             marcarBotaoModalAtivo(manualBtn, false);
         };
+        registrarModal(function () { return manualModal.classList.contains('open'); }, fecharManual);
 
         if (manualBtn)      manualBtn.addEventListener('click', abrirManual);
         if (manualClose)    manualClose.addEventListener('click', fecharManual);
@@ -1093,6 +1149,7 @@
         starsWrap.addEventListener('mouseleave', function () { pintarEstrelas(notaSelecionada); });
 
         function abrirFeedback() {
+            fecharOutrosModais(fecharFeedback);
             modal.classList.add('open');
             modal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -1105,6 +1162,7 @@
             document.body.style.overflow = '';
             marcarBotaoModalAtivo(btn, false);
         }
+        registrarModal(function () { return modal.classList.contains('open'); }, fecharFeedback);
         function resetarForm() {
             card.setAttribute('data-state', 'form');
             form.reset();
@@ -1186,6 +1244,7 @@
         if (!faqModal || !faqBtn) return;
 
         function abrirFaq() {
+            fecharOutrosModais(fecharFaq);
             faqModal.classList.add('open');
             faqModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -1198,6 +1257,7 @@
             document.body.style.overflow = '';
             marcarBotaoModalAtivo(faqBtn, false);
         }
+        registrarModal(function () { return faqModal.classList.contains('open'); }, fecharFaq);
 
         faqBtn.addEventListener('click', abrirFaq);
         if (faqClose)    faqClose.addEventListener('click', fecharFaq);
@@ -1213,6 +1273,8 @@
         var closeBtn  = document.getElementById('modalClose');
         var buyBtn    = document.getElementById('modalBuy');
         if (!modal) return;
+
+        registrarModal(function () { return modal.classList.contains('open'); }, fecharModal);
 
         if (closeBtn) closeBtn.addEventListener('click', fecharModal);
         if (backdrop) backdrop.addEventListener('click', fecharModal);
@@ -1536,11 +1598,18 @@
         }
     }
 
-    // ── CATALOG INTRO — shown on first session visit only ──────
-    var INTRO_MIN_MS = 1500;   // ensure animation is visible
-    var INTRO_MAX_MS = 5000;   // hard cap — brand moment runs up to 5s
-    var introStart    = 0;
-    var introHidden   = false;
+    // ── CATALOG INTRO — opt-in portal, opened by the header button ──
+    // [VZ] Reformulado (2026-09-18) — antes era um overlay em tela cheia
+    // que cobria a página sozinho assim que ela carregava, com no máximo
+    // 5s antes de fechar sozinho (INTRO_MIN_MS/INTRO_MAX_MS). O cliente
+    // relatou que mal dava tempo de notar o botão de manual antes da
+    // animação sumir. Agora é um modal comum, igual manual/FAQ/feedback:
+    // só abre se a pessoa clicar em "introTriggerBtn" no header, e fica
+    // aberto até ela decidir sair (Entrar, X, Esc, clique fora). Continua
+    // aparecendo só uma vez por sessão — não como auto-play, mas como um
+    // aceno pulsante no ícone do header (ver .intro-trigger-pulse no CSS),
+    // que some assim que a pessoa clicar nele pela primeira vez.
+    var introAberto = false;
 
     function shouldShowIntro() {
         try {
@@ -1552,65 +1621,63 @@
         try { sessionStorage.setItem('vz-intro-seen', '1'); } catch (_) {}
     }
 
-    function mostrarIntro() {
-        var el = document.getElementById('catalogIntro');
-        if (!el) return;
-        introStart = Date.now();
-        el.classList.add('active');
-        el.setAttribute('aria-hidden', 'false');
+    function initCatalogIntro() {
+        var el         = document.getElementById('catalogIntro');
+        var triggerBtn = document.getElementById('introTriggerBtn');
+        var pulse      = document.getElementById('introTriggerPulse');
+        var closeBtn   = document.getElementById('introCloseBtn');
+        var enterBtn   = document.getElementById('introEnterBtn');
+        var manualBtn  = document.getElementById('introManualBtn');
+        if (!el || !triggerBtn) return;
 
-        // [VZ] Controle explícito (2026-09-15) — clicar em qualquer lugar que
-        // não seja um dos botões de ação ainda fecha (atalho pra quem já
-        // conhece o site), mas os botões são o caminho principal agora, não
-        // um hint passivo escondido atrás de um clique genérico.
-        el.addEventListener('click', function (e) {
-            if (e.target.closest('.catalog-intro-actions')) return;
-            esconderIntro();
+        if (pulse && shouldShowIntro()) pulse.hidden = false;
+
+        function mostrarIntro() {
+            fecharOutrosModais(esconderIntro);
+            introAberto = true;
+            el.classList.add('active');
+            el.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            marcarBotaoModalAtivo(triggerBtn, true);
+            if (pulse) pulse.hidden = true;
+            markIntroSeen();
+            if (closeBtn) setTimeout(function () { closeBtn.focus(); }, 50);
+        }
+
+        function esconderIntro() {
+            if (!introAberto) return;
+            introAberto = false;
+            el.classList.remove('active');
+            el.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            marcarBotaoModalAtivo(triggerBtn, false);
+        }
+
+        registrarModal(function () { return introAberto; }, esconderIntro);
+
+        triggerBtn.addEventListener('click', function () {
+            if (introAberto) esconderIntro(); else mostrarIntro();
         });
-        var enterBtn = document.getElementById('introEnterBtn');
-        if (enterBtn) enterBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            esconderIntro();
-        });
-        var manualBtn = document.getElementById('introManualBtn');
-        if (manualBtn) manualBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
+        if (closeBtn) closeBtn.addEventListener('click', esconderIntro);
+        if (enterBtn) enterBtn.addEventListener('click', esconderIntro);
+        if (manualBtn) manualBtn.addEventListener('click', function () {
             esconderIntro();
             abrirManual();
         });
-
-        // Hard cap — never get stuck
-        setTimeout(function () { esconderIntro(); }, INTRO_MAX_MS);
-    }
-
-    function esconderIntro() {
-        if (introHidden) return;
-        introHidden = true;
-        var el = document.getElementById('catalogIntro');
-        if (!el) return;
-        var elapsed = Date.now() - introStart;
-        var wait    = Math.max(0, INTRO_MIN_MS - elapsed);
-        setTimeout(function () {
-            el.classList.add('leaving');
-            el.setAttribute('aria-hidden', 'true');
-            setTimeout(function () {
-                el.classList.remove('active', 'leaving');
-                el.parentNode && el.parentNode.removeChild(el);
-            }, 650);
-            markIntroSeen();
-        }, wait);
+        // Clique fora do card (mas dentro do overlay) também fecha.
+        el.addEventListener('click', function (e) {
+            if (e.target.closest('.catalog-intro-inner')) return;
+            esconderIntro();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && introAberto) esconderIntro();
+        });
     }
 
     function bootCatalog() {
-        var showIntro = shouldShowIntro();
-        if (showIntro) mostrarIntro();
+        initCatalogIntro();
         initEventListeners();
-        // Wrap carregar to trigger intro hide after products load
-        var origCarregar = carregar;
-        Promise.resolve()
-            .then(function () { return origCarregar(); })
-            .catch(function () { /* errors are handled inside carregar */ })
-            .then(function () { if (showIntro) esconderIntro(); });
+        carregar();
     }
 
     if (document.readyState === 'loading') {
